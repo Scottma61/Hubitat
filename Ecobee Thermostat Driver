@@ -51,7 +51,7 @@
  *	1.4.0  - Major release: Renamed device files
  *	1.4.01 - Don't display apiConnected status changes in device log unless in Debug Level 4 or 5
  *	1.4.02 - Fixed display of fanMinOnTime in device log
- *  1.4.1  - Changed @mattw's version as follows: parent.settings. --> parent. ; toDouble() --> toFloat on line 1126  ; added hard brackets on line 706
+ *	1.4.1  - Changed @mattw's version as follows: parent.settings. --> parent. ; toDouble() --> toFloat() on line 1126  ; added hard brackets on line 706
  */
 
 def getVersionNum() { return "1.4.1" }
