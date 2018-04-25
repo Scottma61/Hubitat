@@ -84,7 +84,7 @@ metadata {
 
 def updated() {
     log.debug "updated called"
-    state.version = "1.4.0"    // ************************* Update as required *************************************
+    state.version = "1.6.0"    // ************************* Update as required *************************************
     unschedule()
     forcePoll()
     def pollIntervalCmd = (settings?.pollInterval ?: "5 Minutes").replace(" ", "")
@@ -136,7 +136,7 @@ def forcePoll()
             log.info "Further WU data logging disabled (params1)"    
             }    
             
-            sendEvent(name: "Driver_NameSpace", value: "Cobra")
+            sendEvent(name: "Driver_NameSpace", value: "Scottma61")
             sendEvent(name: "Driver_Version", value: state.version)
             sendEvent(name: "Driver_Station_ID", value: resp1.data.current_observation.station_id)
           
