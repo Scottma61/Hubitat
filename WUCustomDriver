@@ -176,7 +176,7 @@ def ForcePoll()
             }    
             
            sendEvent(name: "Polls_Since_Reset", value: state.NumOfPolls, isStateChange: true)
-           sendEvent(name: "Driver_NameSpace", value: "Cobra", isStateChange: true)
+           sendEvent(name: "Driver_NameSpace", value: "Scottma61", isStateChange: true)
            sendEvent(name: "Driver_Version", value: state.version, isStateChange: true)
            sendEvent(name: "Station_ID", value: resp1.data.current_observation.station_id, isStateChange: true)
            sendEvent(name: "Station_City", value: resp1.data.current_observation.display_location.city, isStateChange: true)
