@@ -15,6 +15,7 @@
  *  - Last Update 01/05/2018
  *
  *
+ *  V2.1.2  - Added 'localSunrise' and 'localSunset' - @Scottma61 05/01/2018
  *  V2.1.1  - Added defaultValue to "pollIntervalLimit" to prevent errors on new installs
  *  V2.1.0  - Added 3 attributes - Rain tomorrow & the day after and Station_State (& lowercase 'state')- Also added poll counter and reset button @Cobra 01/05/2018
  *  V2.0.1  - Changed to one call to WU for Alerts, Conditions and Forecast - Thanks to: @Scottma61 for this one
@@ -35,7 +36,7 @@
  */
 
 metadata {
-    definition (name: "WeatherUndergroundCustomLowerCase", namespace: "Scottma61", author: "mattw01/Cobra") {
+    definition (name: "WUCustomDriver", namespace: "Scottma61", author: "mattw01/Cobra") {
         capability "Actuator"
         capability "Sensor"
         capability "Temperature Measurement"
@@ -82,8 +83,9 @@ metadata {
         attribute "Chance_Of_Rain", "string"
         attribute "Expected_Rain_Tomorrow", "string"
         attribute "Expected_Rain_Day_After_Tomorrow", "string"
-        
-        
+	attribute "localSunrise", "string"
+        attribute "localSunset", "string"
+                
         // lowercase
         attribute "weather", "string"
         attribute "feelsLike", "number"
@@ -114,7 +116,7 @@ metadata {
 
 def updated() {
     log.debug "updated called"
-    state.version = "2.1.1"    // ************************* Update as required *************************************
+    state.version = "2.1.2"    // ************************* Update as required *************************************
     unschedule()
     ForcePoll()
     def pollIntervalCmd = (settings?.pollInterval ?: "5 Minutes").replace(" ", "")
@@ -153,7 +155,7 @@ def ForcePoll()
     
     log.debug "WU: ForcePoll called"
     def params1 = [
-        uri: "http://api.wunderground.com/api/${apiKey}/alerts/conditions/forecast/q/${pollLocation}.json"
+        uri: "http://api.wunderground.com/api/${apiKey}/alerts/astronomy/conditions/forecast/q/${pollLocation}.json"
     ]
  
     log.debug "params1: ${params1}"
@@ -184,8 +186,8 @@ def ForcePoll()
             // lowercase
             sendEvent(name: "weather", value: resp1.data.current_observation.weather)
             sendEvent(name: "humidity", value: resp1.data.current_observation.relative_humidity.replaceFirst("%", ""))
-	    	sendEvent(name: "illuminance", value: resp1.data.current_observation.solarradiation, unit: "lux") 
-	    	sendEvent(name: "city", value: resp1.data.current_observation.display_location.city, isStateChange: true)
+	    sendEvent(name: "illuminance", value: resp1.data.current_observation.solarradiation, unit: "lux") 
+	    sendEvent(name: "city", value: resp1.data.current_observation.display_location.city, isStateChange: true)
             sendEvent(name: "state", value: resp1.data.current_observation.display_location.state, isStateChange: true)
             sendEvent(name: "percentPrecip", value: resp1.data.forecast.simpleforecast.forecastday[0].pop , isStateChange: true)
             
@@ -197,7 +199,7 @@ def ForcePoll()
             defWeatherSummeryFormat = weatherFormat
             
             if (WeatherSummeryFormat == "Celsius, Miles & MPH"){
-                	     sendEvent(name: "Display_Summary_Format", value: "Celsius, Miles & MPH", isStateChange:true)
+                	 sendEvent(name: "Display_Summary_Format", value: "Celsius, Miles & MPH", isStateChange:true)
                          sendEvent(name: "Weather_Summary", value: "Weather summary for" + " " + resp1.data.current_observation.display_location.city + ", " + resp1.data.current_observation.observation_time+ ". " +" - " 
                        + resp1.data.forecast.simpleforecast.forecastday[0].conditions + " with a high of " + resp1.data.forecast.simpleforecast.forecastday[0].high.celsius + " degrees, " + "and a low of " 
                        + resp1.data.forecast.simpleforecast.forecastday[0].low.celsius  + " degrees. " + "Humidity is currently around " + resp1.data.current_observation.relative_humidity + " and temperature is " 
@@ -208,7 +210,7 @@ def ForcePoll()
             }
                 
              if (WeatherSummeryFormat == "Fahrenheit, Miles & MPH"){
-                 		 sendEvent(name: "Display_Summary_Format", value: "Fahrenheit, Miles & MPH", isStateChange:true)
+                 	 sendEvent(name: "Display_Summary_Format", value: "Fahrenheit, Miles & MPH", isStateChange:true)
                          sendEvent(name: "Weather_Summary", value: "Weather summary for" + " " + resp1.data.current_observation.display_location.city + ", " + resp1.data.current_observation.observation_time+ ". " +" - " 
                        + resp1.data.forecast.simpleforecast.forecastday[0].conditions + " with a high of " + resp1.data.forecast.simpleforecast.forecastday[0].high.fahrenheit + " degrees, " + "and a low of " 
                        + resp1.data.forecast.simpleforecast.forecastday[0].low.fahrenheit  + " degrees. " + "Humidity is currently around " + resp1.data.current_observation.relative_humidity + " and temperature is " 
@@ -219,7 +221,7 @@ def ForcePoll()
             }    
             
              if (WeatherSummeryFormat == "Celsius, Kilometres & KPH"){
-                 		 sendEvent(name: "Display_Summary_Format", value: "Celsius, Kilometres & KPH", isStateChange:true)
+                 	 sendEvent(name: "Display_Summary_Format", value: "Celsius, Kilometres & KPH", isStateChange:true)
                          sendEvent(name: "Weather_Summary", value: "Weather summary for" + " " + resp1.data.current_observation.display_location.city + ", " + resp1.data.current_observation.observation_time+ ". " +" - " 
                        + resp1.data.forecast.simpleforecast.forecastday[0].conditions + " with a high of " + resp1.data.forecast.simpleforecast.forecastday[0].high.celsius + " degrees, " + "and a low of " 
                        + resp1.data.forecast.simpleforecast.forecastday[0].low.celsius  + " degrees. " + "Humidity is currently around " + resp1.data.current_observation.relative_humidity + " and temperature is " 
@@ -314,8 +316,7 @@ def ForcePoll()
             sendEvent(name: "Pressure", value: resp1.data.current_observation.pressure_mb, unit: "mb")
             sendEvent(name: "Display_Unit_Pressure", value: "Millibar")  
             }
-            
-                      
+                                  
              def possAlert = (resp1.data.alerts.description)
                if (possAlert){
                sendEvent(name: "Alert", value: resp1.data.alerts.description)  
@@ -323,7 +324,25 @@ def ForcePoll()
                 if (!possAlert){
                sendEvent(name: "Alert", value: " No current weather alerts for this area")
                 }
-               
+            
+	     // Sunrise / sunset
+        	def a = get("astronomy")?.moon_phase
+        	def today = localDate("GMT${resp1.data.current_observation.local_tz_offset}")
+        	def ltf = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm")
+        	ltf.setTimeZone(TimeZone.getTimeZone("GMT${resp1.data.current_observation.local_tz_offset}"))
+        	def utf = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
+        	utf.setTimeZone(TimeZone.getTimeZone("GMT"))
+
+        	def sunriseDate = ltf.parse("${today} ${resp1.data.astronomy.sunrise.hour}:${resp1.data.astronomy.sunrise.minute}")
+        	def sunsetDate = ltf.parse("${today} ${resp1.data.astronomy.sunset.hour}:${resp1.data.astronomy.sunset.minute}")
+
+        	def tf = new java.text.SimpleDateFormat("HH:mm")
+        	tf.setTimeZone(TimeZone.getTimeZone("GMT${resp1.data.current_observation.local_tz_offset}"))
+        	def localSunrise = "${tf.format(sunriseDate)}"
+        	def localSunset = "${tf.format(sunsetDate)}"
+        	sendEvent(name: "localSunrise", value: localSunrise, descriptionText: "Sunrise today is at $localSunrise")
+        	sendEvent(name: "localSunset", value: localSunset, descriptionText: "Sunset today at is $localSunset")
+		
           state.lastPoll = now()     
             
         }
