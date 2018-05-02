@@ -196,7 +196,7 @@ def ForcePoll()
    //       sendEvent(name: "weatherIcon", value: resp1.data.current_observation.icon)
             
             
-            defWeatherSummeryFormat = weatherFormat
+            def WeatherSummeryFormat = weatherFormat
             
             if (WeatherSummeryFormat == "Celsius, Miles & MPH"){
                 	 sendEvent(name: "Display_Summary_Format", value: "Celsius, Miles & MPH", isStateChange:true)
