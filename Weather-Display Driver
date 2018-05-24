@@ -19,8 +19,8 @@
  *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
  *  for the specific language governing permissions and limitations under the License.
  *
- *  Last Update 05/25/2018
- *
+ *  Last Update 05/24/2018
+ * { Left room below to document version changes...}
  *
  *  
  *  
@@ -45,7 +45,6 @@
  *  V1.0.0 - Original version 05/24/2018
  *
  */
-
 metadata {
     definition (name: "Weather-Display Driver", namespace: "Matthew", author: "Scottma61") {
         capability "Actuator"
@@ -105,6 +104,7 @@ metadata {
 	attribute "temperatureUnit", "string"
         attribute "weatherSummary", "string"
         attribute "weatherSummaryFormat", "string"
+/*
 // User source selections	
 	attribute "sourcecity", "bool"
 	attribute "sourcefeelsLike", "bool"	
@@ -116,8 +116,7 @@ metadata {
 	attribute "sourcesolarradiation", "bool"		
         attribute "sourcestate", "bool"
 	attribute "sourceUV", "bool"
-
-    }
+ */   }
     preferences() {
         section("Query Inputs"){
         	input "tempFormat", "enum", required: true, title: "Display Unit - Temperature: Fahrenheit or Celsius",  options: ["Fahrenheit", "Celsius"]
@@ -130,7 +129,7 @@ metadata {
 	    
 		input "pwsLocation", "text", required: true, title: "PWS data file location"
 		input "pwspollIntervalLimit", "number", title: "PWS Poll Interval Limit:", required: true, defaultValue: 1
-		input "pwsautoPoll", "bool", required: false, title: "Enable Auto Poll for PWS"
+		input "pwsautoPoll", "bool", required: false, title: "Enable Auto Poll for PWS", defaultValue: false
 		input "pwspollInterval", "enum", title: "PWS Auto Poll Interval:", required: false, defaultValue: "5 Minutes", options: ["5 Minutes", "10 Minutes", "15 Minutes", "30 Minutes", "1 Hour", "3 Hours"]
 		input "pwslogSet", "bool", title: "Log All PWS Response Data", required: true, defaultValue: false
 		input "pwscutOff", "time", title: "PWS New Day Starts", required: true
@@ -138,21 +137,21 @@ metadata {
 		input "wuapiKey", "text", required: true, title: "WU API Key"
 		input "wuLocation", "text", required: true, title: "ZIP Code or pws:WU_StationID"
 		input "wupollIntervalLimit", "number", title: "WU Poll Interval Limit:", required: true, defaultValue: 1
-		input "wuautoPoll", "bool", required: false, title: "Enable Auto Poll for WU"
+		input "wuautoPoll", "bool", required: false, title: "Enable Auto Poll for WU", defaultValue: false
 		input "wupollInterval", "enum", title: "WU Auto Poll Interval:", required: false, defaultValue: "5 Minutes", options: ["5 Minutes", "10 Minutes", "15 Minutes", "30 Minutes", "1 Hour", "3 Hours"]
 		input "wulogSet", "bool", title: "Log All WU Response Data", required: true, defaultValue: false
 		input "wucutOff", "time", title: "WU New Day Starts", required: true
 		
-		input "sourcecity", "bool", required: true, title: "City from Weather-Display?"
-		input "sourcefeelsLike", "bool", required: true, title: "FeelsLike from Weather-Display?"
-		input "sourceIcon", "bool", required: true, title: "Icon from Weather-Display?"
-		input "sourcelocalSunset", "bool", required: true, title: "Sunrise from Weather-Display?"
-		input "sourcelocalSunrise", "bool", required: true, title: "Sunset from Weather-Display?"
-		input "sourcemoonPhase", "bool", required: true, title: "MoonPhase from Weather-Display?"
-		input "sourcemoonIllumination", "bool", required: true, title: "MoonIllum from Weather-Display?"
-		input "sourcesolarradiation", "bool", required: true, title: "SolarRad from Weather-Display?"
-		input "sourcestate", "bool", required: true, title: "State from Weather-Display?"
-		input "sourceUV", "bool", required: true, title: "UV from Weather-Display?"
+		input "sourcecity", "bool", required: true, title: "City from Weather-Display?", defaultValue: true
+		input "sourcefeelsLike", "bool", required: true, title: "FeelsLike from Weather-Display?", defaultValue: true
+		input "sourceIcon", "bool", required: true, title: "Icon from Weather-Display?", defaultValue: true
+		input "sourcelocalSunset", "bool", required: true, title: "Sunrise from Weather-Display?", defaultValue: true
+		input "sourcelocalSunrise", "bool", required: true, title: "Sunset from Weather-Display?", defaultValue: true
+		input "sourcemoonPhase", "bool", required: true, title: "MoonPhase from Weather-Display?", defaultValue: true
+		input "sourcemoonIllumination", "bool", required: true, title: "MoonIllum from Weather-Display?", defaultValue: true
+		input "sourcesolarradiation", "bool", required: true, title: "SolarRad from Weather-Display?", defaultValue: true
+		input "sourcestate", "bool", required: true, title: "State from Weather-Display?", defaultValue: true
+		input "sourceUV", "bool", required: true, title: "UV from Weather-Display?", defaultValue: true
         }
     }
 }
@@ -172,25 +171,23 @@ def updated() {
 }
 
 def pwsResetPollCount(){
-state.pwsNumOfPolls = -1
-    log.info "PWS Poll counter reset.."
-pwsForcePoll()
+	state.pwsNumOfPolls = -1
+    	log.info "PWS Poll counter reset.."
+	pwsForcePoll()
 }
 
-def pwspollSchedule()
-{
-    pwsForcePoll()
+def pwspollSchedule(){
+    	pwsForcePoll()
 }
               
 def parse(String description) {
 }
 
-def pwsPoll()
-{
-    if(now() - state.pwslastPoll > (pwspollIntervalLimit * 60000))
-        pwsForcePoll()
-    else
-        log.debug "PWS Poll called before interval threshold was reached"
+def pwsPoll(){
+    	if(now() - state.pwslastPoll > (pwspollIntervalLimit * 60000))
+        	pwsForcePoll()
+    	else
+        	log.debug "PWS Poll called before interval threshold was reached"
 }
 
 def pwsForcePoll(){
@@ -214,15 +211,15 @@ def pwsForcePoll(){
         	httpGet(params1) { resp1 ->
 	            	resp1.headers.each {
         	    	log.debug "Response1: ${it.name} : ${it.value}"
-        	}
-            	if(logSet == true){  
-		    log.debug "params1: ${params1}"
-		    log.debug "response contentType: ${resp1.contentType}"
-		    log.debug "response data: ${resp1.data}"
-            	} 
-            	if(logSet == false){ 
-            		log.info "Further WU detailed data logging disabled"
-            	}
+        		}
+			if(pwslogSet == true){  
+				log.debug "params1: ${params1}"
+				log.debug "response contentType: ${resp1.contentType}"
+				log.debug "response data: ${resp1.data}"
+			} 
+			if(pwslogSet == false){ 
+				log.info "Further PWS detailed data logging disabled"
+			}
 // Start Weather-Display data poll		
 		if(sourcecity){
 			sendEvent(name: "city", value: resp1.data.station.name.split(/ /)[0], isStateChange: true)
@@ -313,6 +310,18 @@ def pwsForcePoll(){
 	   	}
 // end WD data poll		
 /*  WeatherUnderground data elements                
+        	httpGet(params2) { resp2 ->
+	            	resp2.headers.each {
+        	    	log.debug "Response2: ${it.name} : ${it.value}"
+			}
+			if(wulogSet == true){  
+			    log.debug "params2: ${params2}"
+			    log.debug "response contentType: ${resp2.contentType}"
+			    log.debug "response data: ${resp2.data}"
+			} 
+			if(wulogSet == false){ 
+				log.info "Further WU detailed data logging disabled"
+			}
 		if(!sourcecity){
 			sendEvent(name: "city", value: resp2.data.current_observation.display_location.city, isStateChange: true)
 		}
@@ -393,7 +402,7 @@ def pwsForcePoll(){
 		if(distanceFormat == "Kilometres (kph)"){
 			sendEvent(name: "visibility", value: resp2.data.current_observation.visibility_km, unit: "km", isStateChange: true)
 		}
-*/           
+          
 		if(summaryType == true){
 			if (WeatherSummeryFormat == "Celsius, Miles & MPH"){
 		   		sendEvent(name: "weatherSummaryFormat", value: "Celsius, Miles & MPH", isStateChange: true)
@@ -469,7 +478,7 @@ def pwsForcePoll(){
                 }
           	state.wulastPoll = now()     
         } 
-        
+*/        
     } catch (e) {
         log.error "something went wrong: $e"
     }
@@ -478,7 +487,7 @@ def pwsForcePoll(){
 
 def Report(){
   def pwsobvTime = pwsobservation_time.value
-  log.info "PWS: $pwsobvTime"
+  log.info "PWS last updated: $pwsobvTime"
   def wuobvTime = wuobservation_time.value
-  log.info "WU: $wuobvTime"
+  log.info "WU last updated: $wuobvTime"
 }
