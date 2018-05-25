@@ -96,31 +96,42 @@ metadata {
     preferences() {
         section("Query Inputs"){
         	input "tempFormat", "enum", required: true, title: "Display Unit - Temperature: Fahrenheit or Celsius",  options: ["Fahrenheit", "Celsius"]
-		input "distanceFormat", "enum", required: true, title: "Display Unit - Distance/Speed: Miles or Kilometres",  options: ["Miles (mph)", "Kilometres (kph)"]
-		input "pressureFormat", "enum", required: true, title: "Display Unit - Pressure: Inches or Millibar",  options: ["Inches", "Millibar"]
-		input "rainFormat", "enum", required: true, title: "Display Unit - Precipitation: Inches or Millimetres",  options: ["Inches", "Millimetres"]
-		input "summaryType", "bool", title: "Full Weather Summary", required: true, defaultValue: false
-		input "iconType", "bool", title: "Icon: On = Current - Off = Forecast", required: true, defaultValue: false
-		input "weatherFormat", "enum", required: true, title: "How to format weather summary",  options: ["Celsius, Miles & MPH", "Fahrenheit, Miles & MPH", "Celsius, Kilometres & KPH"]
-/*	    
-		input "pwspollLocation", "text", required: true, title: "PWS Data file location"
-		input "pwspollIntervalLimit", "number", title: "Poll Interval Limit:", required: true, defaultValue: 1
-		input "pwsautoPoll", "bool", required: false, title: "Enable Auto Poll for PWS", defaultValue: false
-		input "pwspollInterval", "enum", title: "PWS Auto Poll Interval:", required: false, defaultValue: "5 Minutes", options: ["5 Minutes", "10 Minutes", "15 Minutes", "30 Minutes", "1 Hour", "3 Hours"]
-		input "pwslogSet", "bool", title: "Log All PWS Response Data", required: true, defaultValue: false
-		input "pwscutOff", "time", title: "PWS New Day Starts", required: true
-*/	    
-		input "wuapiKey", "text", required: true, title: "WU API Key"
-		input "wupollLocation", "text", required: true, title: "ZIP Code or pws:WU_StationID"
-		input "wupollIntervalLimit", "number", title: "WU Poll Interval Limit:", required: true, defaultValue: 1
-		input "wuautoPoll", "bool", required: false, title: "Enable Auto Poll for WU", defaultValue: false
-		input "wupollInterval", "enum", title: "WU Auto Poll Interval:", required: false, defaultValue: "5 Minutes", options: ["5 Minutes", "10 Minutes", "15 Minutes", "30 Minutes", "1 Hour", "3 Hours"]
-		input "wulogSet", "bool", title: "Log All WU Response Data", required: true, defaultValue: false
-		input "wucutOff", "time", title: "WU New Day Starts", required: true
+			input "distanceFormat", "enum", required: true, title: "Display Unit - Distance/Speed: Miles or Kilometres",  options: ["Miles (mph)", "Kilometres (kph)"]
+			input "pressureFormat", "enum", required: true, title: "Display Unit - Pressure: Inches or Millibar",  options: ["Inches", "Millibar"]
+			input "rainFormat", "enum", required: true, title: "Display Unit - Precipitation: Inches or Millimetres",  options: ["Inches", "Millimetres"]
+			input "summaryType", "bool", title: "Full Weather Summary", required: true, defaultValue: false
+			input "iconType", "bool", title: "Icon: On = Current - Off = Forecast", required: true, defaultValue: false
+			input "weatherFormat", "enum", required: true, title: "How to format weather summary",  options: ["Celsius, Miles & MPH", "Fahrenheit, Miles & MPH", "Celsius, Kilometres & KPH"]
+	    
+			input "pwspollLocation", "text", required: true, title: "PWS Data file location"
+			input "pwspollIntervalLimit", "number", title: "Poll Interval Limit:", required: true, defaultValue: 1
+			input "pwsautoPoll", "bool", required: false, title: "Enable Auto Poll for PWS", defaultValue: false
+			input "pwspollInterval", "enum", title: "PWS Auto Poll Interval:", required: false, defaultValue: "5 Minutes", options: ["5 Minutes", "10 Minutes", "15 Minutes", "30 Minutes", "1 Hour", "3 Hours"]
+			input "pwslogSet", "bool", title: "Log All PWS Response Data", required: true, defaultValue: false
+			input "pwscutOff", "time", title: "PWS New Day Starts", required: true
+	    
+			input "wuapiKey", "text", required: true, title: "WU API Key"
+			input "wupollLocation", "text", required: true, title: "ZIP Code or pws:WU_StationID"
+			input "wupollIntervalLimit", "number", title: "WU Poll Interval Limit:", required: true, defaultValue: 1
+			input "wuautoPoll", "bool", required: false, title: "Enable Auto Poll for WU", defaultValue: false
+			input "wupollInterval", "enum", title: "WU Auto Poll Interval:", required: false, defaultValue: "5 Minutes", options: ["5 Minutes", "10 Minutes", "15 Minutes", "30 Minutes", "1 Hour", "3 Hours"]
+			input "wulogSet", "bool", title: "Log All WU Response Data", required: true, defaultValue: false
+			input "wucutOff", "time", title: "WU New Day Starts", required: true
+            
+            input "sourcecity", "bool", required: true, title: "City from Weather-Display?", defaultValue: true
+			input "sourcefeelsLike", "bool", required: true, title: "FeelsLike from Weather-Display?", defaultValue: true
+			input "sourceIcon", "bool", required: true, title: "Icon from Weather-Display?", defaultValue: true
+			input "sourcelocalSunset", "bool", required: true, title: "Sunrise from Weather-Display?", defaultValue: true
+			input "sourcelocalSunrise", "bool", required: true, title: "Sunset from Weather-Display?", defaultValue: true
+			input "sourcemoonPhase", "bool", required: true, title: "MoonPhase from Weather-Display?", defaultValue: true
+			input "sourcemoonIllumination", "bool", required: true, title: "MoonIllum from Weather-Display?", defaultValue: true
+			input "sourcesolarradiation", "bool", required: true, title: "SolarRad from Weather-Display?", defaultValue: true
+			input "sourcestate", "bool", required: true, title: "State from Weather-Display?", defaultValue: true
+			input "sourceUV", "bool", required: true, title: "UV from Weather-Display?", defaultValue: true
        }
     }
 }
-/*
+
 // Poll PWS
 def pwsupdated() {
     log.debug "PWS update called"
@@ -167,7 +178,7 @@ def pwsForcePoll(){
 	sendEvent(name: "driverNameSpace", value: "Matthew", isStateChange: true)
 	sendEvent(name: "driverVersion", value: state.version, isStateChange: true)
 	
-/*	def params1 = [
+	def params1 = [
 		uri: "${pwspollLocation}/everything.php"
 //        uri: "${pwspollLocation}/everything.json"
     	]
@@ -179,12 +190,12 @@ def pwsForcePoll(){
 	            	resp1.headers.each {
         	    	log.debug "Response1: ${it.name} : ${it.value}"
         			}
-					if(logSet == true){  
+					if(pwslogSet == true){  
 						log.debug "params1: ${params1}"
 						log.debug "response contentType: ${resp1.contentType}"
 						log.debug "response data: ${resp1.data}"
 					} 
-					if(logSet == false){ 
+					if(pwslogSet == false){ 
 						log.info "Further PWS detailed data logging disabled"
 					}
 // Start Weather-Display data poll		
@@ -239,7 +250,7 @@ def pwsForcePoll(){
 //		if(iconType == true){ 
 		   sendEvent(name: "weatherIcon", value: resp1.data.everything.forecast.icon.code, isStateChange: true)
 //		}    
-		sendEvent(name: "observation_time", value: resp1.data.time.time + " " + Date.parse("d/M/yyyy", resp1.data.time.date).format('M/d/yyyy'), isStateChange: true)
+        sendEvent(name: "pwsobservation_time", value: "Last updated on "  + Date.parse("d/M/yyyy", resp1.data.time.date).format("MMMM d,") + " " + Date.parse("hh:mm", resp1.data.time.time).format("h:mm a"), isStateChange: true)
 		sendEvent(name: "wind_dir", value: resp1.data.everything.weather.wind.direction.cardinal, isStateChange: true)
 		if(rainFormat == "Inches"){
 			sendEvent(name: "precip_today", value: resp1.data.everything.weather.rainfall.daily.in, unit: "IN", isStateChange: true)
@@ -277,8 +288,7 @@ def pwsForcePoll(){
 			sendEvent(name: "pressure", value: resp1.data.everything.weather.pressure.current.mb, unit: "mb", isStateChange: true)
 		   	sendEvent(name: "pressureUnit", value: "Millibar", isStateChange: true) 
 	   	}
-// end WD data poll		
-  WeatherUnderground data elements                
+// end PWS data poll		Start WeatherUnderground data poll                
         	httpGet(params2) { resp2 ->
 	            	resp2.headers.each {
         	    	log.debug "Response2: ${it.name} : ${it.value}"
@@ -315,7 +325,7 @@ def pwsForcePoll(){
 			sendEvent(name: "moonIllumination", value: resp2.data.moon_phase.percentIlluminated  + "%" , isStateChange: true)
 		}
 		if(!sourcesolarradiation){
-			def illume = (resp2.data.current_observation.solarradiation)
+//			def illume = (resp2.data.current_observation.solarradiation)
         		if(illume){
             	 		sendEvent(name: "illuminance", value: resp2.data.current_observation.solarradiation, unit: "lux", isStateChange: true)
                  		sendEvent(name: "solarradiation", value: resp2.data.current_observation.solarradiation, unit: "W", isStateChange: true)
@@ -331,8 +341,9 @@ def pwsForcePoll(){
 		if(!sourceUV){
 			sendEvent(name: "UV", value: resp2.data.current_observation.UV, isStateChange: true)
 		}
-		sendEvent(name: "stationID", value: resp2.data.station.name, isStateChange: true)
-	        sendEvent(name: "chanceOfRain", value: resp2.data.forecast.simpleforecast.forecastday[0].pop + "%", isStateChange: true)
+
+		sendEvent(name: "stationID", value: resp2.data.stationID, isStateChange: true)
+	    sendEvent(name: "chanceOfRain", value: resp2.data.forecast.simpleforecast.forecastday[0].pop + "%", isStateChange: true)
 		sendEvent(name: "percentPrecip", value: resp2.data.forecast.simpleforecast.forecastday[0].pop , isStateChange: true)
 		sendEvent(name: "wind_string", value: resp2.data.current_observation.wind_string)
 		sendEvent(name: "forecastConditions", value: resp2.data.forecast.simpleforecast.forecastday[0].conditions, isStateChange: true)            
@@ -350,19 +361,18 @@ def pwsForcePoll(){
 	   	sendEvent(name: "forecastConditions", value: resp2.data.forecast.simpleforecast.forecastday[0].conditions, isStateChange: true)
 	   	sendEvent(name: "chanceOfRain", value: resp2.data.forecast.simpleforecast.forecastday[0].pop + "%", isStateChange: true)
 	   	sendEvent(name: "percentPrecip", value: resp2.data.forecast.simpleforecast.forecastday[0].pop , isStateChange: true)
-//       		sendEvent(name: "weather", value: resp2.data.current_observation.weather, isStateChange: true)
 	   	if(tempFormat == "Fahrenheit"){ 
-			if(!sourcefeelsLike){
+/*			if(!sourcefeelsLike){
 				sendEvent(name: "feelsLike", value: resp2.data.current_observation.feelslike_f, unit: "F", isStateChange: true)
 			{
-			sendEvent(name: "forecastHigh", value: resp2.data.forecast.simpleforecast.forecastday[0].high.fahrenheit, unit: "F", isStateChange: true)
+*/			sendEvent(name: "forecastHigh", value: resp2.data.forecast.simpleforecast.forecastday[0].high.fahrenheit, unit: "F", isStateChange: true)
 			sendEvent(name: "forecastLow", value: resp2.data.forecast.simpleforecast.forecastday[0].low.fahrenheit, unit: "F", isStateChange: true)
 		}
 		if(tempFormat == "Celsius"){
-			if(!sourcefeelsLike){
+/*			if(!sourcefeelsLike){
 				sendEvent(name: "feelsLike", value: resp2.data.current_observation.feelslike_c, unit: "C", isStateChange: true)
 			{
-			sendEvent(name: "forecastHigh", value: resp2.data.forecast.simpleforecast.forecastday[0].high.celsius, unit: "C", isStateChange: true)
+*/			sendEvent(name: "forecastHigh", value: resp2.data.forecast.simpleforecast.forecastday[0].high.celsius, unit: "C", isStateChange: true)
 			sendEvent(name: "forecastLow", value: resp2.data.forecast.simpleforecast.forecastday[0].low.celsius, unit: "C", isStateChange: true)
 		}
 		if(distanceFormat == "Miles (mph)"){  
@@ -433,23 +443,20 @@ def pwsForcePoll(){
 				)  
 			}
 		}                     
-            	sendEvent(name: "WUobservation_time", value: resp2.data.current_observation.observation_time, isStateChange: true)
-//            	sendEvent(name: "weather", value: resp2.data.current_observation.weather, isStateChange: true)
-	    	sendEvent(name: "wind_string", value: resp2.data.current_observation.wind_string)
-	       	sendEvent(name: "forecastConditions", value: resp2.data.forecast.simpleforecast.forecastday[0].conditions, isStateChange: true)                        
+        sendEvent(name: "WUobservation_time", value: resp2.data.current_observation.observation_time, isStateChange: true)
+	    sendEvent(name: "wind_string", value: resp2.data.current_observation.wind_string)
+	    sendEvent(name: "forecastConditions", value: resp2.data.forecast.simpleforecast.forecastday[0].conditions, isStateChange: true)                        
    
-             	def possAlert = (resp2.data.alerts.description)
+        def possAlert = (resp2.data.alerts.description)
 		if (possAlert){
-               		sendEvent(name: "alert", value: resp2.data.alerts.description, isStateChange: true)  
-               	}
-                if (!possAlert){
-               		sendEvent(name: "alert", value: " No current weather alerts for this area")
-                }
-          	state.wulastPoll = now()     
-        
-        } 
+        	sendEvent(name: "alert", value: resp2.data.alerts.description, isStateChange: true)  
+        }
+        if (!possAlert){
+            sendEvent(name: "alert", value: " No current weather alerts for this area")
+        }
+        state.wulastPoll = now()             
 	}
-    catch (e) {
+            }}	catch (e) {
         log.error "something went wrong: $e"
     }
 }
@@ -459,9 +466,9 @@ def Report(){
   def wuobvTime = wuobservation_time.value
   log.info "WU last updated: $wuobvTime"  
 }
-*/
+
 //***********************************************************************************************************************//
-def wuupdated() {
+/*def wuupdated() {
     log.debug "WU update called"
     unschedule()
     state.wuNumOfPolls = 0
@@ -521,28 +528,28 @@ def wuForcePoll(){
 //		if(!sourcecity){
 			sendEvent(name: "city", value: resp2.data.current_observation.display_location.city, isStateChange: true)
 //		}
-/*		if(!sourceicon){
+		if(!sourceicon){
 			if(iconType == false){   
                    		sendEvent(name: "weatherIcon", value: resp2.data.forecast.simpleforecast.forecastday[0].icon, isStateChange: true)
                 	}
                 	if(iconType == true){ 
-*/			       sendEvent(name: "weatherIcon", value: resp2.data.current_observation.icon, isStateChange: true)
+			       sendEvent(name: "weatherIcon", value: resp2.data.current_observation.icon, isStateChange: true)
 //                	}
 //		}
 //		if(!sourcelocalSunset){
 			sendEvent(name: "localSunset", value: resp2.data.sun_phase.sunset.hour + ":" + resp2.data.sun_phase.sunset.minute, descriptionText: "Sunset today at is $localSunset", isStateChange: true)
 //		}
 //		if(!sourcelocalSunrise){
-			sendEvent(name: "localSunrise", value: resp2.data.sun_phase.sunrise.hour + ":" + resp2.data.sun_phase.sunrise.minute, descriptionText: "Sunrise today is at $localSunrise", isStateChange: true)
+//			sendEvent(name: "localSunrise", value: resp2.data.sun_phase.sunrise.hour + ":" + resp2.data.sun_phase.sunrise.minute, descriptionText: "Sunrise today is at $localSunrise", isStateChange: true)
 //		}
 //		if(!sourcemoonPhase){
-			sendEvent(name: "moonPhase", value: resp2.data.moon_phase.phaseofMoon , isStateChange: true)
+//			sendEvent(name: "moonPhase", value: resp2.data.moon_phase.phaseofMoon , isStateChange: true)
 //		}
 //		if(!sourcemoonIllumination){
-			sendEvent(name: "moonIllumination", value: resp2.data.moon_phase.percentIlluminated  + "%" , isStateChange: true)
+//			sendEvent(name: "moonIllumination", value: resp2.data.moon_phase.percentIlluminated  + "%" , isStateChange: true)
 //		}
 //		if(!sourcesolarradiation){
-			def illume = (resp2.data.current_observation.solarradiation)
+/*			def illume = (resp2.data.current_observation.solarradiation)
         		if(illume){
             	 		sendEvent(name: "illuminance", value: resp2.data.current_observation.solarradiation, unit: "lux", isStateChange: true)
                  		sendEvent(name: "solarradiation", value: resp2.data.current_observation.solarradiation, unit: "W", isStateChange: true)
@@ -661,7 +668,7 @@ def wuForcePoll(){
 				)  
 			}
 		}                     
-*/            	sendEvent(name: "observation_time", value: resp2.data.current_observation.observation_time, isStateChange: true)
+            	sendEvent(name: "wuobservation_time", value: resp2.data.current_observation.observation_time, isStateChange: true)
 //            	sendEvent(name: "weather", value: resp2.data.current_observation.weather, isStateChange: true)
 	    	sendEvent(name: "wind_string", value: resp2.data.current_observation.wind_string)
 	       	sendEvent(name: "forecastConditions", value: resp2.data.forecast.simpleforecast.forecastday[0].conditions, isStateChange: true)                        
@@ -687,3 +694,4 @@ def Report(){
   def wuobvTime = wuobservation_time.value
   log.info "WU last updated: $wuobvTime"
 }
+*/
