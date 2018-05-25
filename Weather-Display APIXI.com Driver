@@ -117,9 +117,9 @@ metadata {
 			    input "sourceIcon", "bool", required: true, title: "Icon from Weather-Display?", defaultValue: true
 			    input "sourcelocalSunset", "bool", required: true, title: "Sunrise from Weather-Display?", defaultValue: true
 			    input "sourcelocalSunrise", "bool", required: true, title: "Sunset from Weather-Display?", defaultValue: true
-			    input "sourcemoonPhase", "bool", required: true, title: "MoonPhase from Weather-Display?", defaultValue: true
-			    input "sourcemoonIllumination", "bool", required: true, title: "MoonIllum from Weather-Display?", defaultValue: true
-			    input "sourcesolarradiation", "bool", required: true, title: "SolarRad from Weather-Display?", defaultValue: true
+//			    input "sourcemoonPhase", "bool", required: true, title: "MoonPhase from Weather-Display?", defaultValue: true
+//			    input "sourcemoonIllumination", "bool", required: true, title: "MoonIllum from Weather-Display?", defaultValue: true
+//			    input "sourcesolarradiation", "bool", required: true, title: "SolarRad from Weather-Display?", defaultValue: true
 			    input "sourcestate", "bool", required: true, title: "State from Weather-Display?", defaultValue: true
 			    input "sourceUV", "bool", required: true, title: "UV from Weather-Display?", defaultValue: true
        }
@@ -283,10 +283,6 @@ def ForcePoll(){
 		   	sendEvent(name: "pressureUnit", value: "Millibar", isStateChange: true) 
 	   	}
 // end PWS data poll		Start APIXI.com data poll
-      def todaycast = date.format("yyyy-MM-dd", now()) 
-      def tomorrowcast = date.format("yyyy-MM-dd", todaycast + 1)
-      def dayaftertomorrowcast = date.format("yyyy-MM-dd", tomorrowcast + 1)
-
             httpGet(params2) { resp2 ->
 	            	resp2.headers.each {
         	    	log.debug "Response2: ${it.name} : ${it.value}"
@@ -304,25 +300,25 @@ def ForcePoll(){
 		}
 		if(!sourceicon){
 			if(iconType == false){   
-                   		sendEvent(name: "weatherIcon", value: resp2.data.forecast.forcastday.${todaycast}.condition.icon, isStateChange: true)
+                sendEvent(name: "weatherIcon", value: "http:" + resp2.data.forecast.forecastday[0].day.condition.icon, isStateChange: true)
                 	}
                 	if(iconType == true){ 
 			       sendEvent(name: "weatherIcon", value: resp2.data.current.condition.icon, isStateChange: true)
                 	}
 		}
 		if(!sourcelocalSunset){
-			sendEvent(name: "localSunset", value: resp2.data.forecast.forcastday.${todaycast}.astro.sunset, descriptionText: "Sunset today at is $localSunset", isStateChange: true)
+			sendEvent(name: "localSunset", value: resp2.data.forecast.forecastday[0].astro.sunset, descriptionText: "Sunset today at is $localSunset", isStateChange: true)
 		}
 		if(!sourcelocalSunrise){
-			sendEvent(name: "localSunrise", value: resp2.data.forecast.forcastday.${todaycast}.astro.sunrise, descriptionText: "Sunrise today is at $localSunrise", isStateChange: true)
+			sendEvent(name: "localSunrise", value: resp2.data.forecast.forecastday[0].astro.sunrise, descriptionText: "Sunrise today is at $localSunrise", isStateChange: true)
 		}
-/*		if(!sourcemoonPhase){
-			sendEvent(name: "moonPhase", value: resp2.data.moon_phase.phaseofMoon , isStateChange: true)
+		if(!sourcemoonPhase){
+			sendEvent(name: "moonPhase", value: resp2.data.forecast.forecastday[0].astro.moon_phase , isStateChange: true)
 		}
 		if(!sourcemoonIllumination){
-			sendEvent(name: "moonIllumination", value: resp2.data.moon_phase.percentIlluminated  + "%" , isStateChange: true)
+			sendEvent(name: "moonIllumination", value: resp2.forecast.forecastday[0].astro.moon_illumination  + "%" , isStateChange: true)
 		}
-		if(!sourcesolarradiation){
+/*		if(!sourcesolarradiation){
         		if(illume){
             	 		sendEvent(name: "illuminance", value: resp2.data.current_observation.solarradiation, unit: "lux", isStateChange: true)
                  		sendEvent(name: "solarradiation", value: resp2.data.current_observation.solarradiation, unit: "W", isStateChange: true)
@@ -336,44 +332,44 @@ def ForcePoll(){
 			sendEvent(name: "state", value: resp2.data.location.region, isStateChange: true)
 		}
 		if(!sourceUV){
-			sendEvent(name: "UV", value: resp2.data.forecast.forcastday.${todaycast}.uv, isStateChange: true)
+			sendEvent(name: "UV", value: resp2.data.forecast.forecastday[0].day.uv, isStateChange: true)
 		}
 
 		sendEvent(name: "stationID", value: resp2.data.location.name + ", " + resp2.data.location.region, isStateChange: true)
-	  sendEvent(name: "chanceOfRain", value: resp2.data.forecast.forcastday.${todaycast}.chance_of_rain + "%", isStateChange: true)
-		sendEvent(name: "percentPrecip", value: resp2.data.forecast.forcastday.${todaycast}.chance_of_rain , isStateChange: true)
-		sendEvent(name: "wind_string", value: "Wind is from " + resp2.data.forecast.forcastday.${todaycast}.wind_dir + " at " +resp2.data.forecast.wind_mph, isStateChange: true)
-		sendEvent(name: "forecastConditions", value: resp2.data.forecast.forcastday.${todaycast}.condition.text, isStateChange: true)            
+//	  sendEvent(name: "chanceOfRain", value: resp2.data.forecast.forecastday[0].hour.chance_of_rain + "%", isStateChange: true)
+//		sendEvent(name: "percentPrecip", value: resp2.data.forecast.forecastday.date.todaycast.chance_of_rain , isStateChange: true)
+		sendEvent(name: "forecastConditions", value: resp2.data.forecast.forecastday[0].day.condition.text, isStateChange: true)            
 		if(rainFormat == "Inches"){
-			sendEvent(name: "rainTomorrow", value: resp2.data.forecast.forecastday.date.${tomorrowcast}.precip_in, isStateChange: true)
-			sendEvent(name: "rainDayAfterTomorrow", value: resp2.data.forecast.forecastday.date.${dayaftertomorrowcast}.precip_in, unit: "IN", isStateChange: true)
+			sendEvent(name: "rainTomorrow", value: resp2.data.forecast.forecastday[1].day.totalprecip_in, isStateChange: true)
+			sendEvent(name: "rainDayAfterTomorrow", value: resp2.data.forecast.forecastday[2].day.totalprecip_in, unit: "IN", isStateChange: true)
 		}
 		if(rainFormat == "Millimetres"){   
-			sendEvent(name: "rainTomorrow", value: resp2.data.forecast.forecastday.date.${tomorrowcast}.precip_mm, unit: "MM", isStateChange: true)
-			sendEvent(name: "rainDayAfterTomorrow", value: resp2.data.forecast.forecastday.date.${dayaftertomorrowcast}.precip_mm, unit: "MM", isStateChange: true)
+			sendEvent(name: "rainTomorrow", value: resp2.data.forecast.forecastday[1].day.totalprecip_mm, unit: "MM", isStateChange: true)
+			sendEvent(name: "rainDayAfterTomorrow", value: resp2.data.forecast.forecastday[2].day.totalprecip_mm, unit: "MM", isStateChange: true)
 		}		
-		sendEvent(name: "apixuobservation_time", value: Date.parse("yyyy-MM-dd kk:mm", resp2.data.current.last_updated).format("MMMM d,") + " " + Date.parse("yyyy-MM-dd kk:mm", resp2.data.current.last_updated).format("h:mm a") , isStateChange: true)
-	   	sendEvent(name: "forecastConditions", value: resp2.data.forecast.forecastday.date.${todaycast}.day.condition.text, isStateChange: true)
-//	    sendEvent(name: "wind_string", value: resp2.data.current_observation.wind_string)
+		sendEvent(name: "apixuobservation_time", value: Date.parse("yyyy-MM-dd hh:mm", resp2.data.current.last_updated).format("MMMM d,") + " " + Date.parse("yyyy-MM-dd hh:mm", resp2.data.current.last_updated).format("h:mm a"), isStateChange: true)
+	   	sendEvent(name: "forecastConditions", value: resp2.data.forecast.forecastday[0].day.condition.text, isStateChange: true)
 	   	if(tempFormat == "Fahrenheit"){ 
 			if(!sourcefeelsLike){
 				sendEvent(name: "feelsLike", value: resp2.data.current.feelslike_f, unit: "F", isStateChange: true)
             }
-			sendEvent(name: "forecastHigh", value: resp2.data.forecast.forecastday.date.${todaycast}.day.maxtemp_f, unit: "F", isStateChange: true)
-			sendEvent(name: "forecastLow", value: resp2.data.forecast.forecastday.date.${todaycast}.day.mintemp_f, unit: "F", isStateChange: true)
+			sendEvent(name: "forecastHigh", value: resp2.data.forecast.forecastday[0].day.maxtemp_f, unit: "F", isStateChange: true)
+			sendEvent(name: "forecastLow", value: resp2.data.forecast.forecastday[0].day.mintemp_f, unit: "F", isStateChange: true)
 		}
 		if(tempFormat == "Celsius"){
 			if(!sourcefeelsLike){
 				sendEvent(name: "feelsLike", value: resp2.data.current.feelslike_c, unit: "C", isStateChange: true)
             }
-			sendEvent(name: "forecastHigh", value: resp2.data.forecast.forecastday.date.${todaycast}.day.maxtemp_c, unit: "F", isStateChange: true)
-			sendEvent(name: "forecastLow", value: resp2.data.forecast.forecastday.date.${todaycast}.day.mintemp_c, unit: "F", isStateChange: true)
+			sendEvent(name: "forecastHigh", value: resp2.data.forecast.forecastday[0].day.maxtemp_c, unit: "F", isStateChange: true)
+			sendEvent(name: "forecastLow", value: resp2.data.forecast.forecastday[0].day.mintemp_c, unit: "F", isStateChange: true)
 		}
 		if(distanceFormat == "Miles (mph)"){  
-			sendEvent(name: "visibility", value: resp2.data.current.vis_mi, unit: "mi", isStateChange: true)
+			sendEvent(name: "visibility", value: resp2.data.current.vis_miles, unit: "mi", isStateChange: true)
+            sendEvent(name: "wind_string", value: "Wind is from " + resp2.data.current.wind_dir + " at " +resp2.data.current.wind_mph + " MPH", isStateChange: true)
 		}
 		if(distanceFormat == "Kilometres (kph)"){
 			sendEvent(name: "visibility", value: resp2.data.current.vis_km, unit: "km", isStateChange: true)
+            sendEvent(name: "wind_string", value: "Wind is from " + resp2.data.current.wind_dir + " at " +resp2.data.current.wind_kph + " KPH", isStateChange: true)
 		}
           
 		if(summaryType == true){
@@ -381,36 +377,36 @@ def ForcePoll(){
 	   		sendEvent(name: "weatherSummaryFormat", value: "Celsius, Miles & MPH", isStateChange: true)
 				sendEvent(name: "weatherSummary", value: "Weather summary for" + " " + resp1.data.station.name.split(/ /)[0] + ", " + resp1.data.station.name.split(/ /)[1] 
                 + " updated at " + Date.parse("hh:mm", resp1.data.time.time).format("h:mm a") + " on " + Date.parse("d/M/yyyy", resp1.data.time.date).format("MMMM d") + ". "  
-				+ resp2.data.forecast.forecastday.date.${todaycast}.day.condition.text + " with a high of " + resp2.data.forecast.forecastday.date.${todaycast}.day.maxtemp_c + " degrees, " + "and a low of " 
-				+ resp2.data.forecast.forecastday.date.${todaycast}.day.mintemp_c  + " degrees. " + "Humidity is currently around " + resp1.data.everything.weather.humidity.current + "% and temperature is " 
+				+ resp2.data.forecast.forecastday[0].day.condition.text + " with a high of " + resp2.data.forecast.forecastday[0].day.maxtemp_c + " degrees, " + "and a low of " 
+				+ resp2.data.forecast.forecastday[0].day.mintemp_c  + " degrees. " + "Humidity is currently around " + resp1.data.everything.weather.humidity.current + "% and temperature is " 
 				+ resp1.data.everything.weather.temperature.current.c + " degrees. " + " The temperature feels like it's " + resp2.data.current.feelslike_c + " degrees. " 
 				+ "Wind is from the " + resp1.data.everything.weather.wind.direction.cardinal
 				+ " at " + resp1.data.everything.weather.wind.avg_speed.mph + " mph" + ", with gusts up to " + resp1.data.everything.weather.wind.max_gust_speed.mph + " mph" + ". Visibility is around " 
-				+ resp2.data.current.vis_mi + " miles" + ". " + "There is a " + resp2.data.forecast.forcastday.${todaycast}.chance_of_rain + "% chance of rain today." , isStateChange: true
+				+ resp2.data.current.vis_miles + " miles" + "." , isStateChange: true
 				)  
 			}
 			if (WeatherSummeryFormat == "Fahrenheit, Miles & MPH"){
 				sendEvent(name: "weatherSummaryFormat", value: "Fahrenheit, Miles & MPH", isStateChange: true)
 				sendEvent(name: "weatherSummary", value: "Weather summary for" + " " + resp1.data.station.name.split(/ /)[0] + ", " + resp1.data.station.name.split(/ /)[1] 
                 + " updated at " + Date.parse("hh:mm", resp1.data.time.time).format("h:mm a") + " on " + Date.parse("d/M/yyyy", resp1.data.time.date).format("MMMM d") + ". "  
-				+ resp2.data.forecast.forecastday.date.${todaycast}.day.condition.text + " with a high of " + resp2.data.forecast.forecastday.date.${todaycast}.day.maxtemp_f + " degrees, " + "and a low of " 
-				+ resp2.data.forecast.forecastday.date.${todaycast}.day.mintemp_f  + " degrees. " + "Humidity is currently around " + resp1.data.everything.weather.humidity.current + "% and temperature is " 
+				+ resp2.data.forecast.forecastday[0].day.condition.text + " with a high of " + resp2.data.forecast.forecastday[0].day.maxtemp_f + " degrees, " + "and a low of " 
+				+ resp2.data.forecast.forecastday[0].day.mintemp_f  + " degrees. " + "Humidity is currently around " + resp1.data.everything.weather.humidity.current + "% and temperature is " 
 				+ resp1.data.everything.weather.temperature.current.f + " degrees. " + " The temperature feels like it's " + resp2.data.current.feelslike_f + " degrees. " 
 				+ "Wind is from the " + resp1.data.everything.weather.wind.direction.cardinal
 				+ " at " + resp1.data.everything.weather.wind.avg_speed.mph + " mph" + ", with gusts up to " + resp1.data.everything.weather.wind.max_gust_speed.mph + " mph" + ". Visibility is around " 
-				+ resp2.data.current.vis_mi + " miles" + ". " + "There is a " + resp2.data.forecast.forcastday.${todaycast}.chance_of_rain + "% chance of rain today." , isStateChange: true
+				+ resp2.data.current.vis_miles + " miles" + ".", isStateChange: true
 				)  
 			}   
 			 if (WeatherSummeryFormat == "Celsius, Kilometres & KPH"){
 				sendEvent(name: "weatherSummaryFormat", value: "Celsius, Kilometres & KPH", isStateChange: true)
 				sendEvent(name: "weatherSummary", value: "Weather summary for" + " " + resp1.data.station.name.split(/ /)[0] + ", " + resp1.data.station.name.split(/ /)[1] 
         + " updated at " + Date.parse("hh:mm", resp1.data.time.time).format("h:mm a") + " on " + Date.parse("d/M/yyyy", resp1.data.time.date).format("MMMM d") + ". "  
-				+ resp2.data.forecast.forecastday.date.${todaycast}.day.condition.text + " with a high of " + resp2.data.forecast.forecastday.date.${todaycast}.day.maxtemp_c + " degrees, " + "and a low of " 
-				+ resp2.data.forecast.forecastday.date.${todaycast}.day.mintemp_c  + " degrees. " + "Humidity is currently around " + resp1.data.everything.weather.humidity.current + "% and temperature is " 
+				+ resp2.data.forecast.forecastday[0].day.condition.text + " with a high of " + resp2.data.forecast.forecastday[0].day.maxtemp_c + " degrees, " + "and a low of " 
+				+ resp2.data.forecast.forecastday[0].day.mintemp_c  + " degrees. " + "Humidity is currently around " + resp1.data.everything.weather.humidity.current + "% and temperature is " 
 				+ resp1.data.everything.weather.temperature.current.c + " degrees. " + " The temperature feels like it's " + resp2.data.current.feelslike_c + " degrees. " 
 				+ "Wind is from the " + resp1.data.everything.weather.wind.direction.cardinal
 				+ " at " + resp1.data.everything.weather.wind.avg_speed.kmh + " kph" + ", with gusts up to " + resp1.data.everything.weather.wind.max_gust_speed.kmh + " kph" + ". Visibility is around " 
-				+ resp2.data.current.vis_km + " kilometers. " + "There is a " + resp2.data.forecast.forcastday.${todaycast}.chance_of_rain + "% chance of rain today." , isStateChange: true
+				+ resp2.data.current.vis_km + " kilometers.", isStateChange: true
 				)  
 			}                
 		}    
@@ -420,7 +416,7 @@ def ForcePoll(){
 				sendEvent(name: "weatherSummary", value: resp1.data.everything.forecast.davis_forecast + ". " + " Today's High:" + resp1.data.everything.weather.temperature.current.high.c + ", Today's Low:" 
 				+ resp1.data.everything.weather.tempurature.current.low.c  +  ". Humidity: " + resp1.data.everything.weather.current.humidity + "% Temperature: " 
 				+ resp1.data.everything.weather.tempurature.current.c  + ". Wind Direction: " + resp1.data.everything.weather.wind.direction.cardinal + ". Wind Speed: " + resp1.data.everything.weather.avg_speed.mph + " mph" 
-				+ ", Gust: " + resp1.data.everything.weather.max_gust_speed.mph + " mph.  Rain: " + resp2.data.forecast.forcastday.${todaycast}.chance_of_rain + "%" , isStateChange: true
+				+ ", Gust: " + resp1.data.everything.weather.max_gust_speed.mph + " mph.", isStateChange: true
 				)  
 			}
 			if (WeatherSummeryFormat == "Fahrenheit, Miles & MPH"){
@@ -428,7 +424,7 @@ def ForcePoll(){
 				sendEvent(name: "weatherSummary", value: resp1.data.everything.forecast.davis_forecast + ". " + " Today's High:" + resp1.data.everything.weather.temperature.current.high.f + ", Today's Low:" 
 				+ resp1.data.everything.weather.tempurature.current.low.f  +  ". Humidity: " + resp1.data.everything.weather.current.humidity + "% Temperature: " 
 				+ resp1.data.everything.weather.tempurature.current.f  + ". Wind Direction: " + resp1.data.everything.weather.wind.direction.cardinal + ". Wind Speed: " + resp1.data.everything.weather.avg_speed.mph + " mph" 
-				+ ", Gust: " + resp1.data.everything.weather.max_gust_speed.mph + " mph. Rain: " + resp2.data.forecast.forcastday.${todaycast}.chance_of_rain + "%" , isStateChange: true
+				+ ", Gust: " + resp1.data.everything.weather.max_gust_speed.mph + " mph.", isStateChange: true
 				)  
 			}
 			 if (WeatherSummeryFormat ==  "Celsius, Kilometres & KPH"){
@@ -436,7 +432,7 @@ def ForcePoll(){
 				sendEvent(name: "weatherSummary", value: resp1.data.everything.forecast.davis_forecast + ". " + " Today's High:" + resp1.data.everything.weather.temperature.current.high.c + ", Today's Low:" 
 				+ resp1.data.everything.weather.tempurature.current.low.c  +  ". Humidity: " + resp1.data.everything.weather.current.humidity + "% Temperature: " 
 				+ resp1.data.everything.weather.tempurature.current.c  + ". Wind Direction: " + resp1.data.everything.weather.wind.direction.cardinal + ". Wind Speed: " + resp1.data.everything.weather.avg_speed.kmh + " kph" 
-				+ ", Gust: " + resp1.data.everything.weather.max_gust_speed.kmh + " kph.  Rain: " + resp2.data.forecast.forcastday.${todaycast}.chance_of_rain + "%", isStateChange: true
+				+ ", Gust: " + resp1.data.everything.weather.max_gust_speed.kmh + " kph.", isStateChange: true
 				)  
 			}
 		}                     
