@@ -177,7 +177,7 @@ def ForcePoll(){
 		uri: "${pwspollLocation}/everything.php"
     	]
     def params2 = [
-        uri: "http://api.apixu.com/v1/forecast.json?key=${apixuapiKey}&q=${apixupollLocation}&days=3
+        uri: "http://api.apixu.com/v1/forecast.json?key=${apixuapiKey}&q=${apixupollLocation}&days=3"
     	]
     	try {
         	httpGet(params1) { resp1 ->
