@@ -53,10 +53,7 @@ metadata {
         capability "Illuminance Measurement"
         capability "Relative Humidity Measurement"
         
-        command "pwsPoll"
-        command "pwsForcePoll"
-        command "wuPoll"
-        command "wuForcePoll"
+        command "ForcePoll"
 	
 // Weather-Display sourced attributes        
         attribute "dewpoint", "number"
@@ -85,7 +82,8 @@ metadata {
         attribute "driverNameSpace", "string"
 		attribute "driverVersion", "string"
         attribute "distanceUnit", "string"
-		attribute "pollsSinceReset", "number"	
+		attribute "pwspollsSinceReset", "number"
+        attribute "wupollsSinceReset", "number"
         attribute "pressureUnit", "string"
         attribute "rainUnit", "string"
         attribute "summaryFormat", "string"
@@ -104,19 +102,15 @@ metadata {
 			input "weatherFormat", "enum", required: true, title: "How to format weather summary",  options: ["Celsius, Miles & MPH", "Fahrenheit, Miles & MPH", "Celsius, Kilometres & KPH"]
 	    
 			input "pwspollLocation", "text", required: true, title: "PWS Data file location"
-			input "pwspollIntervalLimit", "number", title: "Poll Interval Limit:", required: true, defaultValue: 1
-			input "pwsautoPoll", "bool", required: false, title: "Enable Auto Poll for PWS", defaultValue: false
-			input "pwspollInterval", "enum", title: "PWS Auto Poll Interval:", required: false, defaultValue: "5 Minutes", options: ["5 Minutes", "10 Minutes", "15 Minutes", "30 Minutes", "1 Hour", "3 Hours"]
+			input "pollIntervalLimit", "number", title: "Poll Interval Limit:", required: true, defaultValue: 1
+			input "autoPoll", "bool", required: false, title: "Enable Auto Poll", defaultValue: false
+			input "pollInterval", "enum", title: "Auto Poll Interval:", required: false, defaultValue: "5 Minutes", options: ["5 Minutes", "10 Minutes", "15 Minutes", "30 Minutes", "1 Hour", "3 Hours"]
 			input "pwslogSet", "bool", title: "Log All PWS Response Data", required: true, defaultValue: false
-			input "pwscutOff", "time", title: "PWS New Day Starts", required: true
+			input "cutOff", "time", title: "New Day Starts", required: true
 	    
 			input "wuapiKey", "text", required: true, title: "WU API Key"
 			input "wupollLocation", "text", required: true, title: "ZIP Code or pws:WU_StationID"
-			input "wupollIntervalLimit", "number", title: "WU Poll Interval Limit:", required: true, defaultValue: 1
-			input "wuautoPoll", "bool", required: false, title: "Enable Auto Poll for WU", defaultValue: false
-			input "wupollInterval", "enum", title: "WU Auto Poll Interval:", required: false, defaultValue: "5 Minutes", options: ["5 Minutes", "10 Minutes", "15 Minutes", "30 Minutes", "1 Hour", "3 Hours"]
 			input "wulogSet", "bool", title: "Log All WU Response Data", required: true, defaultValue: false
-			input "wucutOff", "time", title: "WU New Day Starts", required: true
             
             input "sourcecity", "bool", required: true, title: "City from Weather-Display?", defaultValue: true
 			input "sourcefeelsLike", "bool", required: true, title: "FeelsLike from Weather-Display?", defaultValue: true
@@ -133,57 +127,57 @@ metadata {
 }
 
 // Poll PWS
-def pwsupdated() {
+def update() {
     log.debug "PWS update called"
     state.version = "1.0.0"    // ************************* Update as required *************************************
     unschedule()
-    state.pwsNumOfPolls = 0
-    pwsForcePoll()
-    def pwspollIntervalCmd = (settings?.pwspollInterval ?: "5 Minutes").replace(" ", "")
-    if(pwsautoPoll)
-        "runEvery${pwspollIntervalCmd}"(pwspollSchedule)
-    def pwschangeOver = pwscutOff
-    schedule(pwschangeOver, pwsResetPollCount)
+    state.NumOfPolls = 0
+    ForcePoll()
+    def pollIntervalCmd = (settings?.pollInterval ?: "5 Minutes").replace(" ", "")
+    if(autoPoll)
+        "runEvery${pollIntervalCmd}"(pollSchedule)
+    def changeOver = cutOff
+    schedule(changeOver, ResetPollCount)
 }
 
-def pwsResetPollCount(){
-	state.pwsNumOfPolls = -1
-    	log.info "PWS Poll counter reset.."
-	pwsForcePoll()
+def ResetPollCount(){
+	state.NumOfPolls = -1
+    	log.info "Poll counter reset.."
+	ForcePoll()
 }
 
-def pwspollSchedule(){
-    	pwsForcePoll()
+def pollSchedule(){
+    	ForcePoll()
 }
               
 def parse(String description) {
 }
 
-def pwsPoll(){
-    	if(now() - state.pwslastPoll > (pwspollIntervalLimit * 60000))
-        	pwsForcePoll()
+def Poll(){
+    if(lastPoll == null){ lastPoll = now() }
+    if(pollIntervalLimit == null){ pollIntervalLimit = 0 }
+    	if(now() - state.lastPoll > (pollIntervalLimit * 60000))
+        	ForcePoll()
     	else
-        	log.debug "PWS Poll called before interval threshold was reached"
+        	log.debug "Poll called before interval threshold was reached"
 }
-
-def pwsForcePoll(){
-    if(state.pwsNumOfPolls == null) {
-        state.pwsNumOfPolls = 0
+def ForcePoll(){
+    if(state.NumOfPolls == null) {
+        state.NumOfPolls = 0
     }
-	state.pwsNumOfPolls = (state.pwsNumOfPolls) + 1
-	log.info " state.pwsNumOfPolls = $state.pwsNumOfPolls" 
-    log.debug "PWS: ForcePoll called"
+	state.NumOfPolls = (state.NumOfPolls) + 1
+	log.info " state.NumOfPolls = $state.NumOfPolls" 
+    log.debug "ForcePoll called"
     def WeatherSummeryFormat = weatherFormat
-	sendEvent(name: "pwspollsSinceReset", value: state.pwsNumOfPolls, isStateChange: true)
+	sendEvent(name: "pollsSinceReset", value: state.NumOfPolls, isStateChange: true)
 	sendEvent(name: "driverNameSpace", value: "Matthew", isStateChange: true)
 	sendEvent(name: "driverVersion", value: state.version, isStateChange: true)
 	
 	def params1 = [
 		uri: "${pwspollLocation}/everything.php"
-//        uri: "${pwspollLocation}/everything.json"
     	]
-    	def params2 = [
-        	uri: "http://api.wunderground.com/api/${wuapiKey}/alerts/astronomy/conditions/forecast/q/${wupollLocation}.json"
+    def params2 = [
+        uri: "http://api.wunderground.com/api/${wuapiKey}/alerts/astronomy/conditions/forecast/q/${wupollLocation}.json"
     	] 
     	try {
         	httpGet(params1) { resp1 ->
@@ -199,22 +193,22 @@ def pwsForcePoll(){
 						log.info "Further PWS detailed data logging disabled"
 					}
 // Start Weather-Display data poll		
-//		if(sourcecity){
+		if(sourcecity){
 			sendEvent(name: "city", value: resp1.data.station.name.split(/ /)[0], isStateChange: true)
-//		}
-//        if(sourcefeelsLike){
+		}
+        if(sourcefeelsLike){
             sendEvent(name: "weatherIcon", value: resp1.data.everything.weather.apparent_temperature.current.f, isStateChange: true)
-//        }
-//		if(sourceicon){
+        }
+		if(sourceicon){
 			sendEvent(name: "weatherIcon", value: resp1.data.everything.forecast.icon.code, isStateChange: true)
-//		}
-//		if(sourcelocalSunset){
+		}
+		if(sourcelocalSunset){
 			sendEvent(name: "localSunset", value: resp1.data.everything.astronomy.sun.sunset_time.hour + ":" + resp1.data.everything.astronomy.sun.sunset_time.minute, descriptionText: "Sunset today at is $localSunset", isStateChange: true)
-//		}
-//		if(sourcelocalSunrise){
+		}
+		if(sourcelocalSunrise){
 			sendEvent(name: "localSunrise", value: resp1.data.everything.astronomy.sun.sunrise_time.hour + ":" + resp1.data.everything.astronomy.sun.sunrise_time.minute, descriptionText: "Sunrise today is at $localSunrise", isStateChange: true)
-//		}
-//		if(sourcemoonPhase){
+		}
+		if(sourcemoonPhase){
 			sendEvent(name: "moonAge", value: resp1.data.everything.astronomy.moon.moon_age.toDouble(), isStateChange: true)
 			if (resp1.data.everything.astronomy.moon.moon_age.toDouble() >= 0 && resp1.data.everything.astronomy.moon.moon_age.toDouble() < 4) {sendEvent(name: "moonPhase", value: "New Moon", isStateChange: true)}
 			if (resp1.data.everything.astronomy.moon.moon_age.toDouble() >= 4 && resp1.data.everything.astronomy.moon.moon_age.toDouble() < 7) {sendEvent(name: "moonPhase", value: "Waxing Crescent", isStateChange: true)}
@@ -224,12 +218,12 @@ def pwsForcePoll(){
 			if (resp1.data.everything.astronomy.moon.moon_age.toDouble() >= 18 && resp1.data.everything.astronomy.moon.moon_age.toDouble() < 22) {sendEvent(name: "moonPhase", value: "Waning Gibbous", isStateChange: true)}
 			if (resp1.data.everything.astronomy.moon.moon_age.toDouble() >= 22 && resp1.data.everything.astronomy.moon.moon_age.toDouble() < 26) {sendEvent(name: "moonPhase", value: "Last Quarter", isStateChange: true)}
 			if (resp1.data.everything.astronomy.moon.moon_age.toDouble() >= 26) {sendEvent(name: "moonPhase", value: "Waxing Gibbous", isStateChange: true)}
-//		}
-//		if(sourcemoonIllumination){
+		}
+		if(sourcemoonIllumination){
 			sendEvent(name: "moonIllumination", value: resp1.data.everything.astronomy.moon.moon_phase + "%", isStateChange: true)
-//		}
-//		if(sourcesolarradiation){
-			def illume = (resp1.data.everything.weather.solar.irradiance.wm2)
+		}
+		def illume = (resp1.data.everything.weather.solar.irradiance.wm2)
+		if(sourcesolarradiation){
 			if(illume){
 				 sendEvent(name: "illuminance", value: resp1.data.everything.weather.solar.irradiance.wm2, unit: "lux", isStateChange: true)
 				 sendEvent(name: "solarradiation", value: resp1.data.everything.weather.solar.irradiance.wm2, unit: "wm2", isStateChange: true)
@@ -238,18 +232,18 @@ def pwsForcePoll(){
 				sendEvent(name: "illuminance", value: "This station does not send Illumination data", isStateChange: true)
 			 	sendEvent(name: "solarradiation", value: "This station does not send Solar Radiation data", isStateChange: true)
 			}   
-//		}
-//		if(sourcestate){
+		}
+		if(sourcestate){
 			sendEvent(name: "state", value: resp1.data.station.name.split(/ /)[1], isStateChange: true)
-//		}
-//		if(sourceUV){
+		}
+		if(sourceUV){
 			sendEvent(name: "UV", value: resp1.data.everything.weather.uv.uvi, isStateChange: true)
-//		}
+		}
 		sendEvent(name: "weather", value: resp1.data.everything.forecast.davis_forecast, isStateChange: true)
 		sendEvent(name: "humidity", value: resp1.data.everything.weather.humidity.current, isStateChange: true)
-//		if(iconType == true){ 
+		if(iconType == true){ 
 		   sendEvent(name: "weatherIcon", value: resp1.data.everything.forecast.icon.code, isStateChange: true)
-//		}    
+		}    
         sendEvent(name: "pwsobservation_time", value: "Last updated on "  + Date.parse("d/M/yyyy", resp1.data.time.date).format("MMMM d,") + " " + Date.parse("hh:mm", resp1.data.time.time).format("h:mm a"), isStateChange: true)
 		sendEvent(name: "wind_dir", value: resp1.data.everything.weather.wind.direction.cardinal, isStateChange: true)
 		if(rainFormat == "Inches"){
@@ -289,7 +283,8 @@ def pwsForcePoll(){
 		   	sendEvent(name: "pressureUnit", value: "Millibar", isStateChange: true) 
 	   	}
 // end PWS data poll		Start WeatherUnderground data poll                
-        	httpGet(params2) { resp2 ->
+
+            httpGet(params2) { resp2 ->
 	            	resp2.headers.each {
         	    	log.debug "Response2: ${it.name} : ${it.value}"
 			}
@@ -325,7 +320,6 @@ def pwsForcePoll(){
 			sendEvent(name: "moonIllumination", value: resp2.data.moon_phase.percentIlluminated  + "%" , isStateChange: true)
 		}
 		if(!sourcesolarradiation){
-//			def illume = (resp2.data.current_observation.solarradiation)
         		if(illume){
             	 		sendEvent(name: "illuminance", value: resp2.data.current_observation.solarradiation, unit: "lux", isStateChange: true)
                  		sendEvent(name: "solarradiation", value: resp2.data.current_observation.solarradiation, unit: "W", isStateChange: true)
@@ -357,22 +351,23 @@ def pwsForcePoll(){
 			sendEvent(name: "rainTomorrow", value: resp2.data.forecast.simpleforecast.forecastday[1].qpf_allday.mm, unit: "MM", isStateChange: true)
 			sendEvent(name: "rainDayAfterTomorrow", value: resp2.data.forecast.simpleforecast.forecastday[2].qpf_allday.mm, unit: "MM", isStateChange: true)
 		}		
-		sendEvent(name: "WUobservation_time", value: resp2.data.current_observation.observation_time, isStateChange: true)
+		sendEvent(name: "wuobservation_time", value: resp2.data.current_observation.observation_time, isStateChange: true)
 	   	sendEvent(name: "forecastConditions", value: resp2.data.forecast.simpleforecast.forecastday[0].conditions, isStateChange: true)
 	   	sendEvent(name: "chanceOfRain", value: resp2.data.forecast.simpleforecast.forecastday[0].pop + "%", isStateChange: true)
 	   	sendEvent(name: "percentPrecip", value: resp2.data.forecast.simpleforecast.forecastday[0].pop , isStateChange: true)
+	    sendEvent(name: "wind_string", value: resp2.data.current_observation.wind_string)
 	   	if(tempFormat == "Fahrenheit"){ 
-/*			if(!sourcefeelsLike){
+			if(!sourcefeelsLike){
 				sendEvent(name: "feelsLike", value: resp2.data.current_observation.feelslike_f, unit: "F", isStateChange: true)
-			{
-*/			sendEvent(name: "forecastHigh", value: resp2.data.forecast.simpleforecast.forecastday[0].high.fahrenheit, unit: "F", isStateChange: true)
+            }
+			sendEvent(name: "forecastHigh", value: resp2.data.forecast.simpleforecast.forecastday[0].high.fahrenheit, unit: "F", isStateChange: true)
 			sendEvent(name: "forecastLow", value: resp2.data.forecast.simpleforecast.forecastday[0].low.fahrenheit, unit: "F", isStateChange: true)
 		}
 		if(tempFormat == "Celsius"){
-/*			if(!sourcefeelsLike){
+			if(!sourcefeelsLike){
 				sendEvent(name: "feelsLike", value: resp2.data.current_observation.feelslike_c, unit: "C", isStateChange: true)
-			{
-*/			sendEvent(name: "forecastHigh", value: resp2.data.forecast.simpleforecast.forecastday[0].high.celsius, unit: "C", isStateChange: true)
+            }
+			sendEvent(name: "forecastHigh", value: resp2.data.forecast.simpleforecast.forecastday[0].high.celsius, unit: "C", isStateChange: true)
 			sendEvent(name: "forecastLow", value: resp2.data.forecast.simpleforecast.forecastday[0].low.celsius, unit: "C", isStateChange: true)
 		}
 		if(distanceFormat == "Miles (mph)"){  
@@ -446,10 +441,7 @@ def pwsForcePoll(){
 				)  
 			}
 		}                     
-        sendEvent(name: "WUobservation_time", value: resp2.data.current_observation.observation_time, isStateChange: true)
-	    sendEvent(name: "wind_string", value: resp2.data.current_observation.wind_string)
-	    sendEvent(name: "forecastConditions", value: resp2.data.forecast.simpleforecast.forecastday[0].conditions, isStateChange: true)                        
-   
+
         def possAlert = (resp2.data.alerts.description)
 		if (possAlert){
         	sendEvent(name: "alert", value: resp2.data.alerts.description, isStateChange: true)  
