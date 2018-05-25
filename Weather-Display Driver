@@ -385,34 +385,37 @@ def pwsForcePoll(){
 		if(summaryType == true){
 			if (WeatherSummeryFormat == "Celsius, Miles & MPH"){
 		   		sendEvent(name: "weatherSummaryFormat", value: "Celsius, Miles & MPH", isStateChange: true)
-				sendEvent(name: "weatherSummary", value: "Weather summary for" + " " + resp1.data.station.name.split(/ /)[0] + ", " + resp1.data.station.name.split(/ /)[1] + " at " + resp1.data.time.time + " " + Date.parse("d/M/yyyy", resp1.data.time.date).format('M/d/yyyy') + ". "  
+				sendEvent(name: "weatherSummary", value: "Weather summary for" + " " + resp1.data.station.name.split(/ /)[0] + ", " + resp1.data.station.name.split(/ /)[1] 
+                + " updated at " + Date.parse("hh:mm", resp1.data.time.time).format("h:mm a") + " on " + Date.parse("d/M/yyyy", resp1.data.time.date).format("MMMM d") + ". "  
 				+ resp2.data.forecast.simpleforecast.forecastday[0].conditions + " with a high of " + resp2.data.forecast.simpleforecast.forecastday[0].high.celsius + " degrees, " + "and a low of " 
 				+ resp2.data.forecast.simpleforecast.forecastday[0].low.celsius  + " degrees. " + "Humidity is currently around " + resp1.data.everything.weather.humidity.current + "% and temperature is " 
 				+ resp1.data.everything.weather.temperature.current.c + " degrees. " + " The temperature feels like it's " + resp2.data.current_observation.feelslike_c + " degrees. " 
 				+ "Wind is from the " + resp1.data.everything.weather.wind.direction.cardinal
-				+ " at " + resp1.data.everything.weather.wind.avg_speed.mph + " mph" + ", with gusts up to: " + resp1.data.everything.weather.wind.max_gust_speed.mph + " mph" + ". Visibility is around " 
+				+ " at " + resp1.data.everything.weather.wind.avg_speed.mph + " mph" + ", with gusts up to " + resp1.data.everything.weather.wind.max_gust_speed.mph + " mph" + ". Visibility is around " 
 				+ resp2.data.current_observation.visibility_mi + " miles" + ". " + "There is a "+resp2.data.forecast.simpleforecast.forecastday[0].pop + "% chance of rain today." , isStateChange: true
 				)  
 			}
 			if (WeatherSummeryFormat == "Fahrenheit, Miles & MPH"){
 				sendEvent(name: "weatherSummaryFormat", value: "Fahrenheit, Miles & MPH", isStateChange: true)
-				sendEvent(name: "weatherSummary", value: "Weather summary for" + " " + resp1.data.station.name.split(/ /)[0] + ", " + resp1.data.station.name.split(/ /)[1] + " at " + resp1.data.time.time + " " + Date.parse("d/M/yyyy", resp1.data.time.date).format('M/d/yyyy') + ". "  
+				sendEvent(name: "weatherSummary", value: "Weather summary for" + " " + resp1.data.station.name.split(/ /)[0] + ", " + resp1.data.station.name.split(/ /)[1]  
+                + " updated at " + Date.parse("hh:mm", resp1.data.time.time).format("h:mm a") + " on " + Date.parse("d/M/yyyy", resp1.data.time.date).format("MMMM d") + ". "  
 				+ resp2.data.forecast.simpleforecast.forecastday[0].conditions + " with a high of " + resp2.data.forecast.simpleforecast.forecastday[0].high.fahrenheit + " degrees, " + "and a low of " 
 				+ resp2.data.forecast.simpleforecast.forecastday[0].low.fahrenheit  + " degrees. " + "Humidity is currently around " + resp1.data.everything.weather.humidity.current + "% and temperature is " 
 				+ resp1.data.everything.weather.temperature.current.f + " degrees. " + " The temperature feels like it's " + resp2.data.current_observation.feelslike_f + " degrees. " 
 				+ "Wind is from the " + resp1.data.everything.weather.wind.direction.cardinal
-				+ " at " + resp1.data.everything.weather.wind.avg_speed.mph + " mph" + ", with gusts up to: " + resp1.data.everything.weather.wind.max_gust_speed.mph + " mph" + ". Visibility is around " 
+				+ " at " + resp1.data.everything.weather.wind.avg_speed.mph + " mph" + ", with gusts up to " + resp1.data.everything.weather.wind.max_gust_speed.mph + " mph" + ". Visibility is around " 
 				+ resp2.data.current_observation.visibility_mi + " miles" + ". " + "There is a "+resp2.data.forecast.simpleforecast.forecastday[0].pop + "% chance of rain today." , isStateChange: true
 				)  
 			}   
 			 if (WeatherSummeryFormat == "Celsius, Kilometres & KPH"){
 				sendEvent(name: "weatherSummaryFormat", value: "Celsius, Kilometres & KPH", isStateChange: true)
-				sendEvent(name: "weatherSummary", value: "Weather summary for" + " " + resp1.data.station.name.split(/ /)[0] + ", " + resp1.data.station.name.split(/ /)[1] + " at " + resp1.data.time.time + " " + Date.parse("d/M/yyyy", resp1.data.time.date).format('M/d/yyyy') + ". "  
+				sendEvent(name: "weatherSummary", value: "Weather summary for" + " " + resp1.data.station.name.split(/ /)[0] + ", " + resp1.data.station.name.split(/ /)[1]  
+				+ " updated at " + Date.parse("hh:mm", resp1.data.time.time).format("h:mm a") + " on " + Date.parse("d/M/yyyy", resp1.data.time.date).format("MMMM d") + ". "  
 				+ resp2.data.forecast.simpleforecast.forecastday[0].conditions + " with a high of " + resp2.data.forecast.simpleforecast.forecastday[0].high.celsius + " degrees, " + "and a low of " 
 				+ resp2.data.forecast.simpleforecast.forecastday[0].low.celsius  + " degrees. " + "Humidity is currently around " + resp1.data.everything.weather.humidity.current + "% and temperature is " 
 				+ resp1.data.everything.weather.temperature.current.c + " degrees. " + " The temperature feels like it's " + resp2.data.current_observation.feelslike_c + " degrees. " 
 				+ "Wind is from the " + resp1.data.everything.weather.wind.direction.cardinal
-				+ " at " + resp1.data.everything.weather.wind.avg_speed.kmh + " kph" + ", with gusts up to: " + resp1.data.everything.weather.wind.max_gust_speed.kmh + " kph" + ". Visibility is around " 
+				+ " at " + resp1.data.everything.weather.wind.avg_speed.kmh + " kph" + ", with gusts up to " + resp1.data.everything.weather.wind.max_gust_speed.kmh + " kph" + ". Visibility is around " 
 				+ resp2.data.current_observation.visibility_mi + " miles" + ". " + "There is a "+resp2.data.forecast.simpleforecast.forecastday[0].pop + "% chance of rain today." , isStateChange: true
 				)  
 			}                
