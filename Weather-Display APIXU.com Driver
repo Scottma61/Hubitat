@@ -117,8 +117,8 @@ metadata {
 			    input "sourceIcon", "bool", required: true, title: "Icon from Weather-Display?", defaultValue: true
 			    input "sourcelocalSunset", "bool", required: true, title: "Sunrise from Weather-Display?", defaultValue: true
 			    input "sourcelocalSunrise", "bool", required: true, title: "Sunset from Weather-Display?", defaultValue: true
-//			    input "sourcemoonPhase", "bool", required: true, title: "MoonPhase from Weather-Display?", defaultValue: true
-//			    input "sourcemoonIllumination", "bool", required: true, title: "MoonIllum from Weather-Display?", defaultValue: true
+			    input "sourcemoonPhase", "bool", required: true, title: "MoonPhase from Weather-Display?", defaultValue: true
+			    input "sourcemoonIllumination", "bool", required: true, title: "MoonIllum from Weather-Display?", defaultValue: true
 //			    input "sourcesolarradiation", "bool", required: true, title: "SolarRad from Weather-Display?", defaultValue: true
 			    input "sourcestate", "bool", required: true, title: "State from Weather-Display?", defaultValue: true
 			    input "sourceUV", "bool", required: true, title: "UV from Weather-Display?", defaultValue: true
