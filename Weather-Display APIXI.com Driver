@@ -58,7 +58,7 @@ metadata {
 // Weather-Display sourced attributes        
         attribute "dewpoint", "number"
 		    attribute "pwsobservation_time", "string"
-        attribute "wuobservation_time", "string"
+        attribute "apixuobservation_time", "string"
         attribute "precip_1hr", "number"
         attribute "precip_today", "number"
 		    attribute "pressure", "number"
@@ -83,7 +83,7 @@ metadata {
 		    attribute "driverVersion", "string"
         attribute "distanceUnit", "string"
 		    attribute "pwspollsSinceReset", "number"
-        attribute "wupollsSinceReset", "number"
+        attribute "apixupollsSinceReset", "number"
         attribute "pressureUnit", "string"
         attribute "rainUnit", "string"
         attribute "summaryFormat", "string"
@@ -177,7 +177,7 @@ def ForcePoll(){
 		uri: "${pwspollLocation}/everything.php"
     	]
     def params2 = [
-        uri: "http://api.apixu.com/v1/forecast.json?key=${apixuapiKey}&q=${wupollLocation}&days=3
+        uri: "http://api.apixu.com/v1/forecast.json?key=${apixuapiKey}&q=${apixupollLocation}&days=3
     	]
     	try {
         	httpGet(params1) { resp1 ->
@@ -458,5 +458,5 @@ def Report(){
   def pwsobvTime = pwsobservation_time.value
   log.info "PWS last updated: $pwsobvTime"
   def apixuobvTime = apixuobservation_time.value
-  log.info "APIXU last updated: $wuobvTime"  
+  log.info "APIXU last updated: $apixuobvTime"  
 }
