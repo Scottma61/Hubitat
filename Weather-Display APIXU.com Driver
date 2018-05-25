@@ -223,7 +223,7 @@ def ForcePoll(){
 			sendEvent(name: "moonIllumination", value: resp1.data.everything.astronomy.moon.moon_phase + "%", isStateChange: true)
 		}
 		def illume = (resp1.data.everything.weather.solar.irradiance.wm2)
-		if(sourcesolarradiation){
+//		if(sourcesolarradiation){
 			if(illume){
 				 sendEvent(name: "illuminance", value: resp1.data.everything.weather.solar.irradiance.wm2, unit: "lux", isStateChange: true)
 				 sendEvent(name: "solarradiation", value: resp1.data.everything.weather.solar.irradiance.wm2, unit: "wm2", isStateChange: true)
@@ -232,7 +232,7 @@ def ForcePoll(){
 				sendEvent(name: "illuminance", value: "This station does not send Illumination data", isStateChange: true)
 			 	sendEvent(name: "solarradiation", value: "This station does not send Solar Radiation data", isStateChange: true)
 			}   
-		}
+//		}
 		if(sourcestate){
 			sendEvent(name: "state", value: resp1.data.station.name.split(/ /)[1], isStateChange: true)
 		}
@@ -444,7 +444,7 @@ def ForcePoll(){
         if (!possAlert){
             sendEvent(name: "alert", value: " No current weather alerts for this area")
         }
-*/        state.apixulastPoll = now()             
+*/        state.lastPoll = now()             
 	}
             }}	catch (e) {
         log.error "something went wrong: $e"
