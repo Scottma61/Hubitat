@@ -335,7 +335,7 @@ def ForcePoll(){
 			sendEvent(name: "UV", value: resp2.data.current_observation.UV, isStateChange: true)
 		}
 
-		sendEvent(name: "stationID", value: resp2.data.stationID, isStateChange: true)
+		sendEvent(name: "stationID", value: resp2.data.current_observation.station_id, isStateChange: true)
 	    sendEvent(name: "chanceOfRain", value: resp2.data.forecast.simpleforecast.forecastday[0].pop + "%", isStateChange: true)
 		sendEvent(name: "percentPrecip", value: resp2.data.forecast.simpleforecast.forecastday[0].pop , isStateChange: true)
 		sendEvent(name: "wind_string", value: resp2.data.current_observation.wind_string)
