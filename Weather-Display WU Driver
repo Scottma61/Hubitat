@@ -385,22 +385,63 @@ def ForcePoll(){
 				state.lastPoll = now()             
 // End WeatherUnderground only data pull -- start summaries
 				if(summaryType == true){
-					sendEvent(name: "weatherSummary", value: "Weather summary for " + resp1.data.station.name.split(/ /)[0] + ", " 
-					+ resp1.data.station.name.split(/ /)[1] + " updated at " + Date.parse("hh:mm", resp1.data.time.time).format("h:mm a") 
-					+ " on " + Date.parse("d/M/yyyy", resp1.data.time.date).format("MMMM d") 
-					+ ". $forecastConditions with a high of $forecastHigh degrees, and a low of $forecastLow degrees. "
-					+ "Humidity is currently around $humidity% and temperature is $temperature degrees. The temperature feels like it's $feelsLike degrees. " 
-					+ "Wind is from the $wind_dir at $wind $distanceUnit, with gusts up to $wind_gust $distanceUnit. Visibility is around $visibility $distanceUnit. "
-					+ "There is a $chanceOfRain% chance of rain today." , isStateChange: true
-					)  
-				}   
-				if(summaryType == false){
-					sendEvent(name: "weatherSummaryFormat", value: "Celsius, Miles & MPH", isStateChange: true)
-					sendEvent(name: "weatherSummary", value: resp1.data.everything.forecast.davis_forecast + ". " + " Today's High: $forecastHigh, Today's Low:" 
-					+ "$forecastLow. Humidity: $humidity% Temperature: $temperature. Wind Direction: $wind_dir. Wind Speed: $wind $distanceUnit, Gust: $wind_gust $distanceUnit. "  
-					+ "Rain: $changeOfRain%" , isStateChange: true
-					)  
+					if (WeatherSummeryFormat == "Celsius, Miles & MPH"){				
+						sendEvent(name: "weatherSummary", value: "Weather summary for" + " " + resp1.data.station.name.split(/ /)[0] + ", " + resp1.data.station.name.split(/ /)[1] 
+						+ " updated at " + resp2.data.current_observation.observation_time + ". "  
+						+ resp2.data.forecast.simpleforecast.forecastday[0].conditions + " with a high of " + resp2.data.forecast.simpleforecast.forecastday[0].high.celsius + " degrees, " + "and a low of " 
+						+ resp2.data.forecast.simpleforecast.forecastday[0].low.celsius  + " degrees. " + "Humidity is currently around " + resp1.data.everything.weather.humidity.current + "% and temperature is " 
+						+ resp1.data.everything.weather.temperature.current.c + " degrees. " + " The temperature feels like it's " + resp2.data.current_observation.feelslike_c + " degrees. " 
+						+ "Wind is from the " + resp1.data.everything.weather.wind.direction.cardinal
+						+ " at " + resp1.data.everything.weather.wind.avg_speed.mph + " mph" + ", with gusts up to " + resp1.data.everything.weather.wind.max_gust_speed.mph + " mph" + ". Visibility is around " 
+						+ resp2.data.current_observation.visibility_mi + " miles" + ". " + "There is a "+resp2.data.forecast.simpleforecast.forecastday[0].pop + "% chance of rain today." , isStateChange: true
+						)  
+					}
+					if (WeatherSummeryFormat == "Fahrenheit, Miles & MPH"){
+						sendEvent(name: "weatherSummary", value: "Weather summary for" + " " + resp1.data.station.name.split(/ /)[0] + ", " + resp1.data.station.name.split(/ /)[1]  
+						+ " updated at " + resp2.data.current_observation.observation_time + ". "  
+						+ resp2.data.forecast.simpleforecast.forecastday[0].conditions + " with a high of " + resp2.data.forecast.simpleforecast.forecastday[0].high.fahrenheit + " degrees, " + "and a low of " 
+						+ resp2.data.forecast.simpleforecast.forecastday[0].low.fahrenheit  + " degrees. " + "Humidity is currently around " + resp1.data.everything.weather.humidity.current + "% and temperature is " 
+						+ resp1.data.everything.weather.temperature.current.f + " degrees. " + " The temperature feels like it's " + resp2.data.current_observation.feelslike_f + " degrees. " 
+						+ "Wind is from the " + resp1.data.everything.weather.wind.direction.cardinal
+						+ " at " + resp1.data.everything.weather.wind.avg_speed.mph + " mph" + ", with gusts up to " + resp1.data.everything.weather.wind.max_gust_speed.mph + " mph" + ". Visibility is around " 
+						+ resp2.data.current_observation.visibility_mi + " miles" + ". " + "There is a "+resp2.data.forecast.simpleforecast.forecastday[0].pop + "% chance of rain today." , isStateChange: true
+						)  
+					}   
+					 if (WeatherSummeryFormat == "Celsius, Kilometres & KPH"){
+						sendEvent(name: "weatherSummary", value: "Weather summary for" + " " + resp1.data.station.name.split(/ /)[0] + ", " + resp1.data.station.name.split(/ /)[1]  
+						+ " updated at " + resp2.data.current_observation.observation_time + ". "  
+						+ resp2.data.forecast.simpleforecast.forecastday[0].conditions + " with a high of " + resp2.data.forecast.simpleforecast.forecastday[0].high.celsius + " degrees, " + "and a low of " 
+						+ resp2.data.forecast.simpleforecast.forecastday[0].low.celsius  + " degrees. " + "Humidity is currently around " + resp1.data.everything.weather.humidity.current + "% and temperature is " 
+						+ resp1.data.everything.weather.temperature.current.c + " degrees. " + " The temperature feels like it's " + resp2.data.current_observation.feelslike_c + " degrees. " 
+						+ "Wind is from the " + resp1.data.everything.weather.wind.direction.cardinal
+						+ " at " + resp1.data.everything.weather.wind.avg_speed.kmh + " kph" + ", with gusts up to " + resp1.data.everything.weather.wind.max_gust_speed.kmh + " kph" + ". Visibility is around " 
+						+ resp2.data.current_observation.visibility_mi + " miles" + ". " + "There is a "+resp2.data.forecast.simpleforecast.forecastday[0].pop + "% chance of rain today." , isStateChange: true
+						)  
+					}                
 				}
+				if(summaryType == false){
+					if (WeatherSummeryFormat == "Celsius, Miles & MPH"){
+						sendEvent(name: "weatherSummary", value: resp1.data.everything.forecast.davis_forecast + ". " + " Today's High:" + resp1.data.everything.weather.temperature.current.high.c + ", Today's Low:" 
+						+ resp1.data.everything.weather.tempurature.current.low.c  +  ". Humidity: " + resp1.data.everything.weather.current.humidity + "% Temperature: " 
+						+ resp1.data.everything.weather.tempurature.current.c  + ". Wind Direction: " + resp1.data.everything.weather.wind.direction.cardinal + ". Wind Speed: " + resp1.data.everything.weather.avg_speed.mph + " mph" 
+						+ ", Gust: " + resp1.data.everything.weather.max_gust_speed.mph + " mph.  Rain: "  +resp2.data.forecast.simpleforecast.forecastday[0].pop + "%" , isStateChange: true
+						)  
+					}
+					if (WeatherSummeryFormat == "Fahrenheit, Miles & MPH"){
+						sendEvent(name: "weatherSummary", value: resp1.data.everything.forecast.davis_forecast + ". " + " Today's High:" + resp1.data.everything.weather.temperature.current.high.f + ", Today's Low:" 
+						+ resp1.data.everything.weather.tempurature.current.low.f  +  ". Humidity: " + resp1.data.everything.weather.current.humidity + "% Temperature: " 
+						+ resp1.data.everything.weather.tempurature.current.f  + ". Wind Direction: " + resp1.data.everything.weather.wind.direction.cardinal + ". Wind Speed: " + resp1.data.everything.weather.avg_speed.mph + " mph" 
+						+ ", Gust: " + resp1.data.everything.weather.max_gust_speed.mph + " mph. Rain: "  +resp1.data.forecast.simpleforecast.forecastday[0].pop + "%" , isStateChange: true
+						)  
+					}
+					 if (WeatherSummeryFormat ==  "Celsius, Kilometres & KPH"){
+						sendEvent(name: "weatherSummary", value: resp1.data.everything.forecast.davis_forecast + ". " + " Today's High:" + resp1.data.everything.weather.temperature.current.high.c + ", Today's Low:" 
+						+ resp1.data.everything.weather.tempurature.current.low.c  +  ". Humidity: " + resp1.data.everything.weather.current.humidity + "% Temperature: " 
+						+ resp1.data.everything.weather.tempurature.current.c  + ". Wind Direction: " + resp1.data.everything.weather.wind.direction.cardinal + ". Wind Speed: " + resp1.data.everything.weather.avg_speed.kmh + " kph" 
+						+ ", Gust: " + resp1.data.everything.weather.max_gust_speed.kmh + " kph.  Rain: "  +resp1.data.forecast.simpleforecast.forecastday[0].pop + "%", isStateChange: true
+						)  
+					}
+				}                     
 			}                     
 		}
 	}
