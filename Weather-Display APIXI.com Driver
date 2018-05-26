@@ -1,4 +1,4 @@
-/**
+/*
  * Custom Weather-Display APIXU.com Driver
  *
  *  Copyright 2018 @Matthew (Scottma61)
@@ -41,418 +41,598 @@
  *  
  *  
  *  
- *  
+ *  V1.1.0 - Major re-write incorporating @bangali's work. 05-26-2018
  *  V1.0.0 - Original version 05/25/2018
  *
  */
 metadata {
-    definition (name: "Weather-Display APIXU Driver", namespace: "Matthew", author: "Scottma61") {
+    definition (name: "Weather-Display APIXU-test Driver", namespace: "Matthew", author: "Scottma61") {
         capability "Actuator"
         capability "Sensor"
         capability "Temperature Measurement"
         capability "Illuminance Measurement"
         capability "Relative Humidity Measurement"
         
-        command "ForcePoll"
+        command "Poll"
+        command "Refresh"
 	
-// Weather-Display sourced attributes        
-        attribute "dewpoint", "number"
-		    attribute "pwsobservation_time", "string"
-        attribute "apixuobservation_time", "string"
-        attribute "precip_1hr", "number"
-        attribute "precip_today", "number"
-		    attribute "pressure", "number"
-		    attribute "weather", "string"
-        attribute "weatherIcon", "string"
-        attribute "wind_dir", "string"
-        attribute "wind_gust", "string"
-        attribute "wind", "number"
-		    attribute "city", "string"
-		    attribute "feelsLike", "number"	
-        attribute "localSunset", "string"
-		    attribute "localSunrise", "string"
-		    attribute "moonPhase", "string"
-        attribute "moonIllumination", "string"
-		    attribute "solarradiation", "number"		
-        attribute "state", "string"
-		    attribute "UV", "number"
-	
- // User specified attributes
-		    attribute "dateFormat", "string"
+// APIXU Sourced Variables
+        attribute "alast_updated", "string"
+        attribute "aname", "string"
+	attribute "aregion", "string"
+        attribute "acountry", "string"
+        attribute "alocation", "string"
+        attribute "alat", "string"
+        attribute "alon", "string"
+        attribute "atz_id", "string"
+        attribute "alocaltime_epoch", "string"
+        attribute "alocal_time", "string"
+        attribute "alocal_date", "string"
+        attribute "alast_updated_epoch", "string"
+        attribute "atemp_c", "string"
+        attribute "atemp_f", "string"
+        attribute "ais_day", "string"
+        attribute "acondition_text", "string"
+        attribute "acondition_icon", "string"
+        attribute "acondition_code", "string"
+        attribute "awind_mph", "string"
+        attribute "awind_kph", "string"
+        attribute "awind_gust_mph", "string"
+        attribute "awind_gust_kph", "string"
+        attribute "awind_degree", "string"
+        attribute "awind_dir", "string"
+        attribute "apressure_mb", "string"
+        attribute "apressure_in", "string"
+        attribute "aprecip_mm", "string"
+        attribute "aprecip_in", "string"
+        attribute "acloud", "string"
+        attribute "afeelslike_c", "string"
+        attribute "afeelslike_f", "string"
+        attribute "avis_km", "string"
+        attribute "avis_miles", "string"
+        attribute "adewpoint", "number"
+        attribute "aprecip_1hr_in", "number"
+        attribute "aprecip_1hr_mm", "number"        
+        attribute "aprecip_today_in", "number"
+        attribute "aprecip_today_mm", "number"        
+        attribute "amoonPhase", "string"
+        attribute "amoonIllumination", "string"
+	attribute "aUV", number
+
+// Weather-Display Sourced Variables
+        attribute "wlast_updated", "string"
+        attribute "wstationID", "string"
+        attribute "wregion", "string"
+        attribute "wcountry", "string"
+        attribute "wlocation", "string"
+        attribute "wtemp_c", "string"
+        attribute "wtemp_f", "string"
+        attribute "wcondition_text", "string"
+        attribute "wcondition_icon", "string"
+        attribute "wwind_mph", "string"
+        attribute "wwind_kph", "string"
+        attribute "wwind_gust_mph", "string"
+        attribute "wwind_gust_kph", "string"
+        attribute "wwind_degree", "string"
+        attribute "wwind_dir", "string"
+        attribute "wpressure_mb", "string"
+        attribute "wpressure_in", "string"
+        attribute "wprecip_mm", "string"
+        attribute "wprecip_in", "string"
+        attribute "wfeelslike_c", "string"
+        attribute "wfeelslike_f", "string"
+        attribute "wvis_km", "string"
+        attribute "wvis_miles", "string"
+        attribute "wdewpoint", "number"        
+        attribute "wprecip_today_in", "number"
+        attribute "wprecip_today_mm", "number"        
+        attribute "wmoonPhase", "string"
+        attribute "wmoonIllumination", "string"
+        attribute "wsolarradiation", "number"
+	attribute "wUV", number
+		
+// SunriseSunSet Sourced variables
+        attribute "local_sunrise", "string"
+        attribute "local_sunset", "string"
+        attribute "twilight_begin", "string"
+        attribute "twilight_end", "string"
+        
+// User specified attributes
+        attribute "dateFormat", "string"
         attribute "driverNameSpace", "string"
-		    attribute "driverVersion", "string"
+        attribute "driverVersion", "string"
         attribute "distanceUnit", "string"
-		    attribute "pwspollsSinceReset", "number"
-        attribute "apixupollsSinceReset", "number"
         attribute "pressureUnit", "string"
         attribute "rainUnit", "string"
+        attribute "temperatureUnit", "string"
         attribute "summaryFormat", "string"
-		    attribute "temperatureUnit", "string"
         attribute "weatherSummary", "string"
         attribute "weatherSummaryFormat", "string"
     }
     preferences() {
         section("Query Inputs"){
-        	input "tempFormat", "enum", required: true, title: "Display Unit - Temperature: Fahrenheit or Celsius",  options: ["Fahrenheit", "Celsius"]
-			    input "distanceFormat", "enum", required: true, title: "Display Unit - Distance/Speed: Miles or Kilometres",  options: ["Miles (mph)", "Kilometres (kph)"]
-			    input "pressureFormat", "enum", required: true, title: "Display Unit - Pressure: Inches or Millibar",  options: ["Inches", "Millibar"]
-			    input "rainFormat", "enum", required: true, title: "Display Unit - Precipitation: Inches or Millimetres",  options: ["Inches", "Millimetres"]
-			    input "summaryType", "bool", title: "Full Weather Summary", required: true, defaultValue: false
-			    input "iconType", "bool", title: "Icon: On = Current - Off = Forecast", required: true, defaultValue: false
-			    input "weatherFormat", "enum", required: true, title: "How to format weather summary",  options: ["Celsius, Miles & MPH", "Fahrenheit, Miles & MPH", "Celsius, Kilometres & KPH"]
+	    input "tempFormat", "enum", required: true, defaultValue: "Fahrenheit", title: "Display Unit - Temperature: Fahrenheit or Celsius",  options: ["Fahrenheit", "Celsius"]
+            input "distanceFormat", "enum", required: true, defaultValue: "Miles (mph)", title: "Display Unit - Distance/Speed: Miles or Kilometres",  options: ["Miles (mph)", "Kilometers (kph)"]
+            input "pressureFormat", "enum", required: true, defaultValue: "Inches", title: "Display Unit - Pressure: Inches or Millibar",  options: ["Inches", "Millibar"]
+            input "rainFormat", "enum", required: true, defaultValue: "Inches", title: "Display Unit - Precipitation: Inches or Millimetres",  options: ["Inches", "Millimetres"]
+            input "summaryType", "bool", title: "Full Weather Summary", required: true, defaultValue: false
+            input "iconType", "bool", title: "Icon: On = Current - Off = Forecast", required: true, defaultValue: false
+            input "weatherFormat", "enum", required: true, defaultValue: "Fahrenheit, Miles & MPH", title: "How to format weather summary",  options: ["Celsius, Miles & MPH", "Fahrenheit, Miles & MPH", "Celsius, Kilometres & KPH"]
 	    
-    			input "pwspollLocation", "text", required: true, title: "PWS Data file location"
-    			input "pollIntervalLimit", "number", title: "Poll Interval Limit:", required: true, defaultValue: 1
-    			input "autoPoll", "bool", required: false, title: "Enable Auto Poll", defaultValue: false
-    			input "pollInterval", "enum", title: "Auto Poll Interval:", required: false, defaultValue: "5 Minutes", options: ["5 Minutes", "10 Minutes", "15 Minutes", "30 Minutes", "1 Hour", "3 Hours"]
-    			input "pwslogSet", "bool", title: "Log All PWS Response Data", required: true, defaultValue: false
-    			input "cutOff", "time", title: "New Day Starts", required: true
+	    input "autoPoll", "bool", required: true, title: "Enable Auto Poll", defaultValue: false
+            input "pollInterval", "enum", title: "Auto Poll Interval:", required: true, defaultValue: "5 Minutes", options: ["5 Minutes", "10 Minutes", "15 Minutes", "30 Minutes", "1 Hour", "3 Hours"]
 	    
-    			input "apixuapiKey", "text", required: true, title: "APIXU API Key"
-			    input "apixupollLocation", "text", required: true, title: "Location code for APIXU"
-			    input "apixulogSet", "bool", title: "Log All APIXU Response Data", required: true, defaultValue: false
+            input "WDpollLocation", "text", required: true, title: "Weather-Display Data file location", defaultValue: "http://"
+            input "wdlogSet", "bool", title: "Log All PWS Response Data", required: true, defaultValue: false
+	    
+            input "xuapiKey", "text", required: true, title: "APIXU API Key"
+            input "xupollLocation", "text", required: true, title: "Location code for APIXU"
+            input "xulogSet", "bool", title: "Log All APIXU Response Data", required: true, defaultValue: false
             
-          input "sourcecity", "bool", required: true, title: "City from Weather-Display?", defaultValue: true
-			    input "sourcefeelsLike", "bool", required: true, title: "FeelsLike from Weather-Display?", defaultValue: true
-			    input "sourceIcon", "bool", required: true, title: "Icon from Weather-Display?", defaultValue: true
-			    input "sourcelocalSunset", "bool", required: true, title: "Sunrise from Weather-Display?", defaultValue: true
-			    input "sourcelocalSunrise", "bool", required: true, title: "Sunset from Weather-Display?", defaultValue: true
-//			    input "sourcemoonPhase", "bool", required: true, title: "MoonPhase from Weather-Display?", defaultValue: true
-//			    input "sourcemoonIllumination", "bool", required: true, title: "MoonIllum from Weather-Display?", defaultValue: true
-//			    input "sourcesolarradiation", "bool", required: true, title: "SolarRad from Weather-Display?", defaultValue: true
-			    input "sourcestate", "bool", required: true, title: "State from Weather-Display?", defaultValue: true
-			    input "sourceUV", "bool", required: true, title: "UV from Weather-Display?", defaultValue: true
+            input "sourcecity", "bool", required: true, title: "City from Weather-Display?", defaultValue: true
+            input "sourcefeelsLike", "bool", required: true, title: "FeelsLike from Weather-Display?", defaultValue: true
+            input "sourceIcon", "bool", required: true, title: "Icon from Weather-Display?", defaultValue: true
+            input "sourcelocalSunset", "bool", required: true, title: "Sunrise from Weather-Display?", defaultValue: true
+            input "sourcelocalSunrise", "bool", required: true, title: "Sunset from Weather-Display?", defaultValue: true
+            input "sourcemoonPhase", "bool", required: true, title: "MoonPhase from Weather-Display?", defaultValue: true
+            input "sourcemoonIllumination", "bool", required: true, title: "MoonIllum from Weather-Display?", defaultValue: true
+	    input "sourceIllumination", "bool", required: true, title: "Illume from Weather-Display?", defaultValue: true
+            input "sourcestate", "bool", required: true, title: "State from Weather-Display?", defaultValue: true
+            input "sourceUV", "bool", required: true, title: "UV from Weather-Display?", defaultValue: true
        }
     }
 }
 
 // Poll PWS
-def update() {
-    log.debug "PWS update called"
-    state.version = "1.0.0"    // ************************* Update as required *************************************
+def updated() {
+    state.version = "1.1.0"    // ************************* Update as required *************************************
     unschedule()
-    state.NumOfPolls = 0
-    ForcePoll()
-    def pollIntervalCmd = (settings?.pollInterval ?: "5 Minutes").replace(" ", "")
-    if(autoPoll)
-        "runEvery${pollIntervalCmd}"(pollSchedule)
-    def changeOver = cutOff
-    schedule(changeOver, ResetPollCount)
+    def pollIntervalCmd = substring((settings?.pollInterval ?: "5 Minutes"),0,2).toInteger
+    log.debug "pollIntervalCmd = $pollIntervalCmd"
+    if(autoPoll){
+    	int randomSeconds = rand.nextInt(59)
+        if(pollIntervalCmd < 5 ) {
+                schedule("${randomSeconds} * 0/${pollIntervalCmd} * * ?", "pollSchedule")
+        }
+        if(pollIntervalCmd >= 5 ) {
+                schedule("${randomSeconds} 0/${pollIntervalCmd} * * * ?", "pollSchedule")
+        }
+    }
+    log.debug "Update called"
+    poll()
 }
-
-def ResetPollCount(){
-	state.NumOfPolls = -1
-    	log.info "Poll counter reset.."
-	ForcePoll()
-}
+/*
 
 def pollSchedule(){
-    	ForcePoll()
+    poll()
 }
               
 def parse(String description) {
 }
 
-def Poll(){
-    if(lastPoll == null){ lastPoll = now() }
-    if(pollIntervalLimit == null){ pollIntervalLimit = 0 }
-    	if(now() - state.lastPoll > (pollIntervalLimit * 60000))
-        	ForcePoll()
-    	else
-        	log.debug "Poll called before interval threshold was reached"
-}
-def ForcePoll(){
-    if(state.NumOfPolls == null) {
-        state.NumOfPolls = 0
-    }
-	state.NumOfPolls = (state.NumOfPolls) + 1
-	log.info " state.NumOfPolls = $state.NumOfPolls" 
-    log.debug "ForcePoll called"
-    def WeatherSummeryFormat = weatherFormat
-	sendEvent(name: "pollsSinceReset", value: state.NumOfPolls, isStateChange: true)
-	sendEvent(name: "driverNameSpace", value: "Matthew", isStateChange: true)
-	sendEvent(name: "driverVersion", value: state.version, isStateChange: true)
-	
-	def params1 = [
-		uri: "${pwspollLocation}/everything.php"
-    	]
-    def params2 = [
-        uri: "http://api.apixu.com/v1/forecast.json?key=${apixuapiKey}&q=${apixupollLocation}&days=3"
-    	]
-    	try {
-        	httpGet(params1) { resp1 ->
-	            	resp1.headers.each {
-        	    	log.debug "Response1: ${it.name} : ${it.value}"
-        			}
-					if(pwslogSet == true){  
-						log.debug "params1: ${params1}"
-						log.debug "response contentType: ${resp1.contentType}"
-						log.debug "response data: ${resp1.data}"
-					} 
-					if(pwslogSet == false){ 
-						log.info "Further PWS detailed data logging disabled"
-					}
-// Start Weather-Display data poll		
-		if(sourcecity){
-			sendEvent(name: "city", value: resp1.data.station.name.split(/ /)[0], isStateChange: true)
-		}
-        if(sourcefeelsLike){
-            sendEvent(name: "weatherIcon", value: resp1.data.everything.weather.apparent_temperature.current.f, isStateChange: true)
-        }
-		if(sourceicon){
-			sendEvent(name: "weatherIcon", value: resp1.data.everything.forecast.icon.code, isStateChange: true)
-		}
-		if(sourcelocalSunset){
-			sendEvent(name: "localSunset", value: resp1.data.everything.astronomy.sun.sunset_time.hour + ":" + resp1.data.everything.astronomy.sun.sunset_time.minute, descriptionText: "Sunset today at is $localSunset", isStateChange: true)
-		}
-		if(sourcelocalSunrise){
-			sendEvent(name: "localSunrise", value: resp1.data.everything.astronomy.sun.sunrise_time.hour + ":" + resp1.data.everything.astronomy.sun.sunrise_time.minute, descriptionText: "Sunrise today is at $localSunrise", isStateChange: true)
-		}
-		if(sourcemoonPhase){
-			sendEvent(name: "moonAge", value: resp1.data.everything.astronomy.moon.moon_age.toDouble(), isStateChange: true)
-			if (resp1.data.everything.astronomy.moon.moon_age.toDouble() >= 0 && resp1.data.everything.astronomy.moon.moon_age.toDouble() < 4) {sendEvent(name: "moonPhase", value: "New Moon", isStateChange: true)}
-			if (resp1.data.everything.astronomy.moon.moon_age.toDouble() >= 4 && resp1.data.everything.astronomy.moon.moon_age.toDouble() < 7) {sendEvent(name: "moonPhase", value: "Waxing Crescent", isStateChange: true)}
-			if (resp1.data.everything.astronomy.moon.moon_age.toDouble() >= 7 && resp1.data.everything.astronomy.moon.moon_age.toDouble() < 10) {sendEvent(name: "moonPhase", value: "First Quarter", isStateChange: true)}
-			if (resp1.data.everything.astronomy.moon.moon_age.toDouble() >= 10 && resp1.data.everything.astronomy.moon.moon_age.toDouble() < 14) {sendEvent(name: "moonPhase", value: "Waxing Gibbous", isStateChange: true)}
-			if (resp1.data.everything.astronomy.moon.moon_age.toDouble() >= 14 && resp1.data.everything.astronomy.moon.moon_age.toDouble() < 18) {sendEvent(name: "moonPhase", value: "Full Moon", isStateChange: true)}
-			if (resp1.data.everything.astronomy.moon.moon_age.toDouble() >= 18 && resp1.data.everything.astronomy.moon.moon_age.toDouble() < 22) {sendEvent(name: "moonPhase", value: "Waning Gibbous", isStateChange: true)}
-			if (resp1.data.everything.astronomy.moon.moon_age.toDouble() >= 22 && resp1.data.everything.astronomy.moon.moon_age.toDouble() < 26) {sendEvent(name: "moonPhase", value: "Last Quarter", isStateChange: true)}
-			if (resp1.data.everything.astronomy.moon.moon_age.toDouble() >= 26) {sendEvent(name: "moonPhase", value: "Waxing Gibbous", isStateChange: true)}
-		}
-		if(sourcemoonIllumination){
-			sendEvent(name: "moonIllumination", value: resp1.data.everything.astronomy.moon.moon_phase + "%", isStateChange: true)
-		}
-		def illume = (resp1.data.everything.weather.solar.irradiance.wm2)
-		if(sourcesolarradiation){
-			if(illume){
-				 sendEvent(name: "illuminance", value: resp1.data.everything.weather.solar.irradiance.wm2, unit: "lux", isStateChange: true)
-				 sendEvent(name: "solarradiation", value: resp1.data.everything.weather.solar.irradiance.wm2, unit: "wm2", isStateChange: true)
-			}
-			if(!illume){
-				sendEvent(name: "illuminance", value: "This station does not send Illumination data", isStateChange: true)
-			 	sendEvent(name: "solarradiation", value: "This station does not send Solar Radiation data", isStateChange: true)
-			}   
-		}
-		if(sourcestate){
-			sendEvent(name: "state", value: resp1.data.station.name.split(/ /)[1], isStateChange: true)
-		}
-		if(sourceUV){
-			sendEvent(name: "UV", value: resp1.data.everything.weather.uv.uvi, isStateChange: true)
-		}
-		sendEvent(name: "weather", value: resp1.data.everything.forecast.davis_forecast, isStateChange: true)
-		sendEvent(name: "humidity", value: resp1.data.everything.weather.humidity.current, isStateChange: true)
-		if(iconType == true){ 
-		   sendEvent(name: "weatherIcon", value: resp1.data.everything.forecast.icon.code, isStateChange: true)
-		}    
-        sendEvent(name: "pwsobservation_time", value: "Last updated on "  + Date.parse("d/M/yyyy", resp1.data.time.date).format("MMMM d,") + " " + Date.parse("hh:mm", resp1.data.time.time).format("h:mm a"), isStateChange: true)
-		sendEvent(name: "wind_dir", value: resp1.data.everything.weather.wind.direction.cardinal, isStateChange: true)
-		if(rainFormat == "Inches"){
-			sendEvent(name: "precip_today", value: resp1.data.everything.weather.rainfall.daily.in, unit: "IN", isStateChange: true)
-			sendEvent(name: "rainUnit", value: "Inches", isStateChange: true)
-		}
-		if(rainFormat == "Millimetres"){   
-			sendEvent(name: "precip_today", value: resp1.everything.weather.data.rainfall.daily.mm, unit: "MM", isStateChange: true)
-			sendEvent(name: "rainUnit", value: "Millimetres", isStateChange: true)
-		}
-		if(tempFormat == "Celsius"){
-			sendEvent(name: "dewpoint", value: resp1.data.everything.weather.dew_point.current.c, unit: "C", isStateChange: true)
-			sendEvent(name: "temperatureUnit", value: "Celsius", isStateChange: true)
-			sendEvent(name: "temperature", value: resp1.data.everything.weather.temperature.current.c, unit: "C", isStateChange: true)   	
-		}
-		if(tempFormat == "Fahrenheit"){ 
-			sendEvent(name: "dewpoint", value: resp1.data.everything.weather.dew_point.current.f, unit: "F", isStateChange: true)
-			sendEvent(name: "temperatureUnit", value: "Fahrenheit", isStateChange: true)
-			sendEvent(name: "temperature", value: resp1.data.everything.weather.temperature.current.f, unit: "F", isStateChange: true)    	
-		}  
-	   	if(distanceFormat == "Miles (mph)"){  
-			sendEvent(name: "wind", value: resp1.data.everything.weather.wind.avg_speed.mph, unit: "MPH", isStateChange: true)
-	   		sendEvent(name: "wind_gust", value: resp1.data.everything.weather.wind.max_gust_speed.mph, isStateChange: true) 
-	   		sendEvent(name: "distanceUnit", value: "Miles (mph)", isStateChange: true)
-	   	}  
-	   	if(distanceFormat == "Kilometres (kph)"){
-			sendEvent(name: "wind", value: resp1.data.everything.weather.wind.max_gust_speed.kmh, unit: "KPH", isStateChange: true)  
-			sendEvent(name: "wind_gust", value: resp1.data.everything.weather.wind.max_gust_speed.kmh, isStateChange: true) 
-			sendEvent(name: "distanceUnit", value: "Kilometres (kph)", isStateChange: true)  
-	   	}		  
-	   	if(pressureFormat == "Inches"){
-			sendEvent(name: "pressure", value: resp1.data.everything.weather.pressure.current.inhg, unit: "inhg", isStateChange: true)
-			sendEvent(name: "pressureUnit", value: "Inches")  
-	   	}
-		if(pressureFormat == "Millibar"){
-			sendEvent(name: "pressure", value: resp1.data.everything.weather.pressure.current.mb, unit: "mb", isStateChange: true)
-		   	sendEvent(name: "pressureUnit", value: "Millibar", isStateChange: true) 
-	   	}
-// end PWS data poll		Start APIXI.com data poll
-            httpGet(params2) { resp2 ->
-	            	resp2.headers.each {
-        	    	log.debug "Response2: ${it.name} : ${it.value}"
-			}
-			if(apixulogSet == true){  
-			    log.debug "params2: ${params2}"
-			    log.debug "response contentType: ${resp2.contentType}"
-			    log.debug "response data: ${resp2.data}"
-			} 
-			if(apixulogSet == false){ 
-				log.info "Further APIXU detailed data logging disabled"
-			}
-		if(!sourcecity){
-			sendEvent(name: "city", value: resp2.data.location.name, isStateChange: true)
-		}
-		if(!sourceicon){
-			if(iconType == false){   
-                sendEvent(name: "weatherIcon", value: "http:" + resp2.data.forecast.forecastday[0].day.condition.icon, isStateChange: true)
-                	}
-                	if(iconType == true){ 
-			       sendEvent(name: "weatherIcon", value: resp2.data.current.condition.icon, isStateChange: true)
-                	}
-		}
-		if(!sourcelocalSunset){
-			sendEvent(name: "localSunset", value: resp2.data.forecast.forecastday[0].astro.sunset, descriptionText: "Sunset today at is $localSunset", isStateChange: true)
-		}
-		if(!sourcelocalSunrise){
-			sendEvent(name: "localSunrise", value: resp2.data.forecast.forecastday[0].astro.sunrise, descriptionText: "Sunrise today is at $localSunrise", isStateChange: true)
-		}
-		if(!sourcemoonPhase){
-			sendEvent(name: "moonPhase", value: resp2.data.forecast.forecastday[0].astro.moon_phase , isStateChange: true)
-		}
-		if(!sourcemoonIllumination){
-			sendEvent(name: "moonIllumination", value: resp2.forecast.forecastday[0].astro.moon_illumination  + "%" , isStateChange: true)
-		}
-/*		if(!sourcesolarradiation){
-        		if(illume){
-            	 		sendEvent(name: "illuminance", value: resp2.data.current_observation.solarradiation, unit: "lux", isStateChange: true)
-                 		sendEvent(name: "solarradiation", value: resp2.data.current_observation.solarradiation, unit: "W", isStateChange: true)
-            		}
-            		if(!illume){
-                 		sendEvent(name: "illuminance", value: "This station does not send Illumination data", isStateChange: true)
-            	 		sendEvent(name: "solarradiation", value: "This station does not send Solar Radiation data", isStateChange: true)
-            		}
-		}
-*/		if(!sourcestate){
-			sendEvent(name: "state", value: resp2.data.location.region, isStateChange: true)
-		}
-		if(!sourceUV){
-			sendEvent(name: "UV", value: resp2.data.forecast.forecastday[0].day.uv, isStateChange: true)
-		}
+def poll()      {
+    log.debug "apixu: Executing 'poll', location: ${location.name}"
 
-		sendEvent(name: "stationID", value: resp2.data.location.name + ", " + resp2.data.location.region, isStateChange: true)
-//	  sendEvent(name: "chanceOfRain", value: resp2.data.forecast.forecastday[0].hour.chance_of_rain + "%", isStateChange: true)
-//		sendEvent(name: "percentPrecip", value: resp2.data.forecast.forecastday.date.todaycast.chance_of_rain , isStateChange: true)
-		sendEvent(name: "forecastConditions", value: resp2.data.forecast.forecastday[0].day.condition.text, isStateChange: true)            
-		if(rainFormat == "Inches"){
-			sendEvent(name: "rainTomorrow", value: resp2.data.forecast.forecastday[1].day.totalprecip_in, isStateChange: true)
-			sendEvent(name: "rainDayAfterTomorrow", value: resp2.data.forecast.forecastday[2].day.totalprecip_in, unit: "IN", isStateChange: true)
-		}
-		if(rainFormat == "Millimetres"){   
-			sendEvent(name: "rainTomorrow", value: resp2.data.forecast.forecastday[1].day.totalprecip_mm, unit: "MM", isStateChange: true)
-			sendEvent(name: "rainDayAfterTomorrow", value: resp2.data.forecast.forecastday[2].day.totalprecip_mm, unit: "MM", isStateChange: true)
-		}		
-		sendEvent(name: "apixuobservation_time", value: Date.parse("yyyy-MM-dd hh:mm", resp2.data.current.last_updated).format("MMMM d,") + " " + Date.parse("yyyy-MM-dd hh:mm", resp2.data.current.last_updated).format("h:mm a"), isStateChange: true)
-	   	sendEvent(name: "forecastConditions", value: resp2.data.forecast.forecastday[0].day.condition.text, isStateChange: true)
-	   	if(tempFormat == "Fahrenheit"){ 
-			if(!sourcefeelsLike){
-				sendEvent(name: "feelsLike", value: resp2.data.current.feelslike_f, unit: "F", isStateChange: true)
-            }
-			sendEvent(name: "forecastHigh", value: resp2.data.forecast.forecastday[0].day.maxtemp_f, unit: "F", isStateChange: true)
-			sendEvent(name: "forecastLow", value: resp2.data.forecast.forecastday[0].day.mintemp_f, unit: "F", isStateChange: true)
-		}
-		if(tempFormat == "Celsius"){
-			if(!sourcefeelsLike){
-				sendEvent(name: "feelsLike", value: resp2.data.current.feelslike_c, unit: "C", isStateChange: true)
-            }
-			sendEvent(name: "forecastHigh", value: resp2.data.forecast.forecastday[0].day.maxtemp_c, unit: "F", isStateChange: true)
-			sendEvent(name: "forecastLow", value: resp2.data.forecast.forecastday[0].day.mintemp_c, unit: "F", isStateChange: true)
-		}
-		if(distanceFormat == "Miles (mph)"){  
-			sendEvent(name: "visibility", value: resp2.data.current.vis_miles, unit: "mi", isStateChange: true)
-            sendEvent(name: "wind_string", value: "Wind is from " + resp2.data.current.wind_dir + " at " +resp2.data.current.wind_mph + " MPH", isStateChange: true)
-		}
-		if(distanceFormat == "Kilometres (kph)"){
-			sendEvent(name: "visibility", value: resp2.data.current.vis_km, unit: "km", isStateChange: true)
-            sendEvent(name: "wind_string", value: "Wind is from " + resp2.data.current.wind_dir + " at " +resp2.data.current.wind_kph + " KPH", isStateChange: true)
-		}
-          
-		if(summaryType == true){
-			if (WeatherSummeryFormat == "Celsius, Miles & MPH"){
-	   		sendEvent(name: "weatherSummaryFormat", value: "Celsius, Miles & MPH", isStateChange: true)
-				sendEvent(name: "weatherSummary", value: "Weather summary for" + " " + resp1.data.station.name.split(/ /)[0] + ", " + resp1.data.station.name.split(/ /)[1] 
-                + " updated at " + Date.parse("hh:mm", resp1.data.time.time).format("h:mm a") + " on " + Date.parse("d/M/yyyy", resp1.data.time.date).format("MMMM d") + ". "  
-				+ resp2.data.forecast.forecastday[0].day.condition.text + " with a high of " + resp2.data.forecast.forecastday[0].day.maxtemp_c + " degrees, " + "and a low of " 
-				+ resp2.data.forecast.forecastday[0].day.mintemp_c  + " degrees. " + "Humidity is currently around " + resp1.data.everything.weather.humidity.current + "% and temperature is " 
-				+ resp1.data.everything.weather.temperature.current.c + " degrees. " + " The temperature feels like it's " + resp2.data.current.feelslike_c + " degrees. " 
-				+ "Wind is from the " + resp1.data.everything.weather.wind.direction.cardinal
-				+ " at " + resp1.data.everything.weather.wind.avg_speed.mph + " mph" + ", with gusts up to " + resp1.data.everything.weather.wind.max_gust_speed.mph + " mph" + ". Visibility is around " 
-				+ resp2.data.current.vis_miles + " miles" + "." , isStateChange: true
-				)  
-			}
-			if (WeatherSummeryFormat == "Fahrenheit, Miles & MPH"){
-				sendEvent(name: "weatherSummaryFormat", value: "Fahrenheit, Miles & MPH", isStateChange: true)
-				sendEvent(name: "weatherSummary", value: "Weather summary for" + " " + resp1.data.station.name.split(/ /)[0] + ", " + resp1.data.station.name.split(/ /)[1] 
-                + " updated at " + Date.parse("hh:mm", resp1.data.time.time).format("h:mm a") + " on " + Date.parse("d/M/yyyy", resp1.data.time.date).format("MMMM d") + ". "  
-				+ resp2.data.forecast.forecastday[0].day.condition.text + " with a high of " + resp2.data.forecast.forecastday[0].day.maxtemp_f + " degrees, " + "and a low of " 
-				+ resp2.data.forecast.forecastday[0].day.mintemp_f  + " degrees. " + "Humidity is currently around " + resp1.data.everything.weather.humidity.current + "% and temperature is " 
-				+ resp1.data.everything.weather.temperature.current.f + " degrees. " + " The temperature feels like it's " + resp2.data.current.feelslike_f + " degrees. " 
-				+ "Wind is from the " + resp1.data.everything.weather.wind.direction.cardinal
-				+ " at " + resp1.data.everything.weather.wind.avg_speed.mph + " mph" + ", with gusts up to " + resp1.data.everything.weather.wind.max_gust_speed.mph + " mph" + ". Visibility is around " 
-				+ resp2.data.current.vis_miles + " miles" + ".", isStateChange: true
-				)  
-			}   
-			 if (WeatherSummeryFormat == "Celsius, Kilometres & KPH"){
-				sendEvent(name: "weatherSummaryFormat", value: "Celsius, Kilometres & KPH", isStateChange: true)
-				sendEvent(name: "weatherSummary", value: "Weather summary for" + " " + resp1.data.station.name.split(/ /)[0] + ", " + resp1.data.station.name.split(/ /)[1] 
-        + " updated at " + Date.parse("hh:mm", resp1.data.time.time).format("h:mm a") + " on " + Date.parse("d/M/yyyy", resp1.data.time.date).format("MMMM d") + ". "  
-				+ resp2.data.forecast.forecastday[0].day.condition.text + " with a high of " + resp2.data.forecast.forecastday[0].day.maxtemp_c + " degrees, " + "and a low of " 
-				+ resp2.data.forecast.forecastday[0].day.mintemp_c  + " degrees. " + "Humidity is currently around " + resp1.data.everything.weather.humidity.current + "% and temperature is " 
-				+ resp1.data.everything.weather.temperature.current.c + " degrees. " + " The temperature feels like it's " + resp2.data.current.feelslike_c + " degrees. " 
-				+ "Wind is from the " + resp1.data.everything.weather.wind.direction.cardinal
-				+ " at " + resp1.data.everything.weather.wind.avg_speed.kmh + " kph" + ", with gusts up to " + resp1.data.everything.weather.wind.max_gust_speed.kmh + " kph" + ". Visibility is around " 
-				+ resp2.data.current.vis_km + " kilometers.", isStateChange: true
-				)  
-			}                
-		}    
-		if(summaryType == false){
-			if (WeatherSummeryFormat == "Celsius, Miles & MPH"){
-		 		sendEvent(name: "weatherSummaryFormat", value: "Celsius, Miles & MPH", isStateChange: true)
-				sendEvent(name: "weatherSummary", value: resp1.data.everything.forecast.davis_forecast + ". " + " Today's High:" + resp1.data.everything.weather.temperature.current.high.c + ", Today's Low:" 
-				+ resp1.data.everything.weather.tempurature.current.low.c  +  ". Humidity: " + resp1.data.everything.weather.current.humidity + "% Temperature: " 
-				+ resp1.data.everything.weather.tempurature.current.c  + ". Wind Direction: " + resp1.data.everything.weather.wind.direction.cardinal + ". Wind Speed: " + resp1.data.everything.weather.avg_speed.mph + " mph" 
-				+ ", Gust: " + resp1.data.everything.weather.max_gust_speed.mph + " mph.", isStateChange: true
-				)  
-			}
-			if (WeatherSummeryFormat == "Fahrenheit, Miles & MPH"){
-				sendEvent(name: "weatherSummaryFormat", value: "Fahrenheit, Miles & MPH", isStateChange: true)
-				sendEvent(name: "weatherSummary", value: resp1.data.everything.forecast.davis_forecast + ". " + " Today's High:" + resp1.data.everything.weather.temperature.current.high.f + ", Today's Low:" 
-				+ resp1.data.everything.weather.tempurature.current.low.f  +  ". Humidity: " + resp1.data.everything.weather.current.humidity + "% Temperature: " 
-				+ resp1.data.everything.weather.tempurature.current.f  + ". Wind Direction: " + resp1.data.everything.weather.wind.direction.cardinal + ". Wind Speed: " + resp1.data.everything.weather.avg_speed.mph + " mph" 
-				+ ", Gust: " + resp1.data.everything.weather.max_gust_speed.mph + " mph.", isStateChange: true
-				)  
-			}
-			 if (WeatherSummeryFormat ==  "Celsius, Kilometres & KPH"){
-				sendEvent(name: "weatherSummaryFormat", value:  "Celsius, Kilometres & KPH", isStateChange: true)
-				sendEvent(name: "weatherSummary", value: resp1.data.everything.forecast.davis_forecast + ". " + " Today's High:" + resp1.data.everything.weather.temperature.current.high.c + ", Today's Low:" 
-				+ resp1.data.everything.weather.tempurature.current.low.c  +  ". Humidity: " + resp1.data.everything.weather.current.humidity + "% Temperature: " 
-				+ resp1.data.everything.weather.tempurature.current.c  + ". Wind Direction: " + resp1.data.everything.weather.wind.direction.cardinal + ". Wind Speed: " + resp1.data.everything.weather.avg_speed.kmh + " kph" 
-				+ ", Gust: " + resp1.data.everything.weather.max_gust_speed.kmh + " kph.", isStateChange: true
-				)  
-			}
-		}                     
-/*
-        def possAlert = (resp2.data.alerts.description)
-		if (possAlert){
-        	sendEvent(name: "alert", value: resp2.data.alerts.description, isStateChange: true)  
-        }
-        if (!possAlert){
-            sendEvent(name: "alert", value: " No current weather alerts for this area")
-        }
-*/        state.apixulastPoll = now()             
-	}
-            }}	catch (e) {
-        log.error "something went wrong: $e"
+    def xu = getXUdata()
+    if (!xu)   {
+        log.warn "No response from ApiXU API"
+        return;
     }
+
+//    [location:[name:Kolkata, region:West Bengal, country:India, lat:22.57, lon:88.37, tz_id:Asia/Kolkata, localtime_epoch:1526751861, localtime:2018-05-19 23:14], current:[last_updated_epoch:1526751017, last_updated:2018-05-19 23:00, temp_c:28.0, temp_f:82.4, is_day:0, condition:[text:Mist, icon://cdn.apixu.com/weather/64x64/night/143.png, code:1030], wind_mph:10.5, wind_kph:16.9, wind_degree:180, wind_dir:S, pressure_mb:1004.0, pressure_in:30.1, precip_mm:0.0, precip_in:0.0, humidity:84, cloud:25, feelslike_c:33.0, feelslike_f:91.4, vis_km:3.0, vis_miles:1.0], forecast:[forecastday:[[date:2018-05-19, date_epoch:1526688000, day:[maxtemp_c:39.3, maxtemp_f:102.7, mintemp_c:28.6, mintemp_f:83.5, avgtemp_c:32.3, avgtemp_f:90.1, maxwind_mph:15.4, maxwind_kph:24.8, totalprecip_mm:0.0, totalprecip_in:0.0, avgvis_km:16.5, avgvis_miles:10.0, avghumidity:65.0, condition:[text:Thundery outbreaks possible, icon://cdn.apixu.com/weather/64x64/day/200.png, code:1087], uv:11.6], astro:[sunrise:04:55 AM, sunset:06:11 PM, moonrise:08:30 AM, moonset:10:13 PM]], [date:2018-05-20, date_epoch:1526774400, day:[maxtemp_c:41.0, maxtemp_f:105.8, mintemp_c:29.3, mintemp_f:84.7, avgtemp_c:33.4, avgtemp_f:92.1, maxwind_mph:21.9, maxwind_kph:35.3, totalprecip_mm:0.0, totalprecip_in:0.0, avgvis_km:19.2, avgvis_miles:11.0, avghumidity:54.0, condition:[text:Partly cloudy, icon://cdn.apixu.com/weather/64x64/day/116.png, code:1003], uv:11.4], astro:[sunrise:04:54 AM, sunset:06:12 PM, moonrise:09:34 AM, moonset:11:07 PM]], [date:2018-05-21, date_epoch:1526860800, day:[maxtemp_c:38.5, maxtemp_f:101.3, mintemp_c:28.6, mintemp_f:83.5, avgtemp_c:32.9, avgtemp_f:91.2, maxwind_mph:18.3, maxwind_kph:29.5, totalprecip_mm:0.0, totalprecip_in:0.0, avgvis_km:19.9, avgvis_miles:12.0, avghumidity:58.0, condition:[text:Partly cloudy, icon://cdn.apixu.com/weather/64x64/day/116.png, code:1003], uv:10.3], astro:[sunrise:04:54 AM, sunset:06:12 PM, moonrise:10:36 AM, moonset:11:57 PM]]]]]
+
+//    [results:[sunrise:2018-05-18T23:24:30+00:00, sunset:2018-05-19T12:41:31+00:00, solar_noon:2018-05-19T06:03:00+00:00, day_length:47821, civil_twilight_begin:2018-05-18T23:00:12+00:00, civil_twilight_end:2018-05-19T13:05:48+00:00, nautical_twilight_begin:2018-05-18T22:31:16+00:00, nautical_twilight_end:2018-05-19T13:34:44+00:00, astronomical_twilight_begin:2018-05-18T22:01:24+00:00, astronomical_twilight_end:2018-05-19T14:04:37+00:00], status:OK]
+    def isFahrenheit = if(tempFormat == "Fahrenheit"){
+        true
+    } else {
+        false
+    }
+    def isDistanceMetric = if(distanceFormat == "Kilometers (kph)"){
+        true
+    } else {
+        false
+    }
+    def isRainMetric = if(rainFormat == "Millimetres"){
+        true
+    } else {
+        false
+    }
+    def isPressureMetric = if(pressureFormat == "Millibar"){
+        true
+    } else {
+        false
+    }
+    
+    def now = new Date().format('yyyy-MM-dd HH:mm', location.timeZone)
+    sendEvent(name: "lastXUupdate", value: now)
+
+    def tZ = TimeZone.getTimeZone(obs.location.tz_id)
+    state.tz = obs.location.tz_id
+
+    def localTime = new Date().parse("yyyy-MM-dd HH:mm", obs.location.localtime, tZ)    
+    def localDate = localTime.format("yyyy-MM-dd", tZ)
+    def localTimeOnly = localTime.format("HH:mm", tZ)
+    def sunriseAndSunset = getSunriseAndSunset(obs.location.lat, obs.location.lon, localDate)
+
+    def sunriseTime = new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", sunriseAndSunset.results.sunrise, tZ)
+    def sunsetTime = new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", sunriseAndSunset.results.sunset, tZ)
+    def noonTime = new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", sunriseAndSunset.results.solar_noon, tZ)    
+    def twilight_begin = new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", sunriseAndSunset.results.civil_twilight_begin, tZ)
+    def twilight_end = new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", sunriseAndSunset.results.civil_twilight_end, tZ)
+    
+    def slocalSunrise = sunriseTime.format("HH:mm", tZ)
+    sendEvent(name: "slocal_sunrise", value: localSunrise, descriptionText: "Sunrise today is at $localSunrise")
+    def slocalSunset = sunsetTime.format("HH:mm", tZ)
+    sendEvent(name: "slocal_sunset", value: localSunset, descriptionText: "Sunset today at is $localSunset")
+    def tB = twilight_begin.format("HH:mm", tZ)
+    sendEvent(name: "twilight_begin", value: tB, descriptionText: "Twilight begins today at $tB")
+    def tE = twilight_end.format("HH:mm", tZ)
+    sendEvent(name: "twilight_end", value: tE, descriptionText: "Twilight ends today at $tE")
+    sendEvent(name: "driverNameSpace", value: "Matthew", isStateChange: true)
+    sendEvent(name: "driverVersion", value: state.version, isStateChange: true)
+
+    sendEvent(name: "xucity", value: xu.location.name)
+    sendEvent(name: "xustate", value: xu.location.region)
+    sendEvent(name: "xulocation", value: xu.location.name + ', ' + xu.location.region)
+    sendEvent(name: "xucountry", value: xu.location.country)
+    sendEvent(name: "xulat", value: xu.location.lat)
+    sendEvent(name: "xulon", value: xu.location.lon)
+    sendEvent(name: "xutz_id", value: xu.location.tz_id)
+    sendEvent(name: "xulocaltime_epoch", value: xu.location.localtime_epoch)
+    sendEvent(name: "xulocal_time", value: localTimeOnly)
+    sendEvent(name: "xulocal_date", value: localDate)
+    sendEvent(name: "xulast_updated_epoch", value: xu.current.last_updated_epoch)
+    sendEvent(name: "xulast_updated", value: xu.current.last_updated)
+    sendEvent(name: "xulocalSunset", value: xu.forecast.forecastday[0].astro.sunset, descriptionText: "Sunset today at is $localSunset", isStateChange: true)
+    sendEvent(name: "xulocalSunrise", value: xu.forecast.forecastday[0].astro.sunrise, descriptionText: "Sunrise today at is $localSunrise", isStateChange: true)
+    sendEvent(name: "xumoonPhase", value: xu.forecast.forecastday[0].astro.moon_phase , isStateChange: true)
+    sendEvent(name: "xumoonIllumination", value: xu.forecastday[0].astro.moon_illumination  + "%" , isStateChange: true)
+    sendEvent(name: "xumoonAge", value: resp1.data.everything.astronomy.moon.moon_age.toDouble(), isStateChange: true)
+    sendEvent(name: "xutemp_c", value: xu.current.temp_c, unit: "C")
+    sendEvent(name: "xutemp_f", value: xu.current.temp_f, unit: "F")
+    sendEvent(name: "xutemp", value: (isFahrenheit ? xu.current.temp_f : xu.current.temp_c), unit: "${(isFahrenheit ? 'F' : 'C')}")
+    sendEvent(name: "xuis_day", value: xu.current.is_day)
+    sendEvent(name: "xucondition_text", value: xu.current.condition.text)
+    sendEvent(name: "xucondition_code", value: xu.current.condition.code)
+    sendEvent(name: "xucondition_icon", value: 'http:' + xu.current.condition.icon)
+    sendEvent(name: "xucondition_icon_only", value: xu.current.condition.icon.split("/")[-1])
+    sendEvent(name: "xuforecastCondition_text", value: xu.forecast.forecastday[0].day.condition.text, isStateChange: true)            
+    sendEvent(name: "xuforecast_code", value: 'http:' + xu.forecast.forecastday[0].condition.code)
+    sendEvent(name: "xuforecast_icon", value: 'http:' + xu.forecast.forecastday[0].condition.icon)
+    sendEvent(name: "xuforecast_icon_only", value: xu.forecast.forecastday[0].condition.icon.split("/")[-1])
+    sendEvent(name: "xuwind_mph", value: xu.current.wind_mph, unit: "MPH")
+    sendEvent(name: "xuwind_kph", value: xu.current.wind_kph, unit: "KPH")
+    sendEvent(name: "xuwind", value: (isDistanceMetric ? xu.current.temp_c : xu.current.temp_f), unit: "${(isDistanceMetric ? 'kph' : 'mph')}")
+    sendEvent(name: "xuwind_degree", value: xu.current.wind_degree, unit: "DEGREE")
+    sendEvent(name: "xuwind_dir", value: xu.current.wind_dir)
+    sendEvent(name: "xupressure_mb", value: xu.current.pressure_mb, unit: "MBAR")
+    sendEvent(name: "xupressure_in", value: xu.current.pressure_in, unit: "IN")
+    sendEvent(name: "xupressure", value: (isPressureMetric ? xu.current.pressure_mb : xu.current.pressure_in), unit: "${(isPressureMetric ? 'mb' : 'in')}")
+    sendEvent(name: "xuprecip_mm", value: xu.current.precip_mm, unit: "MM")
+    sendEvent(name: "xuprecip_in", value: xu.current.precip_in, unit: "IN")
+    sendEvent(name: "xuprecip", value: (isRainMetric ? xu.current.precip_mm : xu.current.precip_in), unit: "${(isRainMetric ? 'mm' : 'in')}")
+    sendEvent(name: "xuhumidity", value: xu.current.humidity, unit: "%")
+    sendEvent(name: "xucloud", value: xu.current.cloud, unit: "%")
+    sendEvent(name: "xufeelslike_c", value: xu.current.feelslike_c, unit: "C")
+    sendEvent(name: "xufeelslike_f", value: xu.current.feelslike_f, unit: "F")               )    
+    sendEvent(name: "xufeelslike", value: (isFahrenheit ? xu.current.feelslike_f : xu.current.feelslike_c), unit: "${(isFahrenheit ? 'F' : 'C')}")
+    sendEvent(name: "xuvis_km", value: xu.current.vis_km, unit: "KM")
+    sendEvent(name: "xuvis_miles", value: xu.current.vis_miles, unit: "MILES")
+    sendEvent(name: "xuvis", value: (isDistanceMetric ? value: xu.current.vis_km : value: xu.current.vis_miles), unit: "${(isDistanceMetric ? 'KM' : 'MILES')}")
+    sendEvent(name: "xuUV", value: xu.forecast.forecastday[0].day.uv, isStateChange: true)
+    sendEvent(name: "xuforecastConditions", value: xu.forecast.forecastday[0].day.condition.text, isStateChange: true)
+    sendEvent(name: "xurainTomorrow_in", value: xu.forecast.forecastday[1].day.totalprecip_in, isStateChange: true)
+    sendEvent(name: "xurainTomorrow_mm", value: xu.forecast.forecastday[1].day.totalprecip_mm, unit: "MM", isStateChange: true)    sendEvent(name: "arainDayAfterTomorrow_in", value: resp2.data.forecast.forecastday[2].day.totalprecip_in, unit: "IN", isStateChange: true)
+    sendEvent(name: "xurainTomorrow", value: (isRainMetric ? xu.forecast.forecastday[1].day.totalprecip_mm : resp2.data.forecast.forecastday[1].day.totalprecip_in), unit: "${(isRainMetric ? 'mm' : 'in')}")
+    sendEvent(name: "xurainDayAfterTomorrow_in", value: xu.forecast.forecastday[2].day.totalprecip_in, unit: "In", isStateChange: true)
+    sendEvent(name: "xurainDayAfterTomorrow_mm", value: xu.forecast.forecastday[2].day.totalprecip_mm, unit: "MM", isStateChange: true)
+    sendEvent(name: "xurainDayAfterTomorrow", value: (isRainMetric ? xu.forecast.forecastday[2].day.totalprecip_mm : xu.forecast.forecastday[2].day.totalprecip_in), unit: "${(isRainMetric ? 'mm' : 'in')}")
+    sendEvent(name: "xuforecastHigh_c", value: xu.forecast.forecastday[0].day.maxtemp_c, unit: "C", isStateChange: true)
+    sendEvent(name: "xuforecastHigh_f", value: xu.forecast.forecastday[0].day.maxtemp_f, unit: "F", isStateChange: true)
+    sendEvent(name: "xuforecastHigh", value: (isFahrenheit xu.forecast.forecastday[0].day.maxtemp_f : xu.forecast.forecastday[0].day.maxtemp_c), unit: "${(isFahrenheit ? 'F' : 'C')}")
+    sendEvent(name: "xuforecastLow_c", value: xu.forecast.forecastday[0].day.mintemp_c, unit: "C", isStateChange: true)
+    sendEvent(name: "xuforecastLow_f", value: xu.forecast.forecastday[0].day.mintemp_f, unit: "F", isStateChange: true)
+    sendEvent(name: "xuforecastLow", value: (isFahrenheit xu.forecast.forecastday[0].day.mintemp_f : xu.forecast.forecastday[0].day.mintemp_c), unit: "${(isFahrenheit ? 'F' : 'C')}")
+    sendEvent(name: "xuwind_string_mi", value: "Wind is from " + xu.current.wind_dir + " at " + xu.current.wind_mph + " MPH", isStateChange: true)
+    sendEvent(name: "xuwind_string_km", value: "Wind is from " + xu.current.wind_dir + " at " + xu.current.wind_kmh + " KPH", isStateChange: true)
+    sendEvent(name: "xuwind_string", value: (isDistanceMetric ? value: "Wind is from " + xu.current.wind_dir + " at " + xu.current.wind_kmh + " KPH" : Wind is from " + xu.current.wind_dir + " at " + xu.current.wind_mph + " MPH")
+    
+    def lux = estimateLux(localTime, sunriseTime, sunsetTime, noonTime, twilight_begin, twilight_end, obs.current.condition.text, obs.current.cloud, obs.location.tz_id)
+    sendEvent(name: "xuilluminance", value: lux)
+    sendEvent(name: "xulux", value: String.format("%,d", lux))
+
+    return getXUdata
+
+    log.debug "Weather-Display: Executing 'poll', location: ${location.name}"
+
+    def wd = getWDdata()
+    if (!wd)   {
+        log.warn "No response from Weather-Display API"
+        return;
+
+    	def now = new Date().format('yyyy-MM-dd HH:mm', location.timeZone)
+    	sendEvent(name: "lastWDupdate", value: now)
+
+	sendEvent(name: "wdcity", value: wd.station.name.split(/ /)[0], isStateChange: true)
+	sendEvent(name: "wdstate", value: wd.station.name.split(/ /)[1], isStateChange: true)
+	sendEvent(name: "wdlocation", value: wd.station.name.split(/ /)[0] + ", " + wd.station.name.split(/ /)[1], isStateChange: true)
+	sendEvent(name: "wdcountry", value: wd.station.name.split(/ /)[2], isStateChange: true)
+	sendEvent(name: "wdlat", value: wd.station.latitude, isStateChange: true)
+	sendEvent(name: "wdlon", value: wd.station.longitude, isStateChange: true)
+	sendEvent(name: "wdlocal_time", value: "Date.parse("hh:mm", wd.time.time).format("h:mm a"), isStateChange: true)
+	sendEvent(name: "wdlocal_date", value: "Date.parse("d/M/yyyy", wd.time.date).format("MM/dd/yyyy")
+	sendEvent(name: "wdFeelsLike_f", value: wd.everything.weather.apparent_temperature.current.f, isStateChange: true)
+	sendEvent(name: "wdFeelsLike_c", value: wd.everything.weather.apparent_temperature.current.c, isStateChange: true)
+	sendEvent(name: "wdFeelsLike", value: (isFahrenheit ? wd.everything.weather.apparent_temperature.current.f : wd.everything.weather.apparent_temperature.current.c), unit: "${(isFahrenheit ? 'F' : 'C')}")
+	sendEvent(name: "wdweatherIcon", value: wd.everything.forecast.icon.code, isStateChange: true)
+	sendEvent(name: "wdlocalSunset", value: wd.everything.astronomy.sun.sunset_time.hour + ":" + resp1.data.everything.astronomy.sun.sunset_time.minute, descriptionText: "Sunset today at is $localSunset", isStateChange: true)
+	sendEvent(name: "wdlocalSunrise", value: wd.everything.astronomy.sun.sunrise_time.hour + ":" + resp1.data.everything.astronomy.sun.sunrise_time.minute, descriptionText: "Sunrise today is at $localSunrise", isStateChange: true)
+	sendEvent(name: "wdmoonAge", value: wd.everything.astronomy.moon.moon_age.toDouble(), isStateChange: true)
+			if (wd.everything.astronomy.moon.moon_age.toDouble() >= 0 && wd.everything.astronomy.moon.moon_age.toDouble() < 4) {sendEvent(name: "wdmoonPhase", value: "New Moon", isStateChange: true)}
+			if (wd.everything.astronomy.moon.moon_age.toDouble() >= 4 && wd.everything.astronomy.moon.moon_age.toDouble() < 7) {sendEvent(name: "wdmoonPhase", value: "Waxing Crescent", isStateChange: true)}
+			if (wd.everything.astronomy.moon.moon_age.toDouble() >= 7 && wd.everything.astronomy.moon.moon_age.toDouble() < 10) {sendEvent(name: "wdmoonPhase", value: "First Quarter", isStateChange: true)}
+			if (wd.everything.astronomy.moon.moon_age.toDouble() >= 10 && wd.everything.astronomy.moon.moon_age.toDouble() < 14) {sendEvent(name: "wdmoonPhase", value: "Waxing Gibbous", isStateChange: true)}
+			if (wd.everything.astronomy.moon.moon_age.toDouble() >= 14 && wd.everything.astronomy.moon.moon_age.toDouble() < 18) {sendEvent(name: "wdmoonPhase", value: "Full Moon", isStateChange: true)}
+			if (wd.everything.astronomy.moon.moon_age.toDouble() >= 18 && wd.everything.astronomy.moon.moon_age.toDouble() < 22) {sendEvent(name: "wdmoonPhase", value: "Waning Gibbous", isStateChange: true)}
+			if (wd.everything.astronomy.moon.moon_age.toDouble() >= 22 && wd.everything.astronomy.moon.moon_age.toDouble() < 26) {sendEvent(name: "wdmoonPhase", value: "Last Quarter", isStateChange: true)}
+			if (wd.everything.astronomy.moon.moon_age.toDouble() >= 26) {sendEvent(name: "wdmoonPhase", value: "Waxing Gibbous", isStateChange: true)}
+	sendEvent(name: "wdmoonIllumination", value: wd.everything.astronomy.moon.moon_phase + "%", isStateChange: true)
+	sendEvent(name: "wdilluminance", value: wd.everything.weather.solar.irradiance.wm2, unit: "lux", isStateChange: true)
+	sendEvent(name: "wdsolarradiation", value: wd.everything.weather.solar.irradiance.wm2, unit: "wm2", isStateChange: true)
+	sendEvent(name: "wdUV", value: wd.everything.weather.uv.uvi, isStateChange: true)
+	sendEvent(name: "wdweather", value: wd.everything.forecast.davis_forecast, isStateChange: true)
+	sendEvent(name: "wdhumidity", value: wd.everything.weather.humidity.current, isStateChange: true)
+	sendEvent(name: "wdforecastIcon", value: wd.everything.forecast.icon.code, isStateChange: true)
+	sendEvent(name: "wdobservation_time", value: "Last updated on "  + Date.parse("d/M/yyyy", wd.time.date).format("MMMM d,") + " " + Date.parse("hh:mm", wd.time.time).format("h:mm a"), isStateChange: true)
+	sendEvent(name: "wdwind_dir", value: wd.everything.weather.wind.direction.cardinal, isStateChange: true)
+	sendEvent(name: "wdwind_degree", value: wd.everything.weather.wind.direction.degrees, isStateChange: true)
+	sendEvent(name: "wdprecip_today_in", value: wd.everything.weather.rainfall.daily.in, unit: "IN", isStateChange: true)
+	sendEvent(name: "wdprecip_today_mm", value: wd.everything.weather.rainfall.daily.mm, unit: "MM", isStateChange: true)
+	sendEvent(name: "wdprecip_today", value: (isRainMetric ? wd.everything.weather.rainfall.daily.mm : wd.everything.weather.rainfall.daily.in), unit: "${(isRainMetric ? 'MM' : 'IN')}")
+	sendEvent(name: "wddewpoint_c", value: wd.everything.weather.dew_point.current.c, unit: "C", isStateChange: true)
+	sendEvent(name: "wddewpoint_f", value: wd.everything.weather.dew_point.current.f, unit: "F", isStateChange: true)
+	sendEvent(name: "wddewpoint", value: (isFahrenheit ? wd.everything.weather.dew_point.current.f : wd.everything.weather.dew_point.current.f), unit: "${(isFahrenheit ? 'F' : 'C')}")
+	sendEvent(name: "wdtemperature_c", value: wd.everything.weather.temperature.current.c, unit: "C", isStateChange: true)   	
+	sendEvent(name: "wdtemperature_F", value: wd.everything.weather.temperature.current.f, unit: "F", isStateChange: true)    	
+	sendEvent(name: "wdtemperature", value: (isFahrenheit ? wd.everything.weather.temperature.current.f : wd.everything.weather.temperature.current.c), unit: "${(isFahrenheit ? 'F' : 'C')}")	
+	sendEvent(name: "wdwind_kph", value: wd.everything.weather.wind.max_gust_speed.kmh, unit: "KPH", isStateChange: true)  
+	sendEvent(name: "wdwind_mph", value: wd.everything.weather.wind.avg_speed.mph, unit: "MPH", isStateChange: true)
+	sendEvent(name: "wdwind", value: (isDistanceMetric ? wd.everything.weather.wind.max_gust_speed.kmh : wd.everything.weather.wind.max_gust_speed.mph), unit: "${(isDistanceMetric ? 'MPH' : 'KPH')}")
+	sendEvent(name: "wdwind_gust_kph", value: wd.everything.weather.wind.max_gust_speed.kmh, isStateChange: true) 
+	sendEvent(name: "wdwind_gust_mph", value: wd.everything.weather.wind.max_gust_speed.mph, isStateChange: true) 
+	sendEvent(name: "wdwind_gust", value: (isDistanceMetric ? wd.everything.weather.wind.max_gust_speed.kmh : wd.everything.weather.wind.max_gust_speed.mph), unit: "${(isDistanceMetric ? 'MPH' : 'KPH')}")
+	sendEvent(name: "wdpressure_mb", value: wd.everything.weather.pressure.current.mb, unit: "mb", isStateChange: true)
+	sendEvent(name: "wdpressure_in", value: wd.everything.weather.pressure.current.inhg, unit: "inhg", isStateChange: true)
+	sendEvent(name: "wdpressure"", value: (isPressureMetric ? wd.everything.weather.pressure.current.mb : wd.everything.weather.pressure.current.inhg), unit: "${(isDistanceMetric ? 'In' : 'MB')}")
+
+	return getWDdata
+	
+	if(sourcecity){
+		sendEvent(name: "city", value: wd.station.name.split(/ /)[0], isStateChange: true)
+	} else {
+		sendEvent(name: "city", value: xu.location.name, isStateChange: true)
+	}		
+	if(sourcefeelsLike){
+
+		sendEvent(name: "feelsLike", value: wd.everything.weather.apparent_temperature.current.f, isStateChange: true)
+	} else {
+		sendEvent(name: "feelsLike", value: xu.current.feelslike_f, unit: "F", isStateChange: true)
+	}
+	if(sourceicon){
+		sendEvent(name: "weatherIcon", value: resp1.data.everything.forecast.icon.code, isStateChange: true)
+	} else {
+		if(iconType == false){   
+			sendEvent(name: "weatherIcon", value: "http:" + xu.forecast.forecastday[0].day.condition.icon, isStateChange: true)
+		}
+		if(iconType == true){ 
+			sendEvent(name: "weatherIcon", value: xu.current.condition.icon, isStateChange: true)
+		}
+	}
+	if(sourcelocalSunset){
+		sendEvent(name: "localSunset", value: wd.everything.astronomy.sun.sunset_time.hour + ":" + wd.everything.astronomy.sun.sunset_time.minute, descriptionText: "Sunset today at is $localSunset", isStateChange: true)
+	} else {
+		sendEvent(name: "localSunset", value: xu.forecast.forecastday[0].astro.sunset, descriptionText: "Sunset today at is $localSunset", isStateChange: true)
+	}
+	if(sourcelocalSunrise){
+		sendEvent(name: "localSunrise", value: wd.everything.astronomy.sun.sunrise_time.hour + ":" + wd.everything.astronomy.sun.sunrise_time.minute, descriptionText: "Sunrise today is at $localSunrise", isStateChange: true)
+	} else {
+		sendEvent(name: "localSunrise", value: xu.forecast.forecastday[0].astro.sunrise, descriptionText: "Sunrise today is at $localSunrise", isStateChange: true)
+	}
+	if(sourcemoonPhase){
+		sendEvent(name: "moonAge", value: wd.everything.astronomy.moon.moon_age.toDouble(), isStateChange: true)
+		if (wd.everything.astronomy.moon.moon_age.toDouble() >= 0 && wd.everything.astronomy.moon.moon_age.toDouble() < 4) {sendEvent(name: "moonPhase", value: "New Moon", isStateChange: true)}
+		if (wd.everything.astronomy.moon.moon_age.toDouble() >= 4 && wd.everything.astronomy.moon.moon_age.toDouble() < 7) {sendEvent(name: "moonPhase", value: "Waxing Crescent", isStateChange: true)}
+		if (wd.everything.astronomy.moon.moon_age.toDouble() >= 7 && wd.everything.astronomy.moon.moon_age.toDouble() < 10) {sendEvent(name: "moonPhase", value: "First Quarter", isStateChange: true)}
+		if (wd.everything.astronomy.moon.moon_age.toDouble() >= 10 && wd.everything.astronomy.moon.moon_age.toDouble() < 14) {sendEvent(name: "moonPhase", value: "Waxing Gibbous", isStateChange: true)}
+		if (wd.everything.astronomy.moon.moon_age.toDouble() >= 14 && wd.everything.astronomy.moon.moon_age.toDouble() < 18) {sendEvent(name: "moonPhase", value: "Full Moon", isStateChange: true)}
+		if (wd.everything.astronomy.moon.moon_age.toDouble() >= 18 && wd.everything.astronomy.moon.moon_age.toDouble() < 22) {sendEvent(name: "moonPhase", value: "Waning Gibbous", isStateChange: true)}
+		if (wd.everything.astronomy.moon.moon_age.toDouble() >= 22 && wd.everything.astronomy.moon.moon_age.toDouble() < 26) {sendEvent(name: "moonPhase", value: "Last Quarter", isStateChange: true)}
+		if (wd.everything.astronomy.moon.moon_age.toDouble() >= 26) {sendEvent(name: "moonPhase", value: "Waxing Gibbous", isStateChange: true)}
+	} else {
+		sendEvent(name: "moonPhase", value: xu.forecast.forecastday[0].astro.moon_phase , isStateChange: true)
+	}
+	if(sourcemoonIllumination){
+		sendEvent(name: "moonIllumination", value: wd.everything.astronomy.moon.moon_phase + "%", isStateChange: true)
+	} else {
+		sendEvent(name: "moonIllumination", value: xu.forecast.forecastday[0].astro.moon_illumination  + "%" , isStateChange: true)
+	}
+	if(sourceIllumination){
+			 sendEvent(name: "illuminance", value: wd.everything.weather.solar.irradiance.wm2, unit: "lux", isStateChange: true)
+	} else {
+		sendEvent(name: "illuminance", value: String.format("%,d", alux))
+	}
+//	if(sourcesolarradiation){
+		if(illume){	
+			 sendEvent(name: "solarradiation", value: wd.everything.weather.solar.irradiance.wm2, unit: "wm2", isStateChange: true)
+		}
+		if(!illume){
+			sendEvent(name: "solarradiation", value: "This station does not send Solar Radiation data", isStateChange: true)
+		}   
+	}
+	if(sourcestate){
+		sendEvent(name: "state", value: wd.station.name.split(/ /)[1], isStateChange: true)
+	} else {
+		sendEvent(name: "state", value: xu.location.region)
+	}
+	if(sourceUV){
+		sendEvent(name: "UV", value: wd.everything.weather.uv.uvi, isStateChange: true)
+	} else {
+		sendEvent(name: "UV", value: xu.forecast.forecastday[0].day.uv, isStateChange: true)
+	}
+	sendEvent(name: "weather", value: wd.everything.forecast.davis_forecast, isStateChange: true)
+	sendEvent(name: "humidity", value: wd.everything.weather.humidity.current, isStateChange: true)
+	if(iconType == true){ 
+	   sendEvent(name: "weatherIcon", value: wd.everything.forecast.icon.code, isStateChange: true)
+	}    
+	sendEvent(name: "wdobservation_time", value: "Last updated on "  + Date.parse("d/M/yyyy", wd.time.date).format("MMMM d,") + " " + Date.parse("hh:mm", wd.time.time).format("h:mm a"), isStateChange: true)
+	sendEvent(name: "wind_dir", value: wd.everything.weather.wind.direction.cardinal, isStateChange: true)
+
+// end PWS data poll		Start APIXI.com data poll
+	if(summaryType == true){
+		if (WeatherSummeryFormat == "Celsius, Miles & MPH"){
+			sendEvent(name: "weatherSummary", value: "Weather summary for" + " " + wd.station.name.split(/ /)[0] + ", " + wd.station.name.split(/ /)[1] 
+			+ " updated at " + Date.parse("hh:mm", wd.time.time).format("h:mm a") + " on " + Date.parse("d/M/yyyy", wd.time.date).format("MMMM d") + ". "  
+			+ xu.forecast.forecastday[0].day.condition.text + " with a high of " + xu.data.forecast.forecastday[0].day.maxtemp_c + " degrees, " + "and a low of " 
+			+ xu.forecast.forecastday[0].day.mintemp_c  + " degrees. " + "Humidity is currently around " + wd.everything.weather.humidity.current + "% and temperature is " 
+			+ wd.everything.weather.temperature.current.c + " degrees. " + " The temperature feels like it's " + xu.current.feelslike_c + " degrees. " 
+			+ "Wind is from the " + wd.everything.weather.wind.direction.cardinal
+			+ " at " + wd.everything.weather.wind.avg_speed.mph + " mph" + ", with gusts up to " + wd.everything.weather.wind.max_gust_speed.mph + " mph" + ". Visibility is around " 
+			+ xu.current.vis_miles + " miles." , isStateChange: true
+			)  
+		}
+		if (WeatherSummeryFormat == "Fahrenheit, Miles & MPH"){
+			sendEvent(name: "weatherSummary", value: "Weather summary for" + " " + wd.station.name.split(/ /)[0] + ", " + wd.station.name.split(/ /)[1] 
+			+ " updated at " + Date.parse("hh:mm", wd.time.time).format("h:mm a") + " on " + Date.parse("d/M/yyyy", wd.time.date).format("MMMM d") + ". "  
+			+ xu.forecast.forecastday[0].day.condition.text + " with a high of " + xu.data.forecast.forecastday[0].day.maxtemp_f + " degrees, " + "and a low of " 
+			+ xu.forecast.forecastday[0].day.mintemp_f  + " degrees. " + "Humidity is currently around " + wd.everything.weather.humidity.current + "% and temperature is " 
+			+ wd.everything.weather.temperature.current.f + " degrees. " + " The temperature feels like it's " + xu.current.feelslike_f + " degrees. " 
+			+ "Wind is from the " + wd.everything.weather.wind.direction.cardinal
+			+ " at " + wd.everything.weather.wind.avg_speed.mph + " mph" + ", with gusts up to " + wd.everything.weather.wind.max_gust_speed.mph + " mph" + ". Visibility is around " 
+			+ xu.current.vis_miles + " miles." , isStateChange: true
+			)  
+		}   
+		 if (WeatherSummeryFormat == "Celsius, Kilometres & KPH"){
+			sendEvent(name: "weatherSummary", value: "Weather summary for" + " " + wd.station.name.split(/ /)[0] + ", " + wd.station.name.split(/ /)[1] 
+			+ " updated at " + Date.parse("hh:mm", wd.time.time).format("h:mm a") + " on " + Date.parse("d/M/yyyy", wd.time.date).format("MMMM d") + ". "  
+			+ xu.forecast.forecastday[0].day.condition.text + " with a high of " + xu.data.forecast.forecastday[0].day.maxtemp_c + " degrees, " + "and a low of " 
+			+ xu.forecast.forecastday[0].day.mintemp_c  + " degrees. " + "Humidity is currently around " + wd.everything.weather.humidity.current + "% and temperature is " 
+			+ wd.everything.weather.temperature.current.c + " degrees. " + " The temperature feels like it's " + xu.current.feelslike_c + " degrees. " 
+			+ "Wind is from the " + wd.everything.weather.wind.direction.cardinal
+			+ " at " + wd.everything.weather.wind.avg_speed.kmh + " kph" + ", with gusts up to " + wd.everything.weather.wind.max_gust_speed.kmh + " kph" + ". Visibility is around " 
+			+ xu.current.vis_km + " kilometers." , isStateChange: true
+			)  
+		}                
+	}    
+	if(summaryType == false){
+		if (WeatherSummeryFormat == "Celsius, Miles & MPH"){
+			sendEvent(name: "weatherSummary", value: wd.everything.forecast.davis_forecast + ". " + " Today's High:" + wd.everything.weather.temperature.current.high.c + ", Today's Low:" 
+			+ wd.everything.weather.tempurature.current.low.c  +  ". Humidity: " + wd.everything.weather.current.humidity + "% Temperature: " 
+			+ wd.everything.weather.tempurature.current.c  + ". Wind Direction: " + wd.everything.weather.wind.direction.cardinal + ". Wind Speed: " + wd.everything.weather.avg_speed.mph + " mph" 
+			+ ", Gust: " + wd.everything.weather.max_gust_speed.mph + " mph.", isStateChange: true
+			)  
+		}
+		if (WeatherSummeryFormat == "Fahrenheit, Miles & MPH"){
+			sendEvent(name: "weatherSummary", value: wd.everything.forecast.davis_forecast + ". " + " Today's High:" + wd.everything.weather.temperature.current.high.f + ", Today's Low:" 
+			+ wd.everything.weather.tempurature.current.low.f  +  ". Humidity: " + wd.everything.weather.current.humidity + "% Temperature: " 
+			+ wd.everything.weather.tempurature.current.f  + ". Wind Direction: " + wd.everything.weather.wind.direction.cardinal + ". Wind Speed: " + wd.everything.weather.avg_speed.mph + " mph" 
+			+ ", Gust: " + wd.everything.weather.max_gust_speed.mph + " mph.", isStateChange: true
+			)  
+		}
+		 if (WeatherSummeryFormat ==  "Celsius, Kilometres & KPH"){
+			sendEvent(name: "weatherSummary", value: wd.everything.forecast.davis_forecast + ". " + " Today's High:" + wd.everything.weather.temperature.current.high.c + ", Today's Low:" 
+			+ wd.everything.weather.tempurature.current.low.c  +  ". Humidity: " + wd.everything.weather.current.humidity + "% Temperature: " 
+			+ wd.everything.weather.tempurature.current.c  + ". Wind Direction: " + wd.everything.weather.wind.direction.cardinal + ". Wind Speed: " + wd.everything.weather.avg_speed.kmh + " kph" 
+			+ ", Gust: " + wd.everything.weather.max_gust_speed.kmh + " kph.", isStateChange: true
+			)  
+		}
+	}                     
+
 }
-def Report(){
-  def pwsobvTime = pwsobservation_time.value
-  log.info "PWS last updated: $pwsobvTime"
-  def apixuobvTime = apixuobservation_time.value
-  log.info "APIXU last updated: $apixuobvTime"  
+
+
+private getXUdata()   {
+    def xu = [:]
+    def params = [ uri: "https://api.apixu.com/v1/forecast.json?key=$apixuKey&q=$zipCode&days=3" ]
+    try {
+        httpGet(params)		{ resp -> xu << resp.data }
+    } catch (e) { log.error "http call failed for ApiXU weather api: $e" }
+    return xu
 }
+
+private getWDdata()   {
+    def wd = [:]
+    def params = [ uri: "${wdpollLocation}/everything.php" ]
+    try {
+        httpGet(params)		{ resp -> wd << resp.data }
+    } catch (e) { log.error "http call failed for Weather-Display weather api: $e" }
+    return wd
+}
+def refresh()       { poll() }
+
+def configure()     { poll() }
+
+private getSunriseAndSunset(latitude, longitude, forDate)	{
+    log.debug "lat: $latitude"
+    log.debug "lon: $longitude"
+    log.debug "forDate: $forDate"
+
+    def params = [ uri: "https://api.sunrise-sunset.org/json?lat=$latitude&lng=$longitude&date=$forDate&formatted=0" ]
+    def sunRiseAndSet = [:]
+    try {
+        httpGet(params)		{ resp -> sunRiseAndSet = resp.data }
+    } catch (e) { log.error "http call failed for sunrise and sunset api: $e" }
+    return sunRiseAndSet
+}
+
+private estimateLux(localTime, sunriseTime, sunsetTime, noonTime, twilight_begin, twilight_end, condition_text, cloud, tz_id)     {
+    log.debug "localTime: $localTime"
+    log.debug "twilight_begin: $twilight_begin"
+    log.debug "sunriseTime: $sunriseTime"
+    log.debug "noonTime: $noonTime"
+    log.debug "sunsetTime: $sunsetTime"
+    log.debug "twilight_end: $twilight_end"
+    log.debug "condition_text: $condition_text"
+    log.debug "cloud: $cloud"
+    log.debug "tz_id: $tz_id"
+
+    def tZ = TimeZone.getTimeZone(tz_id)
+    def lux = 0l
+    def aFCC = true
+    def l
+
+    if (timeOfDayIsBetween(sunriseTime, noonTime, localTime, tZ))      {
+        log.debug "between sunrise and noon"
+        l = (((localTime.getTime() - sunriseTime.getTime()) * 10000f) / (noonTime.getTime() - sunriseTime.getTime()))
+        lux = (l < 50f ? 50l : l.trunc(0) as long)
+    }
+    else if (timeOfDayIsBetween(noonTime, sunsetTime, localTime, tZ))      {
+        log.debug "between noon and sunset"
+        l = (((sunsetTime.getTime() - localTime.getTime()) * 10000f) / (sunsetTime.getTime() - noonTime.getTime()))
+        lux = (l < 50f ? 50l : l.trunc(0) as long)
+    }
+    else if (timeOfDayIsBetween(twilight_begin, sunriseTime, localTime, tZ))      {
+        log.debug "between sunrise and twilight"
+        l = (((localTime.getTime() - twilight_begin.getTime()) * 50f) / (sunriseTime.getTime() - twilight_begin.getTime()))
+        lux = (l < 10f ? 10l : l.trunc(0) as long)
+    }
+    else if (timeOfDayIsBetween(sunsetTime, twilight_end, localTime, tZ))      {
+        log.debug "between sunset and twilight"
+        l = (((twilight_end.getTime() - localTime.getTime()) * 50f) / (twilight_end.getTime() - sunsetTime.getTime()))
+        lux = (l < 10f ? 10l : l.trunc(0) as long)
+    }
+    else if (!timeOfDayIsBetween(twilight_begin, twilight_end, localTime, tZ))      {
+        log.debug "between non-twilight"
+        lux = 5l
+        aFCC = false
+    }
+    
+    if (aFCC)       lux = ((lux * (100l - (cloud.toInteger() / 3l))) / 100l) as long;
+    return lux
+}
+
+private timeOfDayIsBetween(fromDate, toDate, checkDate, timeZone)     {
+    return (!checkDate.before(fromDate) && !checkDate.after(toDate))
+}
+
+// Need to build out final variables here.
+
