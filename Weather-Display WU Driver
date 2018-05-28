@@ -142,6 +142,42 @@ metadata {
         attribute "wdmoonIllumination", "string"
         attribute "wdsolarradiation", "number"
 		attribute "wdUV", "number"
+// Presentation variablles
+		attribute "city", "string"
+		attribute "state", "string"
+		attribute "location", "string"
+		attribute "country", "string"
+		attribute "lat", "string"
+		attribute "lon", "string"
+		attribute "local_time", "string"
+		attribute "local_date", "string"
+		attribute "feelsLike", "string"
+		attribute "forecastConditions", "string"
+		attribute "weatherIcon", "string"
+		attribute "localSunset", "string"
+        attribute "localSunrise", "string"
+        attribute "moonAge", "string"
+		attribute "moonPhase", "string"
+		attribute "moonIllumination", "string"
+		attribute "lluminance", "string"
+		attribute "solarradiation", "string"
+		attribute "UV", "string"
+		attribute "humidity", "string"
+		attribute "wind_dir", "string"
+		attribute "wind_degree", "string"
+		attribute "precip_today", "string"
+		attribute "dewpoint", "string"
+		attribute "temperature", "string"
+		attribute "wind", "string"
+		attribute "wind_gust", "string"
+		attribute "pressure", "string"
+		attribute "vis", "string"
+		attribute "rainTomorrow", "string"
+		attribute "rainDayAfterTomorrow", "string"
+		attribute "forecastHigh", "string"
+		attribute "forecastLow", "string"
+		attribute "wind_string", "string"
+   
 		
 // SunriseSunSet Sourced variables
         attribute "local_sunrise", "string"
@@ -195,10 +231,8 @@ def updated() {
     state.version = "1.1.0"    // ************************* Update as required *************************************
     unschedule()
     state.tz = null
-    def pollIntervalCmd = (settings?.pollInterval)
-    log.debug "pollIntervalCmd: $pollIntervalCmd"
     if(autoPoll){
-	    def pollIntervalCmd = (settings?.pollInterval)
+    def pollIntervalCmd = (settings?.pollInterval)
     	log.debug "pollIntervalCmd: $pollIntervalCmd"
         Random rand = new Random(now())
     	def randomSeconds = rand.nextInt(60)
