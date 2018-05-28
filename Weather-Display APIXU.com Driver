@@ -445,18 +445,12 @@ def poll(){
     if (wd.everything.astronomy.moon.moon_age.toDouble() >= 26) {sendEvent(name: "moonPhase", value: "Waxing Gibbous", isStateChange: true)}
     sendEvent(name: "moonIllumination", value: wd.everything.astronomy.moon.moon_phase + "%", isStateChange: true)
 	if(sourceIllumination){
-			 sendEvent(name: "illuminance", value: wd.everything.weather.solar.irradiance.wm2, unit: "lux", isStateChange: true)
+		sendEvent(name: "illuminance", value: wd.everything.weather.solar.irradiance.wm2, unit: "lux", isStateChange: true)
+        	sendEvent(name: "solarradiation", value: wd.everything.weather.solar.irradiance.wm2, unit: "wm2", isStateChange: true)
 	} else {
 		sendEvent(name: "illuminance", value: String.format("%,d", alux))
-	}
-	if(sourcesolarradiation){
-		if(illume){	
-			 sendEvent(name: "solarradiation", value: wd.everything.weather.solar.irradiance.wm2, unit: "wm2", isStateChange: true)
-		}
-		if(!illume){
-			sendEvent(name: "solarradiation", value: "This station does not send Solar Radiation data", isStateChange: true)
-		}   
-	}
+		sendEvent(name: "solarradiation", value: "This station does not send Solar Radiation data", isStateChange: true)
+    }
 	if(sourceUV){
 		sendEvent(name: "UV", value: wd.everything.weather.uv.uvi, isStateChange: true)
 	} else {
