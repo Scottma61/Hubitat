@@ -142,7 +142,43 @@ metadata {
         attribute "wmoonIllumination", "string"
         attribute "wsolarradiation", "number"
 		attribute "wUV", "number"
-		
+
+// Presentation variablles
+		attribute "city", "string"
+		attribute "state", "string"
+		attribute "location", "string"
+		attribute "country", "string"
+		attribute "lat", "string"
+		attribute "lon", "string"
+		attribute "local_time", "string"
+		attribute "local_date", "string"
+		attribute "feelsLike", "string"
+		attribute "forecastConditions", "string"
+		attribute "weatherIcon", "string"
+		attribute "localSunset", "string"
+        attribute "localSunrise", "string"
+        attribute "moonAge", "string"
+		attribute "moonPhase", "string"
+		attribute "moonIllumination", "string"
+		attribute "lluminance", "string"
+		attribute "solarradiation", "string"
+		attribute "UV", "string"
+		attribute "humidity", "string"
+		attribute "wind_dir", "string"
+		attribute "wind_degree", "string"
+		attribute "precip_today", "string"
+		attribute "dewpoint", "string"
+		attribute "temperature", "string"
+		attribute "wind", "string"
+		attribute "wind_gust", "string"
+		attribute "pressure", "string"
+		attribute "vis", "string"
+		attribute "rainTomorrow", "string"
+		attribute "rainDayAfterTomorrow", "string"
+		attribute "forecastHigh", "string"
+		attribute "forecastLow", "string"
+		attribute "wind_string", "string"
+   
 // SunriseSunSet Sourced variables
         attribute "local_sunrise", "string"
         attribute "local_sunset", "string"
@@ -195,16 +231,14 @@ def updated() {
     state.version = "1.1.0"    // ************************* Update as required *************************************
     unschedule()
     state.tz = null
-    def pollIntervalCmd = (settings?.pollInterval)
-    log.debug "pollIntervalCmd: $pollIntervalCmd"
     if(autoPoll){
 	    def pollIntervalCmd = (settings?.pollInterval)
-    	log.debug "pollIntervalCmd: $pollIntervalCmd"
+//    	log.debug "pollIntervalCmd: $pollIntervalCmd"
         Random rand = new Random(now())
     	def randomSeconds = rand.nextInt(60)
-		log.debug "randomSeconds: $randomSeconds"
+//		log.debug "randomSeconds: $randomSeconds"
         def sched = "${randomSeconds} 0/${pollIntervalCmd} * * * ?"
-    	log.debug "Scheduling polling task with \"${sched}\""
+//    	log.debug "Scheduling polling task with \"${sched}\""
         schedule("${sched}", "pollSchedule")
     }
     poll()
@@ -232,9 +266,6 @@ def poll(){
         return;
 	}
 
-// APIXU   [location:[name:Kolkata, region:West Bengal, country:India, lat:22.57, lon:88.37, tz_id:Asia/Kolkata, localtime_epoch:1526751861, localtime:2018-05-19 23:14], current:[last_updated_epoch:1526751017, last_updated:2018-05-19 23:00, temp_c:28.0, temp_f:82.4, is_day:0, condition:[text:Mist, icon://cdn.apixu.com/weather/64x64/night/143.png, code:1030], wind_mph:10.5, wind_kph:16.9, wind_degree:180, wind_dir:S, pressure_mb:1004.0, pressure_in:30.1, precip_mm:0.0, precip_in:0.0, humidity:84, cloud:25, feelslike_c:33.0, feelslike_f:91.4, vis_km:3.0, vis_miles:1.0], forecast:[forecastday:[[date:2018-05-19, date_epoch:1526688000, day:[maxtemp_c:39.3, maxtemp_f:102.7, mintemp_c:28.6, mintemp_f:83.5, avgtemp_c:32.3, avgtemp_f:90.1, maxwind_mph:15.4, maxwind_kph:24.8, totalprecip_mm:0.0, totalprecip_in:0.0, avgvis_km:16.5, avgvis_miles:10.0, avghumidity:65.0, condition:[text:Thundery outbreaks possible, icon://cdn.apixu.com/weather/64x64/day/200.png, code:1087], uv:11.6], astro:[sunrise:04:55 AM, sunset:06:11 PM, moonrise:08:30 AM, moonset:10:13 PM]], [date:2018-05-20, date_epoch:1526774400, day:[maxtemp_c:41.0, maxtemp_f:105.8, mintemp_c:29.3, mintemp_f:84.7, avgtemp_c:33.4, avgtemp_f:92.1, maxwind_mph:21.9, maxwind_kph:35.3, totalprecip_mm:0.0, totalprecip_in:0.0, avgvis_km:19.2, avgvis_miles:11.0, avghumidity:54.0, condition:[text:Partly cloudy, icon://cdn.apixu.com/weather/64x64/day/116.png, code:1003], uv:11.4], astro:[sunrise:04:54 AM, sunset:06:12 PM, moonrise:09:34 AM, moonset:11:07 PM]], [date:2018-05-21, date_epoch:1526860800, day:[maxtemp_c:38.5, maxtemp_f:101.3, mintemp_c:28.6, mintemp_f:83.5, avgtemp_c:32.9, avgtemp_f:91.2, maxwind_mph:18.3, maxwind_kph:29.5, totalprecip_mm:0.0, totalprecip_in:0.0, avgvis_km:19.9, avgvis_miles:12.0, avghumidity:58.0, condition:[text:Partly cloudy, icon://cdn.apixu.com/weather/64x64/day/116.png, code:1003], uv:10.3], astro:[sunrise:04:54 AM, sunset:06:12 PM, moonrise:10:36 AM, moonset:11:57 PM]]]]]
-
-// Sunrise-Sunset   [results:[sunrise:2018-05-18T23:24:30+00:00, sunset:2018-05-19T12:41:31+00:00, solar_noon:2018-05-19T06:03:00+00:00, day_length:47821, civil_twilight_begin:2018-05-18T23:00:12+00:00, civil_twilight_end:2018-05-19T13:05:48+00:00, nautical_twilight_begin:2018-05-18T22:31:16+00:00, nautical_twilight_end:2018-05-19T13:34:44+00:00, astronomical_twilight_begin:2018-05-18T22:01:24+00:00, astronomical_twilight_end:2018-05-19T14:04:37+00:00], status:OK]
     def isFahrenheit = tempFormat == "Fahrenheit" ? true : false
     def isDistanceMetric = distanceFormat == "Kilometers (kph)" ? true : false
     def isRainMetric = rainFormat == "Millimetres" ? true : false
@@ -328,8 +359,8 @@ def poll(){
     sendEvent(name: "xuforecastLow_f", value: xu.forecast.forecastday[0].day.mintemp_f, unit: "F", isStateChange: true)
     sendEvent(name: "xuforecastLow", value: (isFahrenheit ? xu.forecast.forecastday[0].day.mintemp_f : xu.forecast.forecastday[0].day.mintemp_c), unit: "${(isFahrenheit ? 'F' : 'C')}")
     sendEvent(name: "xuwind_string_mi", value: "Wind is from " + xu.current.wind_dir + " at " + xu.current.wind_mph + " MPH", isStateChange: true)
-    sendEvent(name: "xuwind_string_km", value: "Wind is from " + xu.current.wind_dir + " at " + xu.current.wind_kmh + " KPH", isStateChange: true)
-    sendEvent(name: "xuwind_string", value: (isDistanceMetric ? "Wind is from " + xu.current.wind_dir + " at " + xu.current.wind_kmh + " KPH" : "Wind is from " + xu.current.wind_dir + " at " + xu.current.wind_mph + " MPH"))
+    sendEvent(name: "xuwind_string_km", value: "Wind is from " + xu.current.wind_dir + " at " + xu.current.wind_kph + " KPH", isStateChange: true)
+    sendEvent(name: "xuwind_string", value: (isDistanceMetric ? "Wind is from " + xu.current.wind_dir + " at " + xu.current.wind_kph + " KPH" : "Wind is from " + xu.current.wind_dir + " at " + xu.current.wind_mph + " MPH"))
     
     def lux = estimateLux(localTime, sunriseTime, sunsetTime, noonTime, twilight_begin, twilight_end, xu.current.condition.text, xu.current.cloud, xu.location.tz_id)
     sendEvent(name: "xuilluminance", value: lux)
@@ -380,15 +411,18 @@ def poll(){
 	sendEvent(name: "wdtemperature_c", value: wd.everything.weather.temperature.current.c, unit: "C", isStateChange: true)   	
 	sendEvent(name: "wdtemperature_F", value: wd.everything.weather.temperature.current.f, unit: "F", isStateChange: true)    	
 	sendEvent(name: "wdtemperature", value: (isFahrenheit ? wd.everything.weather.temperature.current.f : wd.everything.weather.temperature.current.c), unit: "${(isFahrenheit ? 'F' : 'C')}")	
-	sendEvent(name: "wdwind_kph", value: wd.everything.weather.wind.max_gust_speed.kmh, unit: "KPH", isStateChange: true)  
+	sendEvent(name: "wdwind_kph", value: wd.everything.weather.wind.avg_speed.kmh, unit: "KPH", isStateChange: true)  
 	sendEvent(name: "wdwind_mph", value: wd.everything.weather.wind.avg_speed.mph, unit: "MPH", isStateChange: true)
-	sendEvent(name: "wdwind", value: (isDistanceMetric ? wd.everything.weather.wind.max_gust_speed.kmh : wd.everything.weather.wind.max_gust_speed.mph), unit: "${(isDistanceMetric ? 'MPH' : 'KPH')}")
+	sendEvent(name: "wdwind", value: (isDistanceMetric ? wd.everything.weather.wind.avg_speed.kmh : wd.everything.weather.wind.avg_speed.mph), unit: "${(isDistanceMetric ? 'MPH' : 'KPH')}")
 	sendEvent(name: "wdwind_gust_kph", value: wd.everything.weather.wind.max_gust_speed.kmh, isStateChange: true) 
 	sendEvent(name: "wdwind_gust_mph", value: wd.everything.weather.wind.max_gust_speed.mph, isStateChange: true) 
 	sendEvent(name: "wdwind_gust", value: (isDistanceMetric ? wd.everything.weather.wind.max_gust_speed.kmh : wd.everything.weather.wind.max_gust_speed.mph), unit: "${(isDistanceMetric ? 'MPH' : 'KPH')}")
 	sendEvent(name: "wdpressure_mb", value: wd.everything.weather.pressure.current.mb, unit: "mb", isStateChange: true)
 	sendEvent(name: "wdpressure_in", value: wd.everything.weather.pressure.current.inhg, unit: "inhg", isStateChange: true)
 	sendEvent(name: "wdpressure", value: (isPressureMetric ? wd.everything.weather.pressure.current.mb : wd.everything.weather.pressure.current.inhg), unit: "${(isDistanceMetric ? 'In' : 'MB')}")
+    sendEvent(name: "wdwind_string_mi", value: "Wind is from " + wd.everything.weather.wind.direction.cardinal + " at " + wd.everything.weather.wind.avg_speed.mph + " MPH", isStateChange: true)
+    sendEvent(name: "wdwind_string_km", value: "Wind is from " + wd.everything.weather.wind.direction.cardinal + " at " + wd.everything.weather.wind.avg_speed.kmh + " KPH", isStateChange: true)
+    sendEvent(name: "wdwind_string", value: "Wind is from " + wd.everything.weather.wind.direction.cardinal + " at " + (isDistanceMetric ? wd.everything.weather.wind.avg_speed.kmh + " KPH" : wd.everything.weather.wind.avg_speed.mph + " MPH"))
 
 	if(sourcecity){
 		sendEvent(name: "city", value: wd.station.name.split(/ /)[0], isStateChange: true)
@@ -448,7 +482,7 @@ def poll(){
     if (wd.everything.astronomy.moon.moon_age.toDouble() >= 26) {sendEvent(name: "moonPhase", value: "Waxing Gibbous", isStateChange: true)}
     sendEvent(name: "moonIllumination", value: wd.everything.astronomy.moon.moon_phase + "%", isStateChange: true)
 	if(sourceIllumination){
-		sendEvent(name: "illuminance", value: wd.everything.weather.solar.irradiance.wm2, unit: "lux", isStateChange: true)
+			 sendEvent(name: "illuminance", value: wd.everything.weather.solar.irradiance.wm2, unit: "lux", isStateChange: true)
         	sendEvent(name: "solarradiation", value: wd.everything.weather.solar.irradiance.wm2, unit: "wm2", isStateChange: true)
 	} else {
 		sendEvent(name: "illuminance", value: String.format("%,d", alux))
@@ -473,7 +507,7 @@ def poll(){
     sendEvent(name: "rainDayAfterTomorrow", value: (isRainMetric ? xu.forecast.forecastday[2].day.totalprecip_mm : xu.forecast.forecastday[2].day.totalprecip_in), unit: "${(isRainMetric ? 'mm' : 'in')}")
     sendEvent(name: "forecastHigh", value: (isFahrenheit ? xu.forecast.forecastday[0].day.maxtemp_f : xu.forecast.forecastday[0].day.maxtemp_c), unit: "${(isFahrenheit ? 'F' : 'C')}")
     sendEvent(name: "forecastLow", value: (isFahrenheit ? xu.forecast.forecastday[0].day.mintemp_f : xu.forecast.forecastday[0].day.mintemp_c), unit: "${(isFahrenheit ? 'F' : 'C')}")
-    sendEvent(name: "wind_string", value: (isDistanceMetric ? "Wind is from " + xu.current.wind_dir + " at " + xu.current.wind_kmh + " KPH" : "Wind is from " + xu.current.wind_dir + " at " + xu.current.wind_mph + " MPH"))
+    sendEvent(name: "wind_string", value: "Wind is from " + wd.everything.weather.wind.direction.cardinal + " at " + (isDistanceMetric ? wd.everything.weather.wind.avg_speed.kmh + " KPH" : wd.everything.weather.wind.avg_speed.mph + " MPH"))
     
     if(summaryType == true){
 		if (weatherFormat == "Celsius, Miles & MPH"){
@@ -604,27 +638,27 @@ private estimateLux(localTime, sunriseTime, sunsetTime, noonTime, twilight_begin
     def l
 
     if (timeOfDayIsBetween(sunriseTime, noonTime, localTime, tZ))      {
-        log.debug "between sunrise and noon"
+//        log.debug "between sunrise and noon"
         l = (((localTime.getTime() - sunriseTime.getTime()) * 10000f) / (noonTime.getTime() - sunriseTime.getTime()))
         lux = (l < 50f ? 50l : l.trunc(0) as long)
     }
     else if (timeOfDayIsBetween(noonTime, sunsetTime, localTime, tZ))      {
-        log.debug "between noon and sunset"
+//        log.debug "between noon and sunset"
         l = (((sunsetTime.getTime() - localTime.getTime()) * 10000f) / (sunsetTime.getTime() - noonTime.getTime()))
         lux = (l < 50f ? 50l : l.trunc(0) as long)
     }
     else if (timeOfDayIsBetween(twilight_begin, sunriseTime, localTime, tZ))      {
-        log.debug "between sunrise and twilight"
+//        log.debug "between sunrise and twilight"
         l = (((localTime.getTime() - twilight_begin.getTime()) * 50f) / (sunriseTime.getTime() - twilight_begin.getTime()))
         lux = (l < 10f ? 10l : l.trunc(0) as long)
     }
     else if (timeOfDayIsBetween(sunsetTime, twilight_end, localTime, tZ))      {
-        log.debug "between sunset and twilight"
+//        log.debug "between sunset and twilight"
         l = (((twilight_end.getTime() - localTime.getTime()) * 50f) / (twilight_end.getTime() - sunsetTime.getTime()))
         lux = (l < 10f ? 10l : l.trunc(0) as long)
     }
     else if (!timeOfDayIsBetween(twilight_begin, twilight_end, localTime, tZ))      {
-        log.debug "between non-twilight"
+//        log.debug "between non-twilight"
         lux = 5l
         aFCC = false
     }
