@@ -199,7 +199,7 @@ def updated() {
     log.debug "pollIntervalCmd: $pollIntervalCmd"
     if(autoPoll){
         if(pollIntervalCmd < 5 ) {  // interval is in hours
-            schedule("3 * 0/${pollIntervalCmd} * * ?", "pollSchedule")
+            schedule("3 0 0/${pollIntervalCmd} * * ?", "pollSchedule")
         } else {  // interval is in minutes
             schedule("3 0/${pollIntervalCmd} * * * ?", "pollSchedule")
         }
@@ -444,17 +444,11 @@ def poll(){
     if (wd.everything.astronomy.moon.moon_age.toDouble() >= 26) {sendEvent(name: "moonPhase", value: "Waxing Gibbous", isStateChange: true)}
     sendEvent(name: "moonIllumination", value: wd.everything.astronomy.moon.moon_phase + "%", isStateChange: true)
 	if(sourceIllumination){
-			 sendEvent(name: "illuminance", value: wd.everything.weather.solar.irradiance.wm2, unit: "lux", isStateChange: true)
+		sendEvent(name: "illuminance", value: wd.everything.weather.solar.irradiance.wm2, unit: "lux", isStateChange: true)
+        	sendEvent(name: "solarradiation", value: wd.everything.weather.solar.irradiance.wm2, unit: "wm2", isStateChange: true)
 	} else {
-		sendEvent(name: "illuminance", value: String.format("%,d", alux))
-	}
-	if(sourcesolarradiation){
-		if(illume){	
-			 sendEvent(name: "solarradiation", value: wd.everything.weather.solar.irradiance.wm2, unit: "wm2", isStateChange: true)
-		}
-		if(!illume){
-			sendEvent(name: "solarradiation", value: "This station does not send Solar Radiation data", isStateChange: true)
-		}   
+		sendEvent(name: "illuminance", value: String.format("%,d", lux), unit: "lux", isStateChange: true)
+        	sendEvent(name: "solarradiation", value: "This station does not send Solar Radiation data", isStateChange: true)(name: "illuminance", value: String.format("%,d", lux))
 	}
 	if(sourceUV){
 		sendEvent(name: "UV", value: wd.everything.weather.uv.uvi, isStateChange: true)
