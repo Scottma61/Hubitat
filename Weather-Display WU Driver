@@ -170,7 +170,7 @@ metadata {
             input "weatherFormat", "enum", required: true, defaultValue: "Fahrenheit, Miles & MPH", title: "How to format weather summary",  options: ["Celsius, Miles & MPH", "Fahrenheit, Miles & MPH", "Celsius, Kilometres & KPH"]
 	    
 	    	input "autoPoll", "bool", required: true, title: "Enable Auto Poll", defaultValue: false
-            input "pollInterval", "enum", title: "Auto Poll Interval:", required: true, defaultValue: "5 Minutes", options: [05:"5 Minutes", 10:"10 Minutes", 15:"15 Minutes", 30:"30 Minutes", 1:"1 Hour", 3:"3 Hours"]
+            input "pollInterval", "enum", title: "Auto Poll Interval:", required: true, defaultValue: "5 Minutes", options: [5:"5 Minutes", 10:"10 Minutes", 15:"15 Minutes", 30:"30 Minutes", 1:"1 Hour", 3:"3 Hours"]
 	    
             input "wdpollLocation", "text", required: true, title: "Weather-Display Data file location", defaultValue: "http://"
             input "wdlogSet", "bool", required: true, title: "Display WD data in log", defaultValue: false
@@ -195,13 +195,13 @@ def updated() {
     state.version = "1.1.0"    // ************************* Update as required *************************************
     unschedule()
     state.tz = null
-    def pollIntervalCmd = (settings?.pollInterval).toInteger()
+    def pollIntervalCmd = (settings?.pollInterval)
     log.debug "pollIntervalCmd: $pollIntervalCmd"
     if(autoPoll){
         if(pollIntervalCmd < 5 ) {  // interval is in hours
-            schedule("3 0 0/${pollIntervalCmd} * * ?", "pollSchedule")
+            schedule("3 * */${pollIntervalCmd} * * ?", "pollSchedule")
         } else {  // interval is in minutes
-            schedule("3 0/${pollIntervalCmd} * * * ?", "pollSchedule")
+            schedule("3 */${pollIntervalCmd} * * * ?", "pollSchedule")
         }
     }
     poll()
