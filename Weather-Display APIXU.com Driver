@@ -547,7 +547,7 @@ private getXUdata()   {
         log.debug "params: ${params}"       
         log.debug "response data: ${xu}"
     } 
-    if(wulogSet == false){ 
+    if(xulogSet == false){ 
         log.info "Further APIXU data logging disabled"    
     }    
     
