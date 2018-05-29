@@ -260,6 +260,7 @@ metadata {
         attribute "temp_c", "string"
         attribute "temp_f", "string"
         attribute "temp", "string"
+	attribute "temperature", "string"
         attribute "solarradiation", "string"
         attribute "UV", "number"
         attribute "vis_km", "string"
@@ -652,6 +653,7 @@ def poll(){
 	sendEvent(name: "temp_c", value: wd.everything.weather.temperature.current.c, unit: "C", isStateChange: true)   	
 	sendEvent(name: "temp_F", value: wd.everything.weather.temperature.current.f, unit: "F", isStateChange: true)    	
 	sendEvent(name: "temp", value: (isFahrenheit ? wd.everything.weather.temperature.current.f : wd.everything.weather.temperature.current.c), unit: "${(isFahrenheit ? 'F' : 'C')}")	
+	sendEvent(name: "temperature", value: (isFahrenheit ? wd.everything.weather.temperature.current.f : wd.everything.weather.temperature.current.c), unit: "${(isFahrenheit ? 'F' : 'C')}")	
 	if(sourceUV){
 		sendEvent(name: "UV", value: wd.everything.weather.uv.uvi, isStateChange: true)
 	} else {
