@@ -33,7 +33,7 @@
  *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
  *  for the specific language governing permissions and limitations under the License.
  *
- *  Last Update 05/29/2018
+ *  Last Update 05/30/2018
  * { Left room below to document version changes...}
  *
  *  
@@ -52,7 +52,7 @@
  *  
  *  
  *  
- *  
+ *  V1.3.1 - added variables for SmartTiles weather tile - 05-30-2018
  *  V1.3.0 - Made all exposed variables consistent, bug fixes. 05-29-2018
  *  V1.2.0 - Bug fixes. 05-28-2018 
  *  V1.1.0 - Major re-write incorporating @bangali's work. 05-27-2018
@@ -240,6 +240,8 @@ metadata {
 // - Current Conditions
         attribute "cloud", "string"
         attribute "condition_text", "string"
+	attribute "weather", "string"
+	attribute "weatherIcon", "string"
         attribute "condition_icon", "string"
         attribute "condition_code", "string"
         attribute "dewpoint_c", "number"
@@ -248,6 +250,7 @@ metadata {
         attribute "feelslike_c", "string"
         attribute "feelslike_f", "string"
         attribute "feelslike", "string"
+	attribute "feelsLike", "string"
         attribute "humidity", "string"
         attribute "illuminance", "string"
         attribute "is_day", "string"
@@ -347,7 +350,7 @@ metadata {
 }
 
 def updated() {
-    state.version = "1.3.0"    // ************************* Update as required *************************************
+    state.version = "1.3.1"    // ************************* Update as required *************************************
     unschedule()
     state.tz = null
     if(autoPoll){
@@ -631,14 +634,16 @@ def poll(){
 	sendEvent(name: "dewpoint", value: (isFahrenheit ? wd.everything.weather.dew_point.current.f : wd.everything.weather.dew_point.current.f), unit: "${(isFahrenheit ? 'F' : 'C')}")
 
     if(sourcefeelsLike){
-	    sendEvent(name: "FeelsLike_f", value: wd.everything.weather.apparent_temperature.current.f, isStateChange: true)
-		sendEvent(name: "FeelsLike_c", value: wd.everything.weather.apparent_temperature.current.c, isStateChange: true)
-        sendEvent(name: "feelsLike", value: (isFahrenheit ? wd.everything.weather.apparent_temperature.current.f : wd.everything.weather.apparent_temperature.current.c), unit: "${(isFahrenheit ? 'F' : 'C')}", isStateChange: true)
+	    sendEvent(name: "feelslike_f", value: wd.everything.weather.apparent_temperature.current.f, isStateChange: true)
+		sendEvent(name: "feelslike_c", value: wd.everything.weather.apparent_temperature.current.c, isStateChange: true)
+        sendEvent(name: "feelslike", value: (isFahrenheit ? wd.everything.weather.apparent_temperature.current.f : wd.everything.weather.apparent_temperature.current.c), unit: "${(isFahrenheit ? 'F' : 'C')}", isStateChange: true)
+	sendEvent(name: "feelsLike", value: (isFahrenheit ? wd.everything.weather.apparent_temperature.current.f : wd.everything.weather.apparent_temperature.current.c), unit: "${(isFahrenheit ? 'F' : 'C')}", isStateChange: true)
         sendEvent(name: "forecastConditions_text", value: wd.everything.forecast.davis_forecast, isStateChange: true)
 	} else {
 	    sendEvent(name: "feelslike_c", value: wu.current_observation.feelslike_c, unit: "C", isStateChange: true)
 	    sendEvent(name: "feelslike_f", value: wu.current_observation.feelslike_f, unit: "F", isStateChange: true)
-        sendEvent(name: "feelsLike", value: (isFahrenheit ? wu.current_observation.feelslike_f : wu.current_observation.feelslike_c), unit: "${(isFahrenheit ? 'F' : 'C')}", isStateChange: true)
+        sendEvent(name: "feelslike", value: (isFahrenheit ? wu.current_observation.feelslike_f : wu.current_observation.feelslike_c), unit: "${(isFahrenheit ? 'F' : 'C')}", isStateChange: true)
+	sendEvent(name: "feelsLike", value: (isFahrenheit ? wu.current_observation.feelslike_f : wu.current_observation.feelslike_c), unit: "${(isFahrenheit ? 'F' : 'C')}", isStateChange: true)
         sendEvent(name: "forecastCondition_text", value: wu.forecast.simpleforecast.forecastday[0].conditions, isStateChange: true)            
 	}
     sendEvent(name: "humidity", value: wd.everything.weather.humidity.current, isStateChange: true)
@@ -678,12 +683,17 @@ def poll(){
 
     if(sourceicon){
 		sendEvent(name: "condition_Icon", value: wd.everything.forecast.icon.code, isStateChange: true)
+		sendEvent(name: "weather", value: wu.current_observation.weather.replace(" ","").toLowerCase(), isStateChange: true)
+		sendEvent(name: "weatherIcon", value: wd.everything.forecast.icon.code, isStateChange: true)
 	} else {
 		if(iconType == false){   
             sendEvent(name: "condition_icon", value: wu.current_observation.icon_url, isStateChange: true)
+	    sendEvent(name: "weather", value: wu.current_observation.weather.replace(" ","").toLowerCase(), isStateChange: true)
+	    sendEvent(name: "weatherIcon", value: wd.everything.forecast.icon.code, isStateChange: true)
 		}
 		if(iconType == true){ 
             sendEvent(name: "Condition_icon", value: wu.forecast.simpleforecast.forecastday[0].icon_url, isStateChange: true)
+	    sendEvent(name: "weather", value: wu.forecast.simpleforecast.forecastday[0].conditions.replace(" ","").toLowerCase(), isStateChange: true)
 		}
 	}
     sendEvent(name: "forecastHigh_c", value: wu.forecast.simpleforecast.forecastday[0].high.celsius, unit: "C", isStateChange: true)
