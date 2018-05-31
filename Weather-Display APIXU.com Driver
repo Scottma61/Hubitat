@@ -51,7 +51,7 @@
  *  
  *  
  *  
- *  
+ *  V1.3.2 - Made APIXU and WD data presentation optional. - 05-30-2018
  *  V1.3.1 - Added variables for SmartTiles weather icon - 05/30/2018
  *  V1.3.0 - Made all exposed variables consistent, bug fixes. 05-28-2018
  *  V1.2.0 - Bug fixes. 05-28-2018 
@@ -69,7 +69,7 @@ metadata {
         
         command "poll"
         command "refresh"
-	
+        if(presentXU){		
 // APIXU Location Variables
 // APIXU LOcation
         attribute "xucity", "string"
@@ -149,7 +149,8 @@ metadata {
 		attribute "xurainDayAfterTomorrow_in", "string"
 		attribute "xurainDayAfterTomorrow_mm", "string"
 		attribute "xurainDayAfterTomorrow", "string"
-
+		}
+		if(presentWD){
 // Weather-Display Sourced Variables
 // - WD Location
         attribute "wdcity", "string"
@@ -214,7 +215,7 @@ metadata {
 		attribute "wdwind_string", "string"
 //WD Forecast 
 		attribute "wdforecastConditions_text", "string"
-        
+        	}
 // Presentation variables
 // - Location
         attribute "city", "string"
@@ -254,6 +255,7 @@ metadata {
         attribute "humidity", "string"
         attribute "illuminance", "string"
         attribute "is_day", "string"
+	attribute "percentPrecip", "string"
         attribute "precip_today_in", "number"
         attribute "precip_today_mm", "number"
         attribute "precip_today", "number"
@@ -319,7 +321,9 @@ metadata {
     }
     preferences() {
         section("Query Inputs"){
-	    	input "tempFormat", "enum", required: true, defaultValue: "Fahrenheit", title: "Display Unit - Temperature: Fahrenheit or Celsius",  options: ["Fahrenheit", "Celsius"]
+            input "presentXU", "bool", required: true, defaultValue: false, title: "Present APIXU data?"
+            input "presentWD", "bool", required: true, defaultValue: false, title: "Present all Weather-Display data?"
+	    input "tempFormat", "enum", required: true, defaultValue: "Fahrenheit", title: "Display Unit - Temperature: Fahrenheit or Celsius",  options: ["Fahrenheit", "Celsius"]
             input "distanceFormat", "enum", required: true, defaultValue: "Miles (mph)", title: "Display Unit - Distance/Speed: Miles or Kilometres",  options: ["Miles (mph)", "Kilometers (kph)"]
             input "pressureFormat", "enum", required: true, defaultValue: "Inches", title: "Display Unit - Pressure: Inches or Millibar",  options: ["Inches", "Millibar"]
             input "rainFormat", "enum", required: true, defaultValue: "Inches", title: "Display Unit - Precipitation: Inches or Millimetres",  options: ["Inches", "Millimetres"]
@@ -350,7 +354,7 @@ metadata {
 }
 
 def updated() {
-    state.version = "1.3.1"    // ************************* Update as required *************************************
+    state.version = "1.3.2"    // ************************* Update as required *************************************
     unschedule()
     state.tz = null
     if(autoPoll){
@@ -422,6 +426,7 @@ def poll(){
     sendEvent(name: "driverNameSpace", value: "Matthew", isStateChange: true)
     sendEvent(name: "driverVersion", value: state.version, isStateChange: true)
 
+    if(presentXU){	
     sendEvent(name: "xucity", value: xu.location.name, isStateChange: true)
     sendEvent(name: "xustate", value: xu.location.region, isStateChange: true)
     sendEvent(name: "xucountry", value: xu.location.country, isStateChange: true)
@@ -483,7 +488,7 @@ def poll(){
     sendEvent(name: "xurainDayAfterTomorrow_in", value: xu.forecast.forecastday[2].day.totalprecip_in, unit: "In", isStateChange: true)
     sendEvent(name: "xurainDayAfterTomorrow_mm", value: xu.forecast.forecastday[2].day.totalprecip_mm, unit: "MM", isStateChange: true)
     sendEvent(name: "xurainDayAfterTomorrow", value: (isRainMetric ? xu.forecast.forecastday[2].day.totalprecip_mm : xu.forecast.forecastday[2].day.totalprecip_in), unit: "${(isRainMetric ? 'mm' : 'in')}")
-    
+	}    
     def lux = estimateLux(localTime, sunriseTime, sunsetTime, noonTime, twilight_begin, twilight_end, xu.current.condition.text, xu.current.cloud, xu.location.tz_id)
     sendEvent(name: "xuilluminance", value: lux)
     sendEvent(name: "xulux", value: String.format("%,d", lux))
@@ -491,7 +496,8 @@ def poll(){
     def wdnow = new Date().format('MM-dd-yyyy h:mm a', location.timeZone)
     sendEvent(name: "lastWDupdate", value: wdnow)
 
-	sendEvent(name: "wdcity", value: wd.station.name.split(/ /)[0], isStateChange: true)
+	if(presentWD){	
+        sendEvent(name: "wdcity", value: wd.station.name.split(/ /)[0], isStateChange: true)
 	sendEvent(name: "wdstate", value: wd.station.name.split(/ /)[1], isStateChange: true)
 	sendEvent(name: "wdcountry", value: wd.station.name.split(/ /)[2], isStateChange: true)
 	sendEvent(name: "wdlocation", value: wd.station.name.split(/ /)[0] + ", " + wd.station.name.split(/ /)[1], isStateChange: true)
@@ -544,7 +550,14 @@ def poll(){
 	sendEvent(name: "wdwind_degree", value: wd.everything.weather.wind.direction.degrees, isStateChange: true)
 	sendEvent(name: "wdwind_dir", value: wd.everything.weather.wind.direction.cardinal, isStateChange: true)
     sendEvent(name: "wdwind_bft", value: wd.everything.weather.wind.avg_speed.bft, isStateChange: true)
-    def tWind_string = ""
+    sendEvent(name: "wdwind_string_bft", value: "${tWind_string}", isStateChange: true) 
+    sendEvent(name: "wdwind_string_mi", value: "Wind: ${tWind_string} from the " + wd.everything.weather.wind.direction.cardinal + " at " + wd.everything.weather.wind.avg_speed.mph + " MPH", isStateChange: true)
+    sendEvent(name: "wdwind_string_km", value: "Wind: ${tWind_string} from the " + wd.everything.weather.wind.direction.cardinal + " at " + wd.everything.weather.wind.avg_speed.kmh + " KPH", isStateChange: true)
+    sendEvent(name: "wdwind_string", value: "Wind: ${tWind_string} from the " + wd.everything.weather.wind.direction.cardinal + " at " + (isDistanceMetric ? wd.everything.weather.wind.avg_speed.kmh + " KPH" : wd.everything.weather.wind.avg_speed.mph + " MPH"))
+
+	sendEvent(name: "wdforecastConditions_text", value: wd.everything.forecast.davis_forecast, isStateChange: true)
+	}
+	def tWind_string = ""
      	if ((wd.everything.weather.wind.avg_speed.bft).toInteger() == 0) { tWind_string = "Calm" }
     	if ((wd.everything.weather.wind.avg_speed.bft).toInteger() == 1) { tWind_string = "Light air" }
     	if ((wd.everything.weather.wind.avg_speed.bft).toInteger() == 2) { tWind_string = "Light breeze" }
@@ -558,12 +571,6 @@ def poll(){
         if ((wd.everything.weather.wind.avg_speed.bft).toInteger() == 10) { tWind_string = "Storm, whole gale" }
         if ((wd.everything.weather.wind.avg_speed.bft).toInteger() == 11) { tWind_string = "Violent storm" }
         if ((wd.everything.weather.wind.avg_speed.bft).toInteger() == 12) { tWind_string = "wdwind_bft_string" }
-    sendEvent(name: "wdwind_string_bft", value: "${tWind_string}", isStateChange: true) 
-    sendEvent(name: "wdwind_string_mi", value: "Wind: ${tWind_string} from the " + wd.everything.weather.wind.direction.cardinal + " at " + wd.everything.weather.wind.avg_speed.mph + " MPH", isStateChange: true)
-    sendEvent(name: "wdwind_string_km", value: "Wind: ${tWind_string} from the " + wd.everything.weather.wind.direction.cardinal + " at " + wd.everything.weather.wind.avg_speed.kmh + " KPH", isStateChange: true)
-    sendEvent(name: "wdwind_string", value: "Wind: ${tWind_string} from the " + wd.everything.weather.wind.direction.cardinal + " at " + (isDistanceMetric ? wd.everything.weather.wind.avg_speed.kmh + " KPH" : wd.everything.weather.wind.avg_speed.mph + " MPH"))
-
-	sendEvent(name: "wdforecastConditions_text", value: wd.everything.forecast.davis_forecast, isStateChange: true)
 
 	if(sourcecity){
 		sendEvent(name: "city", value: wd.station.name.split(/ /)[0], isStateChange: true)
@@ -622,6 +629,7 @@ def poll(){
 
     sendEvent(name: "cloud", value: 100 - wd.everything.weather.solar.percentage.toInteger(), isStateChange: true)
     sendEvent(name: "condition_text", value: xu.current.condition.text, isStateChange: true)
+    sendEvent(name: "weather", value: xu.current.condition.text, isStateChange: true)
     sendEvent(name: "condition_Icon", value: wd.everything.forecast.icon.code, isStateChange: true)
 	sendEvent(name: "condition_code", value: xu.current.condition.code, isStateChange: true)
 	sendEvent(name: "dewpoint_c", value: wd.everything.weather.dew_point.current.c, unit:'C', isStateChange: true)
@@ -681,10 +689,12 @@ def poll(){
 		sendEvent(name: "weatherIcon", value: wd.everything.forecast.icon.code, isStateChange: true)
 	} else {
 		if(iconType == false){   
-            sendEvent(name: "condition_icon", value: xu.current.condition.text.replace(" ", "").toLowerCase(), isStateChange: true)
+                        sendEvent(name: "Condition_icon", value: 'http:' + xu.forecast.forecastday[0].day.condition.icon, isStateChange: true)
+	                sendEvent(name: "weatherIcon", value: xu.forecast.forecastday[0].day.condition.text.replace(" ", "").toLowerCase(), isStateChange: true)
 		}
 		if(iconType == true){ 
-            sendEvent(name: "Condition_icon", value: xu.forecast.forecastday[0].day.condition.text.replace(" ", "").toLowerCase(), isStateChange: true)
+		    sendEvent(name: "condition_icon", value: 'http:' + xu.current.condition.icon, isStateChange: true)
+		    sendEvent(name: "weatherIcon", value: xu.current.condition.text.replace(" ", "").toLowerCase(), isStateChange: true)
 		}
 	}
     sendEvent(name: "percentPrecip", value: "Not Available", isStateChange: true)
