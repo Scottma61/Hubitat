@@ -425,7 +425,7 @@ def poll(){
     sendEvent(name: "driverNameSpace", value: "Matthew", isStateChange: true)
     sendEvent(name: "driverVersion", value: state.version, isStateChange: true)
 
-If(presentWU){
+if(presentWU){
     sendEvent(name: "wucity", value: wu.current_observation.display_location.city, isStateChange: true)
     sendEvent(name: "wustate", value: wu.current_observation.display_location.state, isStateChange: true)
     sendEvent(name: "wucountry", value: wu.current_observation.display_location.country, isStateChange: true)
@@ -500,7 +500,7 @@ If(presentWU){
     def wdnow = new Date().format('MM-dd-yyyy h:mm a', location.timeZone)
     sendEvent(name: "lastWDupdate", value: wdnow)
 
-	If(presentWD){
+	if(presentWD){
 	sendEvent(name: "wdcity", value: wd.station.name.split(/ /)[0], isStateChange: true)
 	sendEvent(name: "wdstate", value: wd.station.name.split(/ /)[1], isStateChange: true)
 	sendEvent(name: "wdcountry", value: wd.station.name.split(/ /)[2], isStateChange: true)
