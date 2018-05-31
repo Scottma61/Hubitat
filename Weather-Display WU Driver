@@ -241,8 +241,8 @@ metadata {
         attribute "cloud", "string"
         attribute "condition_text", "string"
 	attribute "weather", "string"
-	attribute "weatherIcon", "string"
         attribute "condition_icon", "string"
+	attribute "weatherIcon", "string"
         attribute "condition_code", "string"
         attribute "dewpoint_c", "number"
         attribute "dewpoint_f", "number"
@@ -683,17 +683,15 @@ def poll(){
 
     if(sourceicon){
 		sendEvent(name: "condition_Icon", value: wd.everything.forecast.icon.code, isStateChange: true)
-		sendEvent(name: "weather", value: wu.current_observation.weather.replace(" ","").toLowerCase(), isStateChange: true)
-		sendEvent(name: "weatherIcon", value: wd.everything.forecast.icon.code, isStateChange: true)
+		sendEvent(name: "weatherIcon", value: wd.everything.forecast.icon.code.replace(" ","").toLowerCase(), isStateChange: true)
 	} else {
 		if(iconType == false){   
             sendEvent(name: "condition_icon", value: wu.current_observation.icon_url, isStateChange: true)
-	    sendEvent(name: "weather", value: wu.current_observation.weather.replace(" ","").toLowerCase(), isStateChange: true)
 	    sendEvent(name: "weatherIcon", value: wd.everything.forecast.icon.code, isStateChange: true)
 		}
 		if(iconType == true){ 
             sendEvent(name: "Condition_icon", value: wu.forecast.simpleforecast.forecastday[0].icon_url, isStateChange: true)
-	    sendEvent(name: "weather", value: wu.forecast.simpleforecast.forecastday[0].conditions.replace(" ","").toLowerCase(), isStateChange: true)
+	    sendEvent(name: "weatherIcon", value: wu.forecast.simpleforecast.forecastday[0].conditions.replace(" ","").toLowerCase(), isStateChange: true)
 		}
 	}
     sendEvent(name: "forecastHigh_c", value: wu.forecast.simpleforecast.forecastday[0].high.celsius, unit: "C", isStateChange: true)
