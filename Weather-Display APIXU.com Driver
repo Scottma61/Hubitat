@@ -33,7 +33,7 @@
  *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
  *  for the specific language governing permissions and limitations under the License.
  *
- *  Last Update 06/01/2018
+ *  Last Update 06/09/2018
  * { Left room below to document version changes...}
  *
  *  
@@ -48,7 +48,7 @@
  *  
  *  
  *  
- *  
+ *  V1.3.5 - updated to @bengali's latest lux calculations - 06-09-2018
  *  V1.3.4 - Summary will now use Display Units selected, so removed the separate format selector for that. 06-01-2018 
  *              also consolidated Sunrise-Sunset selectors to 'Astronomy' and City-State Selectors to 'Location'
  *  V1.3.3 - Added Date-Time format selector - 05-31-2018
@@ -59,6 +59,8 @@
  *  V1.0.0 - Original version 05/25/2018
  *
  */
+import groovy.transform.Field
+
 metadata {
     definition (name: "Weather-Display APIXU Driver", namespace: "Matthew", author: "Scottma61") {
         capability "Actuator"
@@ -88,14 +90,14 @@ metadata {
 		attribute "xulocalSunset", "string"
         attribute "xulocalSunrise", "string"
 //        attribute "xumoonAge", "string"   //not available on APIXU.com (free version)
-//		attribute "xumoonPhase", "string"   //not available on APIXU.com (free version)
-//		attribute "xumoonIllumination", "string"   //not available on APIXU.com (free version)
+//		  attribute "xumoonPhase", "string"   //not available on APIXU.com (free version)
+//		  attribute "xumoonIllumination", "string"   //not available on APIXU.com (free version)
 
 // APIXU Current Conditions  
         attribute "xucloud", "string"
         attribute "xucondition_text", "string"
         attribute "xucondition_icon", "string"
-        attribute "xucondition_code", "string"
+        attribute "xucondition_code", "number"
         attribute "xudewpoint_c", "number"
         attribute "xudewpoint_f", "number"
         attribute "xudewpoint", "number"
@@ -104,6 +106,7 @@ metadata {
         attribute "xufeelslike", "string"
 		attribute "xuhumidity", "string"
         attribute "xuilluminance", "string"
+        attribute "xulux", "string"
         attribute "xuis_day", "string"
         attribute "xuprecip_today_in", "number"
         attribute "xuprecip_today_mm", "number"        
@@ -127,11 +130,11 @@ metadata {
 //        attribute "xuwind_gust", "string"           //not available on APIXU.com (free version)
         attribute "xuwind_degree", "string"
         attribute "xuwind_dir", "string"
-//      attribute "xuwind_bft", "number"   //not available on APIXU.com (free version)
-//		attribute "xuwind_bft_string", "string"   //not available on APIXU.com (free version)
-//		attribute "xuwind_string_mph", "string"   //not available on APIXU.com (free version)
-//		attribute "xuwind_string_kph", "string"   //not available on APIXU.com (free version)
-//		attribute "xuwind_string", "string"   //not available on APIXU.com (free version)
+//        attribute "xuwind_bft", "number"   //not available on APIXU.com (free version)
+//		  attribute "xuwind_bft_string", "string"   //not available on APIXU.com (free version)
+//		  attribute "xuwind_string_mph", "string"   //not available on APIXU.com (free version)
+//		  attribute "xuwind_string_kph", "string"   //not available on APIXU.com (free version)
+//		  attribute "xuwind_string", "string"   //not available on APIXU.com (free version)
 
 // - APIXU Forecast        
 		attribute "xuforecastConditions_text", "string"
@@ -150,6 +153,7 @@ metadata {
 		attribute "xurainDayAfterTomorrow_mm", "string"
 		attribute "xurainDayAfterTomorrow", "string"
         }
+        
         if(presentWD){
 // Weather-Display Sourced Variables
 // - WD Location
@@ -244,7 +248,7 @@ metadata {
         attribute "weather", "string"
         attribute "condition_icon", "string"
         attribute "weatherIcon", "string"
-        attribute "condition_code", "string"
+        attribute "condition_code", "number"
         attribute "dewpoint_c", "number"
         attribute "dewpoint_f", "number"
         attribute "dewpoint", "number"
@@ -255,6 +259,7 @@ metadata {
         attribute "humidity", "string"
         attribute "illuminance", "string"
         attribute "is_day", "string"
+        attribute "lux", "string"        
         attribute "percentPrecip", "string"
         attribute "precip_today_in", "number"
         attribute "precip_today_mm", "number"
@@ -302,7 +307,6 @@ metadata {
         attribute "rainDayAfterTomorrow_mm", "string"
         attribute "rainDayAfterTomorrow", "string"
 
-   
 // SunriseSunSet Sourced variables
         attribute "local_sunrise", "string"
         attribute "local_sunset", "string"
@@ -316,6 +320,7 @@ metadata {
         attribute "rainUnit", "string"
         attribute "temperatureUnit", "string"
         attribute "weatherSummary", "string"
+
 // Other misc attributes
         attribute "driverNameSpace", "string"
         attribute "driverVersion", "string"
@@ -346,7 +351,7 @@ metadata {
             input "sourcefeelsLike", "bool", required: true, title: "FeelsLike from Weather-Display?", defaultValue: true
             input "sourceIcon", "bool", required: true, title: "Icon from Weather-Display?", defaultValue: true
 			input "sourceastronomy", "bool", required: true, title: "Astronomy from Weather-Display?", defaultValue: true
-		    input "sourceIllumination", "bool", required: true, title: "Illumination from Weather-Display?", defaultValue: true
+		    input "sourceIllumination", "bool", required: true, title: "Illuminance from Weather-Display?", defaultValue: true
             input "sourcelocation", "bool", required: true, title: "Location from Weather-Display?", defaultValue: true
             input "sourceUV", "bool", required: true, title: "UV from Weather-Display?", defaultValue: true
        }
@@ -354,7 +359,7 @@ metadata {
 }
 
 def updated() {
-    state.version = "1.3.4"    // ************************* Update as required *************************************
+    state.version = "1.3.5"    // ************************* Update as required *************************************
     unschedule()
     state.tz = null
     if(autoPoll){
@@ -446,17 +451,17 @@ def poll(){
         	timeFormat = "h:mm a"
             break
 	}
-//    log.info "datetimeFormat: ${datetimeFormat}"
-//    log.info "DTFormat: ${DTFormat}"
-//    log.info "dateFormat: ${dateFormat}"
-//    log.info "timeFormat: ${timeFormat}"
-	def isFahrenheit = (tempFormat == "Fahrenheit") ? true : false
+/*    log.info "datetimeFormat: ${datetimeFormat}"
+    log.info "DTFormat: ${DTFormat}"
+    log.info "dateFormat: ${dateFormat}"
+    log.info "timeFormat: ${timeFormat}"
+*/	def isFahrenheit = (tempFormat == "Fahrenheit") ? true : false
     def isDistanceMetric = (distanceFormat == "Kilometers (kph)") ? true : false
     def isRainMetric = (rainFormat == "Millimetres") ? true : false
     def isPressureMetric = (pressureFormat == "Millibar") ? true : false
     
     def tZ = TimeZone.getTimeZone(xu.location.tz_id)
-    state.tz = xu.location.tz_id
+    def xutz_id = xu.location.tz_id
 
     def xunow = new Date().format("${DTFormat}", location.timeZone)
     sendEvent(name: "lastXUupdate", value: xunow)
@@ -465,22 +470,31 @@ def poll(){
     def localDate = localTime.format("yyyy-MM-dd", tZ)
     def localTimeOnly = localTime.format("HH:mm", tZ)
     def sunriseAndSunset = getSunriseAndSunset(xu.location.lat, xu.location.lon, localDate)
+        def sunriseTime = new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", sunriseAndSunset.results.sunrise, tZ)
+    	def sunsetTime = new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", sunriseAndSunset.results.sunset, tZ)
+    	def noonTime = new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", sunriseAndSunset.results.solar_noon, tZ)    
+    	def twilight_begin = new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", sunriseAndSunset.results.civil_twilight_begin, tZ)
+    	def twilight_end = new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", sunriseAndSunset.results.civil_twilight_end, tZ)
+    	def xucloud = xu.current.cloud
+    	def xucondition_code = xu.current.condition.code
 
-    def sunriseTime = new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", sunriseAndSunset.results.sunrise, tZ)
-    def sunsetTime = new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", sunriseAndSunset.results.sunset, tZ)
-    def noonTime = new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", sunriseAndSunset.results.solar_noon, tZ)    
-    def twilight_begin = new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", sunriseAndSunset.results.civil_twilight_begin, tZ)
-    def twilight_end = new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", sunriseAndSunset.results.civil_twilight_end, tZ)
-    
-    def slocalSunrise = sunriseTime.format("${timeFormat}", tZ)
-    sendEvent(name: "local_sunrise", value: slocalSunrise, descriptionText: "Sunrise today is at $slocalSunrise")
-    def slocalSunset = sunsetTime.format("${timeFormat}", tZ)
-    sendEvent(name: "local_sunset", value: slocalSunset, descriptionText: "Sunset today at is $slocalSunset")
-    def tB = twilight_begin.format("${timeFormat}", tZ)
-    sendEvent(name: "twilight_begin", value: tB, descriptionText: "Twilight begins today at $tB")
-    def tE = twilight_end.format("${timeFormat}", tZ)
-    sendEvent(name: "twilight_end", value: tE, descriptionText: "Twilight ends today at $tE")
-
+    if (!sunriseTime || !sunsetTime || !noonTime ||
+         !twilight_begin || !twilight_end || !xucondition_code || !xutz_id) {
+            log.debug "localTime: $localTime"
+            log.debug "twilight_begin: $twilight_begin"
+            log.debug "sunriseTime: $sunriseTime"
+            log.debug "noonTime: $noonTime"
+            log.debug "sunsetTime: $sunsetTime"
+            log.debug "twilight_end: $twilight_end"
+            log.debug "condition_code: $xucondition_code"
+            log.debug "cloud: $xucloud"
+            log.debug "tz: $xutz_id"
+        	xu_lux = null
+    } else {
+	        xu_lux = estimateLux(localTime, sunriseTime, sunsetTime, noonTime, twilight_begin, twilight_end, xucondition_code, xucloud, xutz_id)
+		    sendEvent(name: "xuilluminance", value: String.format("%,d", xu_lux))
+    		sendEvent(name: "xulux", value: String.format("%,d", xu_lux), unit: "lux")
+    }
     def xulocalSunset = Date.parse("hh:mm a", xu.forecast.forecastday[0].astro.sunset).format("$timeFormat}")
     def xulocalSunrise = Date.parse("hh:mm a", xu.forecast.forecastday[0].astro.sunrise).format("$timeFormat}")      
 
@@ -491,7 +505,7 @@ def poll(){
     sendEvent(name: "xulocation", value: xu.location.name + ', ' + xu.location.region, isStateChange: true)
     sendEvent(name: "xulat", value: xu.location.lat, isStateChange: true)
     sendEvent(name: "xulon", value: xu.location.lon, isStateChange: true)
-    sendEvent(name: "xutz_id", value: xu.location.tz_id, isStateChange: true)
+    sendEvent(name: "xutz_id", value: xu.location.tz_id, isStateChange: true)            
     sendEvent(name: "xulocaltime_epoch", value: xu.location.localtime_epoch, isStateChange: true)
     sendEvent(name: "xulocal_time", value: localTimeOnly.format("${timeFormat}"), isStateChange: true)
     sendEvent(name: "xulocal_date", value: localDate.format("${dateFormat}"), isStateChange: true)
@@ -527,6 +541,9 @@ def poll(){
     sendEvent(name: "xuwind_mph", value: xu.current.wind_mph, unit: "MPH", isStateChange: true)
     sendEvent(name: "xuwind_kph", value: xu.current.wind_kph, unit: "KPH", isStateChange: true)
     sendEvent(name: "xuwind", value: (isDistanceMetric ? xu.current.wind_kph : xu.current.wind_mph), unit: "${(isDistanceMetric ? 'kph' : 'mph')}", isStateChange: true)
+//    sendEvent(name: "wuwind_gust_mph", value: wu.current_observation.wind_gust_mph, unit: "MPH", isStateChange: true)
+//    sendEvent(name: "wuwind_gust_kph", value: wu.current_observation.wind_gust_kph, unit: "KPH", isStateChange: true)
+//    sendEvent(name: "wuwind_gust", value: (isDistanceMetric ? wu.current_observation.wind_gust_kph : wu.current_observation.wind_gust_mph), unit: "${(isDistanceMetric ? 'kph' : 'mph')}", isStateChange: true)
     sendEvent(name: "xuwind_degree", value: xu.current.wind_degree, unit: "DEGREE", isStateChange: true)
     sendEvent(name: "xuwind_dir", value: xu.current.wind_dir, isStateChange: true)
 
@@ -547,9 +564,6 @@ def poll(){
     sendEvent(name: "xurainDayAfterTomorrow_mm", value: xu.forecast.forecastday[2].day.totalprecip_mm, unit: "MM", isStateChange: true)
     sendEvent(name: "xurainDayAfterTomorrow", value: (isRainMetric ? xu.forecast.forecastday[2].day.totalprecip_mm : xu.forecast.forecastday[2].day.totalprecip_in), unit: "${(isRainMetric ? 'mm' : 'in')}")
         }
-    def lux = estimateLux(localTime, sunriseTime, sunsetTime, noonTime, twilight_begin, twilight_end, xu.current.condition.text, xu.current.cloud, xu.location.tz_id)
-    sendEvent(name: "xuilluminance", value: lux)
-    sendEvent(name: "xulux", value: String.format("%,d", lux))
 
     def wdnow = new Date().format("${DTFormat}", location.timeZone)
     sendEvent(name: "lastWDupdate", value: wdnow)
@@ -565,7 +579,7 @@ def poll(){
 	sendEvent(name: "wdlat", value: wd.station.latitude, isStateChange: true)
 	sendEvent(name: "wdlon", value: wd.station.longitude, isStateChange: true)
 	sendEvent(name: "wdlocal_time", value: Date.parse("HH:mm", wd.time.time).format("h:mm a"), isStateChange: true)
-        sendEvent(name: "wdlocal_date", value: Date.parse("d/M/yyyy", wd.time.date).format("${dateFormat}"))
+    sendEvent(name: "wdlocal_date", value: Date.parse("d/M/yyyy", wd.time.date).format("${dateFormat}"))
 	sendEvent(name: "wdlast_updated", value: Date.parse("d/M/yyyy", wd.time.date).format("${dateFormat}") + ", " + Date.parse("hh:mm", wd.time.time).format("${timeFormat}"))
     sendEvent(name: "wdlocalSunset", value: ${wdlocalSunset}.format("${timeFormat}", tZ), isStateChange: true)
     sendEvent(name: "wdlocalSunrise", value: ${wdlocalSunrise}.format("${timeFormat}", tZ), isStateChange: true)	
@@ -617,7 +631,6 @@ def poll(){
 
 	sendEvent(name: "wdforecastConditions_text", value: wd.everything.forecast.davis_forecast, isStateChange: true)
 		}
-
     def Summary_Wind_string = ""
      	if ((wd.everything.weather.wind.avg_speed.bft).toInteger() == 0) { Summary_Wind_string = "Calm" }
     	if ((wd.everything.weather.wind.avg_speed.bft).toInteger() == 1) { Summary_Wind_string = "Light air" }
@@ -686,14 +699,14 @@ def poll(){
     if (wd.everything.astronomy.moon.moon_age.toDouble() >= 26) {sendEvent(name: "moonPhase", value: "Waxing Gibbous", isStateChange: true)}
     sendEvent(name: "moonIllumination", value: wd.everything.astronomy.moon.moon_phase + "%", isStateChange: true)
 	if(sourceIllumination){
-			 sendEvent(name: "illuminance", value: wd.everything.weather.solar.irradiance.wm2, unit: "lux", isStateChange: true)
-        	sendEvent(name: "solarradiation", value: wd.everything.weather.solar.irradiance.wm2, unit: "wm2", isStateChange: true)
+		sendEvent(name: "illuminance", value: wd.everything.weather.solar.irradiance.wm2, unit: "lux", isStateChange: true)
+       	sendEvent(name: "solarradiation", value: wd.everything.weather.solar.irradiance.wm2, unit: "wm2", isStateChange: true)
 	} else {
-		sendEvent(name: "illuminance", value: String.format("%,d", xulux))
+        sendEvent(name: "illuminance", value: String.format("%,d", xu_lux), unit: "lux", isStateChange: true)
 		sendEvent(name: "solarradiation", value: "This station does not send Solar Radiation data", isStateChange: true)
     }
 
-    sendEvent(name: "cloud", value: 100 - wd.everything.weather.solar.percentage.toInteger(), isStateChange: true)
+    sendEvent(name: "cloud", value: xu.current.cloud, unit: "%", isStateChange: true)
     sendEvent(name: "condition_text", value: xu.current.condition.text, isStateChange: true)
     sendEvent(name: "weather", value: xu.current.condition.text, isStateChange: true)
     sendEvent(name: "condition_icon", value: wd.everything.forecast.icon.code, isStateChange: true)
@@ -718,6 +731,7 @@ def poll(){
 	}
     sendEvent(name: "humidity", value: wd.everything.weather.humidity.current, isStateChange: true)
     sendEvent(name: "Humidity", value: wd.everything.weather.humidity.current.toString() + "%", isStateChange: true)
+    sendEvent(name: "lux", value: (sourceIllumination ? wd.everything.weather.solar.irradiance.wm2 : String.format("%,d", xu_lux)), unit: "lux", isStateChange: true)
     sendEvent(name: "xuis_day", value: xu.current.is_day, isStateChange: true)
 	sendEvent(name: "precip_today_in", value: wd.everything.weather.rainfall.daily.in, unit: "IN", isStateChange: true)
 	sendEvent(name: "precip_today_mm", value: wd.everything.weather.rainfall.daily.mm, unit: "MM", isStateChange: true)
@@ -853,17 +867,18 @@ private getSunriseAndSunset(latitude, longitude, forDate)	{
     try {
         httpGet(params)		{ resp -> sunRiseAndSet = resp.data }
     } catch (e) { log.error "http call failed for sunrise and sunset api: $e" }
+
     return sunRiseAndSet
 }
 
-private estimateLux(localTime, sunriseTime, sunsetTime, noonTime, twilight_begin, twilight_end, condition_text, cloud, tz_id)     {
+private estimateLux(localTime, sunriseTime, sunsetTime, noonTime, twilight_begin, twilight_end, condition_code, cloud, tz_id)     {
 /*    log.debug "localTime: $localTime"
     log.debug "twilight_begin: $twilight_begin"
     log.debug "sunriseTime: $sunriseTime"
     log.debug "noonTime: $noonTime"
     log.debug "sunsetTime: $sunsetTime"
     log.debug "twilight_end: $twilight_end"
-    log.debug "condition_text: $condition_text"
+    log.debug "condition_code: $condition_code"
     log.debug "cloud: $cloud"
     log.debug "tz_id: $tz_id"
 */
@@ -897,11 +912,59 @@ private estimateLux(localTime, sunriseTime, sunsetTime, noonTime, twilight_begin
         lux = 5l
         aFCC = false
     }
-    
-    if (aFCC)       lux = ((lux * (100l - (cloud.toInteger() / 3l))) / 100l) as long;
+
+    def cC = condition_code.toInteger()
+    def cCT = ''
+    def cCF
+    if (aFCC)
+        if (conditionFactor[cC])    {
+            cCF = conditionFactor[cC][1]
+            cCT = conditionFactor[cC][0]
+        }
+        else    {
+            cCF = ((100 - (cloud.toInteger() / 3d)) / 100).round(1)
+            cCT = 'using cloud cover'
+        }
+    else    {
+        cCF = 1.0
+        cCT = 'night time now'
+    }
+
+    lux = (lux * cCF) as long
+    log.debug "condition: $cC | condition text: $cCT | condition factor: $cCF | lux: $lux"
+    sendEvent(name: "cCF", value: cCF)
+
     return lux
 }
 
 private timeOfDayIsBetween(fromDate, toDate, checkDate, timeZone)     {
     return (!checkDate.before(fromDate) && !checkDate.after(toDate))
 }
+
+@Field final Map    conditionFactor = [
+        1000: ['Sunny', 1],                                     1003: ['Partly cloudy', 0.8],
+        1006: ['Cloudy', 0.6],                                  1009: ['Overcast', 0.5],
+        1030: ['Mist', 0.5],                                    1063: ['Patchy rain possible', 0.8],
+        1066: ['Patchy snow possible', 0.6],                    1069: ['Patchy sleet possible', 0.6],
+        1072: ['Patchy freezing drizzle possible', 0.4],        1087: ['Thundery outbreaks possible', 0.2],
+        1114: ['Blowing snow', 0.3],                            1117: ['Blizzard', 0.1],
+        1135: ['Fog', 0.2],                                     1147: ['Freezing fog', 0.1],
+        1150: ['Patchy light drizzle', 0.8],                    1153: ['Light drizzle', 0.7],
+        1168: ['Freezing drizzle', 0.5],                        1171: ['Heavy freezing drizzle', 0.2],
+        1180: ['Patchy light rain', 0.8],                       1183: ['Light rain', 0.7],
+        1186: ['Moderate rain at times', 0.5],                  1189: ['Moderate rain', 0.4],
+        1192: ['Heavy rain at times', 0.3],                     1195: ['Heavy rain', 0.2],
+        1198: ['Light freezing rain', 0.7],                     1201: ['Moderate or heavy freezing rain', 0.3],
+        1204: ['Light sleet', 0.5],                             1207: ['Moderate or heavy sleet', 0.3],
+        1210: ['Patchy light snow', 0.8],                       1213: ['Light snow', 0.7],
+        1216: ['Patchy moderate snow', 0.6],                    1219: ['Moderate snow', 0.5],
+        1222: ['Patchy heavy snow', 0.4],                       1225: ['Heavy snow', 0.3],
+        1237: ['Ice pellets', 0.5],                             1240: ['Light rain shower', 0.8],
+        1243: ['Moderate or heavy rain shower', 0.3],           1246: ['Torrential rain shower', 0.1],
+        1249: ['Light sleet showers', 0.7],                     1252: ['Moderate or heavy sleet showers', 0.5],
+        1255: ['Light snow showers', 0.7],                      1258: ['Moderate or heavy snow showers', 0.5],
+        1261: ['Light showers of ice pellets', 0.7],            1264: ['Moderate or heavy showers of ice pellets',0.3],
+        1273: ['Patchy light rain with thunder', 0.5],          1276: ['Moderate or heavy rain with thunder', 0.3],
+        1279: ['Patchy light snow with thunder', 0.5],          1282: ['Moderate or heavy snow with thunder', 0.3]]
+
+//**********************************************************************************************************************
