@@ -249,7 +249,7 @@ def locationHandler(evt) {
 	}
 
 //	parsedEvent << ["hub":hub]
-	parsedEvent = ["hub":hub]
+//	parsedEvent = ["hub":hub]
 
 	if (parsedEvent?.ssdpTerm?.contains("urn:schemas-upnp-org:device:MediaRenderer:1"))
 	{ //SSDP DISCOVERY EVENTS
