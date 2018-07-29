@@ -36,7 +36,7 @@
  *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
  *  for the specific language governing permissions and limitations under the License.
  *
- *  Last Update 07/28/2018
+ *  Last Update 07/29/2018
  * { Left room below to document version changes...}
  *
  *  
@@ -46,7 +46,7 @@
  *  
  *  
  *  
- *  
+ *  V1.5.1 - code cleanup. 7-29-2018
  *  v1.5.0 - various fixes and added visualIconWithText icons from @jebbett - 7-28-2018
  *  V1.4.1 - bug fixes - 06-29-2018
  *  V1.4.0 - removed unselected variables (Temp, Distance, Pressure, Rain) from 'Current States' - 6-11-2018
@@ -208,7 +208,6 @@ metadata {
         attribute "condition_icon", "string"
         attribute "visualIconOnly", "string"                
         attribute "visualIconWithText", "string"        
-        attribute "weatherIcon", "string"
         attribute "condition_code", "number"
         attribute "dewpoint", "number"
         attribute "feelslike", "string"
@@ -293,7 +292,7 @@ metadata {
 
 def updated() {
     logCheck()
-    state.version = "1.4.2"    // ************************* Update as required *************************************
+    state.version = "1.5.1"    // ************************* Update as required *************************************
     unschedule()
     state.tz = null
     if(autoPoll){
@@ -330,8 +329,8 @@ def poll(){
         log.warn "WD-APIXU Driver - WARNING: No response from Weather-Display API"
         return;
 	}
-    sendEvent(name: "driverNameSpace", value: "Matthew", isStateChange: true)
-    sendEvent(name: "driverVersion", value: state.version, isStateChange: true)
+    sendEvent(name: "driverNameSpace", value: "Matthew", isStateChange: true, display: true)
+    sendEvent(name: "driverVersion", value: state.version, isStateChange: true, display: true)
     def dtf = datetimeFormat.toInteger()
     switch(dtf) {
         case 1:
@@ -398,7 +397,7 @@ def poll(){
     def xutz_id = xu.location.tz_id
 
     def xunow = new Date().format("${DTFormat}", location.timeZone)
-    sendEvent(name: "lastXUupdate", value: xunow)
+    sendEvent(name: "lastXUupdate", value: xunow, display: (presentXU ? true : false))
 
     def localTime = new Date().parse("yyyy-MM-dd HH:mm", xu.location.localtime, tZ)    
     def localDate = localTime.format("yyyy-MM-dd", tZ)
@@ -428,8 +427,8 @@ def poll(){
         	xu_lux = null
     } else {
 	        xu_lux = estimateLux(localTime, sunriseTime, sunsetTime, noonTime, twilight_begin, twilight_end, xucondition_code, xucloud, xutz_id)
-		    sendEvent(name: "xuilluminance", value: String.format("%,d", xu_lux))
-    		sendEvent(name: "xulux", value: String.format("%,d", xu_lux), unit: "lux")
+		    sendEvent(name: "xuilluminance", value: String.format("%,d", xu_lux), display: (presentXU ? true : false))
+    		sendEvent(name: "xulux", value: String.format("%,d", xu_lux), unit: "lux", display: (presentXU ? true : false))
     }
     def xulocalSunset = Date.parse("hh:mm a", xu.forecast.forecastday[0].astro.sunset).format("$timeFormat}")
     def xulocalSunrise = Date.parse("hh:mm a", xu.forecast.forecastday[0].astro.sunrise).format("$timeFormat}")      
@@ -437,100 +436,101 @@ def poll(){
     def sslocalSunrise = sunriseTime.format("${timeFormat}")    
 
     if(presentXU){	
-    sendEvent(name: "xucity", value: xu.location.name, isStateChange: true)
-    sendEvent(name: "xustate", value: xu.location.region, isStateChange: true)
-    sendEvent(name: "xucountry", value: xu.location.country, isStateChange: true)
-    sendEvent(name: "xulocation", value: xu.location.name + ', ' + xu.location.region, isStateChange: true)
-    sendEvent(name: "xulatitude", value: xu.location.lat, isStateChange: true)
-    sendEvent(name: "xulongitude", value: xu.location.lon, isStateChange: true)
-    sendEvent(name: "xutz_id", value: xu.location.tz_id, isStateChange: true)            
-    sendEvent(name: "xulocaltime_epoch", value: xu.location.localtime_epoch, isStateChange: true)
-    sendEvent(name: "xulocal_time", value: localTimeOnly.format("${timeFormat}"), isStateChange: true)
-    sendEvent(name: "xulocal_date", value: localDate.format("${dateFormat}"), isStateChange: true)
-    sendEvent(name: "xulast_updated_epoch", value: xu.current.last_updated_epoch, isStateChange: true)
-    sendEvent(name: "xulast_updated", value: xu.current.last_updated.format("${DTFormat}"), isStateChange: true)
+    sendEvent(name: "xucity", value: xu.location.name, isStateChange: true, display: (presentXU ? true : false))
+    sendEvent(name: "xustate", value: xu.location.region, isStateChange: true, display: (presentXU ? true : false))
+    sendEvent(name: "xucountry", value: xu.location.country, isStateChange: true, display: (presentXU ? true : false))
+    sendEvent(name: "xulocation", value: xu.location.name + ', ' + xu.location.region, isStateChange: true, display: (presentXU ? true : false))
+    sendEvent(name: "xulatitude", value: xu.location.lat, isStateChange: true, display: (presentXU ? true : false))
+    sendEvent(name: "xulongitude", value: xu.location.lon, isStateChange: true, display: (presentXU ? true : false))
+    sendEvent(name: "xutz_id", value: xu.location.tz_id, isStateChange: true, display: (presentXU ? true : false))            
+    sendEvent(name: "xulocaltime_epoch", value: xu.location.localtime_epoch, isStateChange: true, display: (presentXU ? true : false))
+    sendEvent(name: "xulocal_time", value: localTimeOnly.format("${timeFormat}"), isStateChange: true, display: (presentXU ? true : false))
+    sendEvent(name: "xulocal_date", value: localDate.format("${dateFormat}"), isStateChange: true, display: (presentXU ? true : false))
+    sendEvent(name: "xulast_updated_epoch", value: xu.current.last_updated_epoch, isStateChange: true, display: (presentXU ? true : false))
+    sendEvent(name: "xulast_updated", value: xu.current.last_updated.format("${DTFormat}"), isStateChange: true, display: (presentXU ? true : false))
 
-    sendEvent(name: "xulocalSunset", value: ${xulocalSunset}.format("${timeFormat}", tZ), descriptionText: "Sunset today at is $xulocalSunset", isStateChange: true)
-    sendEvent(name: "xulocalSunrise", value: ${xulocalSunrise}.format("${timeFormat}", tZ), descriptionText: "Sunrise today at is $xulocalSunrise", isStateChange: true)
+    sendEvent(name: "xulocalSunset", value: ${xulocalSunset}.format("${timeFormat}", tZ), descriptionText: "Sunset today at is $xulocalSunset", isStateChange: true, display: (presentXU ? true : false))
+    sendEvent(name: "xulocalSunrise", value: ${xulocalSunrise}.format("${timeFormat}", tZ), descriptionText: "Sunrise today at is $xulocalSunrise", isStateChange: true, display: (presentXU ? true : false))
 
-    sendEvent(name: "xucloud", value: xu.current.cloud, unit: "%", isStateChange: true)
-    sendEvent(name: "xucondition_text", value: xu.current.condition.text, isStateChange: true)
-    sendEvent(name: "xucondition_code", value: xu.current.condition.code, isStateChange: true)
-    sendEvent(name: "xucondition_icon", value: '<img src=http:' + xu.current.condition.icon + '>', isStateChange: true, displayed: true)
-    sendEvent(name: "xucondition_icon_only", value: xu.current.condition.icon.split("/")[-1], isStateChange: true)
-    sendEvent(name: "xucondition_icon_url", value: 'https:' + obs.current.condition.icon, isStateChange: true, displayed: true)        
-    sendEvent(name: "xufeelslike", value: (isFahrenheit ? xu.current.feelslike_f : xu.current.feelslike_c), unit: "${(isFahrenheit ? '°F' : '°C')}", isStateChange: true)
-    sendEvent(name: "xuhumidity", value: xu.current.humidity, unit: "%", isStateChange: true)
-    sendEvent(name: "xuis_day", value: xu.current.is_day, isStateChange: true)
-    sendEvent(name: "xuprecip_today", value: (isRainMetric ? xu.current.precip_mm : xu.current.precip_in), unit: "${(isRainMetric ? 'mm' : 'in')}", isStateChange: true)
-    sendEvent(name: "xupressure", value: (isPressureMetric ? xu.current.pressure_mb : xu.current.pressure_in), unit: "${(isPressureMetric ? 'mb' : 'in')}", isStateChange: true)
-    sendEvent(name: "xutemp", value: (isFahrenheit ? xu.current.temp_f : xu.current.temp_c), unit: "${(isFahrenheit ? '°F' : '°C')}", isStateChange: true)
-    sendEvent(name: "xuUV", value: xu.forecast.forecastday[0].day.uv, isStateChange: true)
-    sendEvent(name: "xuvis", value: (isDistanceMetric ? xu.current.vis_km : xu.current.vis_miles), unit: "${(isDistanceMetric ? 'KM' : 'MILES')}", isStateChange: true)
-    sendEvent(name: "xuwind", value: (isDistanceMetric ? xu.current.wind_kph : xu.current.wind_mph), unit: "${(isDistanceMetric ? 'kph' : 'mph')}", isStateChange: true)
-//    sendEvent(name: "wuwind_gust", value: (isDistanceMetric ? wu.current_observation.wind_gust_kph : wu.current_observation.wind_gust_mph), unit: "${(isDistanceMetric ? 'kph' : 'mph')}", isStateChange: true)
-    sendEvent(name: "xuwind_degree", value: xu.current.wind_degree, unit: "DEGREE", isStateChange: true)
-    sendEvent(name: "xuwind_dir", value: xu.current.wind_dir, isStateChange: true)
+    sendEvent(name: "xucloud", value: xu.current.cloud, unit: "%", isStateChange: true, display: (presentXU ? true : false))
+    sendEvent(name: "xucondition_text", value: xu.current.condition.text, isStateChange: true, display: (presentXU ? true : false))
+    sendEvent(name: "xucondition_code", value: xu.current.condition.code, isStateChange: true, display: (presentXU ? true : false))
+    sendEvent(name: "xucondition_icon", value: '<img src=http:' + xu.current.condition.icon + '>', isStateChange: true, displayed: true, display: (presentXU ? true : false))
+    sendEvent(name: "xucondition_icon_only", value: xu.current.condition.icon.split("/")[-1], isStateChange: true, display: (presentXU ? true : false))
+    sendEvent(name: "xucondition_icon_url", value: 'https:' + xu.current.condition.icon, isStateChange: true, displayed: true, display: (presentXU ? true : false))        
+    sendEvent(name: "xufeelslike", value: (isFahrenheit ? xu.current.feelslike_f : xu.current.feelslike_c), unit: "${(isFahrenheit ? '°F' : '°C')}", isStateChange: true, display: (presentXU ? true : false))
+    sendEvent(name: "xuhumidity", value: xu.current.humidity, unit: "%", isStateChange: true, display: (presentXU ? true : false))
+    sendEvent(name: "xuis_day", value: xu.current.is_day, isStateChange: true, display: (presentXU ? true : false))
+    sendEvent(name: "xuprecip_today", value: (isRainMetric ? xu.current.precip_mm : xu.current.precip_in), unit: "${(isRainMetric ? 'mm' : 'in')}", isStateChange: true, display: (presentXU ? true : false))
+    sendEvent(name: "xupressure", value: (isPressureMetric ? xu.current.pressure_mb : xu.current.pressure_in), unit: "${(isPressureMetric ? 'mb' : 'in')}", isStateChange: true, display: (presentXU ? true : false))
+    sendEvent(name: "xutemp", value: (isFahrenheit ? xu.current.temp_f : xu.current.temp_c), unit: "${(isFahrenheit ? '°F' : '°C')}", isStateChange: true, display: (presentXU ? true : false))
+    sendEvent(name: "xuUV", value: xu.forecast.forecastday[0].day.uv, isStateChange: true, display: (presentXU ? true : false))
+    sendEvent(name: "xuvis", value: (isDistanceMetric ? xu.current.vis_km : xu.current.vis_miles), unit: "${(isDistanceMetric ? 'KM' : 'MILES')}", isStateChange: true, display: (presentXU ? true : false))
+    sendEvent(name: "xuwind", value: (isDistanceMetric ? xu.current.wind_kph : xu.current.wind_mph), unit: "${(isDistanceMetric ? 'kph' : 'mph')}", isStateChange: true, display: (presentXU ? true : false))
+//    sendEvent(name: "wuwind_gust", value: (isDistanceMetric ? wu.current_observation.wind_gust_kph : wu.current_observation.wind_gust_mph), unit: "${(isDistanceMetric ? 'kph' : 'mph')}", isStateChange: true, display: (presentXU ? true : false))
+    sendEvent(name: "xuwind_degree", value: xu.current.wind_degree, unit: "DEGREE", isStateChange: true, display: (presentXU ? true : false))
+    sendEvent(name: "xuwind_dir", value: xu.current.wind_dir, isStateChange: true, display: (presentXU ? true : false))
 
-    sendEvent(name: "xuforecastCondition_text", value: xu.forecast.forecastday[0].day.condition.text, isStateChange: true)            
-    sendEvent(name: "xuforecastCondition_icon", value: 'http:' + xu.forecast.forecastday[0].day.condition.icon, isStateChange: true)
-    sendEvent(name: "xuforecastCondition_icon_only", value: xu.forecast.forecastday[0].day.condition.icon.split("/")[-1], isStateChange: true)
-    sendEvent(name: "xuforecastCondition_code", value: xu.forecast.forecastday[0].day.condition.code, isStateChange: true)
-    sendEvent(name: "xuforecastHigh", value: (isFahrenheit ? xu.forecast.forecastday[0].day.maxtemp_f : xu.forecast.forecastday[0].day.maxtemp_c), unit: "${(isFahrenheit ? '°F' : '°C')}")
-    sendEvent(name: "xuforecastLow", value: (isFahrenheit ? xu.forecast.forecastday[0].day.mintemp_f : xu.forecast.forecastday[0].day.mintemp_c), unit: "${(isFahrenheit ? '°F' : '°C')}")
-    sendEvent(name: "xurainTomorrow", value: (isRainMetric ? xu.forecast.forecastday[1].day.totalprecip_mm : xu.forecast.forecastday[1].day.totalprecip_in), unit: "${(isRainMetric ? 'mm' : 'in')}")
-    sendEvent(name: "xurainDayAfterTomorrow", value: (isRainMetric ? xu.forecast.forecastday[2].day.totalprecip_mm : xu.forecast.forecastday[2].day.totalprecip_in), unit: "${(isRainMetric ? 'mm' : 'in')}")
+    sendEvent(name: "xuforecastCondition_text", value: xu.forecast.forecastday[0].day.condition.text, isStateChange: true, display: (presentXU ? true : false))            
+    sendEvent(name: "xuforecastCondition_icon", value: '<img src=http:' + xu.forecast.forecastday[0].day.condition.icon + '>', isStateChange: true, display: (presentXU ? true : false))
+    sendEvent(name: "xuforecastCondition_icon_only", value: xu.forecast.forecastday[0].day.condition.icon.split("/")[-1], isStateChange: true, display: (presentXU ? true : false))
+    sendEvent(name: "xucondition_icon_url", value: 'https:' + xu.forecast.forecastday[0].day.condition.icon, isStateChange: true, displayed: true, display: (presentXU ? true : false))        
+    sendEvent(name: "xuforecastCondition_code", value: xu.forecast.forecastday[0].day.condition.code, isStateChange: true, display: (presentXU ? true : false))
+    sendEvent(name: "xuforecastHigh", value: (isFahrenheit ? xu.forecast.forecastday[0].day.maxtemp_f : xu.forecast.forecastday[0].day.maxtemp_c), unit: "${(isFahrenheit ? '°F' : '°C')}", display: (presentXU ? true : false))
+    sendEvent(name: "xuforecastLow", value: (isFahrenheit ? xu.forecast.forecastday[0].day.mintemp_f : xu.forecast.forecastday[0].day.mintemp_c), unit: "${(isFahrenheit ? '°F' : '°C')}", display: (presentXU ? true : false))
+    sendEvent(name: "xurainTomorrow", value: (isRainMetric ? xu.forecast.forecastday[1].day.totalprecip_mm : xu.forecast.forecastday[1].day.totalprecip_in), unit: "${(isRainMetric ? 'mm' : 'in')}", display: (presentXU ? true : false))
+    sendEvent(name: "xurainDayAfterTomorrow", value: (isRainMetric ? xu.forecast.forecastday[2].day.totalprecip_mm : xu.forecast.forecastday[2].day.totalprecip_in), unit: "${(isRainMetric ? 'mm' : 'in')}", display: (presentXU ? true : false))
         }
 
     def wdnow = new Date().format("${DTFormat}", location.timeZone)
-    sendEvent(name: "lastWDupdate", value: wdnow)
+    sendEvent(name: "lastWDupdate", value: wdnow, display: (presentWD ? true : false))
 
     def wdlocalSunset = Date.parse("HH:mm", wd.everything.astronomy.sun.sunset_time.time).format("${timeFormat}")
     def wdlocalSunrise = Date.parse("HH:mm", wd.everything.astronomy.sun.sunrise_time.time).format("${timeFormat}")
 
     if(presentWD){	
-	sendEvent(name: "wdcity", value: wd.station.name.split(/ /)[0], isStateChange: true)
-	sendEvent(name: "wdstate", value: wd.station.name.split(/ /)[1], isStateChange: true)
-	sendEvent(name: "wdcountry", value: wd.station.name.split(/ /)[2], isStateChange: true)
-	sendEvent(name: "wdlocation", value: wd.station.name.split(/ /)[0] + ", " + wd.station.name.split(/ /)[1], isStateChange: true)
-	sendEvent(name: "wdlatitude", value: wd.station.latitude, isStateChange: true)
-	sendEvent(name: "wdlongitude", value: wd.station.longitude, isStateChange: true)
-	sendEvent(name: "wdlocal_time", value: Date.parse("HH:mm", wd.time.time).format("h:mm a"), isStateChange: true)
-    sendEvent(name: "wdlocal_date", value: Date.parse("d/M/yyyy", wd.time.date).format("${dateFormat}"))
-	sendEvent(name: "wdlast_updated", value: Date.parse("d/M/yyyy", wd.time.date).format("${dateFormat}") + ", " + Date.parse("hh:mm", wd.time.time).format("${timeFormat}"))
-    sendEvent(name: "wdlocalSunset", value: ${wdlocalSunset}.format("${timeFormat}", tZ), isStateChange: true)
-    sendEvent(name: "wdlocalSunrise", value: ${wdlocalSunrise}.format("${timeFormat}", tZ), isStateChange: true)	
-	sendEvent(name: "wdmoonAge", value: wd.everything.astronomy.moon.moon_age.toDouble(), isStateChange: true)
-			if (wd.everything.astronomy.moon.moon_age.toDouble() >= 0 && wd.everything.astronomy.moon.moon_age.toDouble() < 4) {sendEvent(name: "wdmoonPhase", value: "New Moon", isStateChange: true)}
-			if (wd.everything.astronomy.moon.moon_age.toDouble() >= 4 && wd.everything.astronomy.moon.moon_age.toDouble() < 7) {sendEvent(name: "wdmoonPhase", value: "Waxing Crescent", isStateChange: true)}
-			if (wd.everything.astronomy.moon.moon_age.toDouble() >= 7 && wd.everything.astronomy.moon.moon_age.toDouble() < 10) {sendEvent(name: "wdmoonPhase", value: "First Quarter", isStateChange: true)}
-			if (wd.everything.astronomy.moon.moon_age.toDouble() >= 10 && wd.everything.astronomy.moon.moon_age.toDouble() < 14) {sendEvent(name: "wdmoonPhase", value: "Waxing Gibbous", isStateChange: true)}
-			if (wd.everything.astronomy.moon.moon_age.toDouble() >= 14 && wd.everything.astronomy.moon.moon_age.toDouble() < 18) {sendEvent(name: "wdmoonPhase", value: "Full Moon", isStateChange: true)}
-			if (wd.everything.astronomy.moon.moon_age.toDouble() >= 18 && wd.everything.astronomy.moon.moon_age.toDouble() < 22) {sendEvent(name: "wdmoonPhase", value: "Waning Gibbous", isStateChange: true)}
-			if (wd.everything.astronomy.moon.moon_age.toDouble() >= 22 && wd.everything.astronomy.moon.moon_age.toDouble() < 26) {sendEvent(name: "wdmoonPhase", value: "Last Quarter", isStateChange: true)}
-			if (wd.everything.astronomy.moon.moon_age.toDouble() >= 26) {sendEvent(name: "wdmoonPhase", value: "Waxing Gibbous", isStateChange: true)}
-	sendEvent(name: "wdmoonIllumination", value: wd.everything.astronomy.moon.moon_phase + "%", isStateChange: true)
+	sendEvent(name: "wdcity", value: wd.station.name.split(/ /)[0], isStateChange: true, display: (presentWD ? true : false))
+	sendEvent(name: "wdstate", value: wd.station.name.split(/ /)[1], isStateChange: true, display: (presentWD ? true : false))
+	sendEvent(name: "wdcountry", value: wd.station.name.split(/ /)[2], isStateChange: true, display: (presentWD ? true : false))
+	sendEvent(name: "wdlocation", value: wd.station.name.split(/ /)[0] + ", " + wd.station.name.split(/ /)[1], isStateChange: true, display: (presentWD ? true : false))
+	sendEvent(name: "wdlatitude", value: wd.station.latitude, isStateChange: true, display: (presentWD ? true : false))
+	sendEvent(name: "wdlongitude", value: wd.station.longitude, isStateChange: true, display: (presentWD ? true : false))
+	sendEvent(name: "wdlocal_time", value: Date.parse("HH:mm", wd.time.time).format("h:mm a"), isStateChange: true, display: (presentWD ? true : false))
+    sendEvent(name: "wdlocal_date", value: Date.parse("d/M/yyyy", wd.time.date).format("${dateFormat}"), display: (presentWD ? true : false))
+	sendEvent(name: "wdlast_updated", value: Date.parse("d/M/yyyy", wd.time.date).format("${dateFormat}") + ", " + Date.parse("hh:mm", wd.time.time).format("${timeFormat}"), display: (presentWD ? true : false))
+    sendEvent(name: "wdlocalSunset", value: ${wdlocalSunset}.format("${timeFormat}", tZ), isStateChange: true, display: (presentWD ? true : false))
+    sendEvent(name: "wdlocalSunrise", value: ${wdlocalSunrise}.format("${timeFormat}", tZ), isStateChange: true, display: (presentWD ? true : false))	
+	sendEvent(name: "wdmoonAge", value: wd.everything.astronomy.moon.moon_age.toDouble(), isStateChange: true, display: (presentWD ? true : false))
+			if (wd.everything.astronomy.moon.moon_age.toDouble() >= 0 && wd.everything.astronomy.moon.moon_age.toDouble() < 4) {sendEvent(name: "wdmoonPhase", value: "New Moon", isStateChange: true, display: (presentWD ? true : false))}
+			if (wd.everything.astronomy.moon.moon_age.toDouble() >= 4 && wd.everything.astronomy.moon.moon_age.toDouble() < 7) {sendEvent(name: "wdmoonPhase", value: "Waxing Crescent", isStateChange: true, display: (presentWD ? true : false))}
+			if (wd.everything.astronomy.moon.moon_age.toDouble() >= 7 && wd.everything.astronomy.moon.moon_age.toDouble() < 10) {sendEvent(name: "wdmoonPhase", value: "First Quarter", isStateChange: true, display: (presentWD ? true : false))}
+			if (wd.everything.astronomy.moon.moon_age.toDouble() >= 10 && wd.everything.astronomy.moon.moon_age.toDouble() < 14) {sendEvent(name: "wdmoonPhase", value: "Waxing Gibbous", isStateChange: true, display: (presentWD ? true : false))}
+			if (wd.everything.astronomy.moon.moon_age.toDouble() >= 14 && wd.everything.astronomy.moon.moon_age.toDouble() < 18) {sendEvent(name: "wdmoonPhase", value: "Full Moon", isStateChange: true, display: (presentWD ? true : false))}
+			if (wd.everything.astronomy.moon.moon_age.toDouble() >= 18 && wd.everything.astronomy.moon.moon_age.toDouble() < 22) {sendEvent(name: "wdmoonPhase", value: "Waning Gibbous", isStateChange: true, display: (presentWD ? true : false))}
+			if (wd.everything.astronomy.moon.moon_age.toDouble() >= 22 && wd.everything.astronomy.moon.moon_age.toDouble() < 26) {sendEvent(name: "wdmoonPhase", value: "Last Quarter", isStateChange: true, display: (presentWD ? true : false))}
+			if (wd.everything.astronomy.moon.moon_age.toDouble() >= 26) {sendEvent(name: "wdmoonPhase", value: "Waxing Gibbous", isStateChange: true, display: (presentWD ? true : false))}
+	sendEvent(name: "wdmoonIllumination", value: wd.everything.astronomy.moon.moon_phase + "%", isStateChange: true, display: (presentWD ? true : false))
     
-    sendEvent(name: "wdcloud", value: 100 - wd.everything.weather.solar.percentage.toInteger(), isStateChange: true)
-	sendEvent(name: "wdcondition_code", value: wd.everything.forecast.icon.code, isStateChange: true)
-	sendEvent(name: "wddewpoint", value: (isFahrenheit ? wd.everything.weather.dew_point.current.f : wd.everything.weather.dew_point.current.f), unit: "${(isFahrenheit ? '°F' : '°C')}")
-	sendEvent(name: "wdfeelslike", value: (isFahrenheit ? wd.everything.weather.apparent_temperature.current.f : wd.everything.weather.apparent_temperature.current.c), unit: "${(isFahrenheit ? '°F' : '°C')}")
-	sendEvent(name: "wdhumidity", value: wd.everything.weather.humidity.current, isStateChange: true)
-	sendEvent(name: "wdilluminance", value: wd.everything.weather.solar.irradiance.wm2, unit: "lux", isStateChange: true)
-	sendEvent(name: "wdprecip_today", value: (isRainMetric ? wd.everything.weather.rainfall.daily.mm : wd.everything.weather.rainfall.daily.in), unit: "${(isRainMetric ? 'MM' : 'IN')}")
-	sendEvent(name: "wdpressure", value: (isPressureMetric ? wd.everything.weather.pressure.current.mb : wd.everything.weather.pressure.current.inhg), unit: "${(isDistanceMetric ? 'In' : 'MB')}")
-	sendEvent(name: "wdtemp", value: (isFahrenheit ? wd.everything.weather.temperature.current.f : wd.everything.weather.temperature.current.c), unit: "${(isFahrenheit ? '°F' : '°C')}")	
-	sendEvent(name: "wdsolarradiation", value: wd.everything.weather.solar.irradiance.wm2, unit: "wm2", isStateChange: true)
-	sendEvent(name: "wdUV", value: wd.everything.weather.uv.uvi, isStateChange: true)
-	sendEvent(name: "wdwind", value: (isDistanceMetric ? wd.everything.weather.wind.avg_speed.kmh : wd.everything.weather.wind.avg_speed.mph), unit: "${(isDistanceMetric ? 'MPH' : 'KPH')}")
-	sendEvent(name: "wdwind_gust", value: (isDistanceMetric ? wd.everything.weather.wind.max_gust_speed.kmh : wd.everything.weather.wind.max_gust_speed.mph), unit: "${(isDistanceMetric ? 'MPH' : 'KPH')}")
-	sendEvent(name: "wdwind_degree", value: wd.everything.weather.wind.direction.degrees, isStateChange: true)
-	sendEvent(name: "wdwind_dir", value: wd.everything.weather.wind.direction.cardinal, isStateChange: true)
-    sendEvent(name: "wdwind_bft", value: wd.everything.weather.wind.avg_speed.bft, isStateChange: true)
-    sendEvent(name: "wdwind_string_bft", value: "${Summary_Wind_string}", isStateChange: true) 
-    sendEvent(name: "wdwind_string", value: "Wind: ${Summary_Wind_string} from the " + wd.everything.weather.wind.direction.cardinal + " at " + (isDistanceMetric ? wd.everything.weather.wind.avg_speed.kmh + " KPH" : wd.everything.weather.wind.avg_speed.mph + " MPH"))
+    sendEvent(name: "wdcloud", value: 100 - wd.everything.weather.solar.percentage.toInteger(), isStateChange: true, display: (presentWD ? true : false))
+	sendEvent(name: "wdcondition_code", value: wd.everything.forecast.icon.code, isStateChange: true, display: (presentWD ? true : false))
+	sendEvent(name: "wddewpoint", value: (isFahrenheit ? wd.everything.weather.dew_point.current.f : wd.everything.weather.dew_point.current.f), unit: "${(isFahrenheit ? '°F' : '°C')}", display: (presentWD ? true : false))
+	sendEvent(name: "wdfeelslike", value: (isFahrenheit ? wd.everything.weather.apparent_temperature.current.f : wd.everything.weather.apparent_temperature.current.c), unit: "${(isFahrenheit ? '°F' : '°C')}", display: (presentWD ? true : false))
+	sendEvent(name: "wdhumidity", value: wd.everything.weather.humidity.current, isStateChange: true, display: (presentWD ? true : false))
+	sendEvent(name: "wdilluminance", value: wd.everything.weather.solar.irradiance.wm2, unit: "lux", isStateChange: true, display: (presentWD ? true : false))
+	sendEvent(name: "wdprecip_today", value: (isRainMetric ? wd.everything.weather.rainfall.daily.mm : wd.everything.weather.rainfall.daily.in), unit: "${(isRainMetric ? 'MM' : 'IN')}", display: (presentWD ? true : false))
+	sendEvent(name: "wdpressure", value: (isPressureMetric ? wd.everything.weather.pressure.current.mb : wd.everything.weather.pressure.current.inhg), unit: "${(isDistanceMetric ? 'In' : 'MB')}", display: (presentWD ? true : false))
+	sendEvent(name: "wdtemp", value: (isFahrenheit ? wd.everything.weather.temperature.current.f : wd.everything.weather.temperature.current.c), unit: "${(isFahrenheit ? '°F' : '°C')}", display: (presentWD ? true : false))	
+	sendEvent(name: "wdsolarradiation", value: wd.everything.weather.solar.irradiance.wm2, unit: "wm2", isStateChange: true, display: (presentWD ? true : false))
+	sendEvent(name: "wdUV", value: wd.everything.weather.uv.uvi, isStateChange: true, display: (presentWD ? true : false))
+	sendEvent(name: "wdwind", value: (isDistanceMetric ? wd.everything.weather.wind.avg_speed.kmh : wd.everything.weather.wind.avg_speed.mph), unit: "${(isDistanceMetric ? 'MPH' : 'KPH')}", display: (presentWD ? true : false))
+	sendEvent(name: "wdwind_gust", value: (isDistanceMetric ? wd.everything.weather.wind.max_gust_speed.kmh : wd.everything.weather.wind.max_gust_speed.mph), unit: "${(isDistanceMetric ? 'MPH' : 'KPH')}", display: (presentWD ? true : false))
+	sendEvent(name: "wdwind_degree", value: wd.everything.weather.wind.direction.degrees, isStateChange: true, display: (presentWD ? true : false))
+	sendEvent(name: "wdwind_dir", value: wd.everything.weather.wind.direction.cardinal, isStateChange: true, display: (presentWD ? true : false))
+    sendEvent(name: "wdwind_bft", value: wd.everything.weather.wind.avg_speed.bft, isStateChange: true, display: (presentWD ? true : false))
+    sendEvent(name: "wdwind_string_bft", value: "${Summary_Wind_string}", isStateChange: true, display: (presentWD ? true : false)) 
+    sendEvent(name: "wdwind_string", value: "Wind: ${Summary_Wind_string} from the " + wd.everything.weather.wind.direction.cardinal + " at " + (isDistanceMetric ? wd.everything.weather.wind.avg_speed.kmh + " KPH" : wd.everything.weather.wind.avg_speed.mph + " MPH"), display: (presentWD ? true : false))
 
-	sendEvent(name: "wdforecastConditions_text", value: wd.everything.forecast.davis_forecast, isStateChange: true)
+	sendEvent(name: "wdforecastConditions_text", value: wd.everything.forecast.davis_forecast, isStateChange: true, display: (presentWD ? true : false))
 		}
     def Summary_Wind_string = ""
      	if ((wd.everything.weather.wind.avg_speed.bft).toInteger() == 0) { Summary_Wind_string = "Calm" }
@@ -548,124 +548,123 @@ def poll(){
         if ((wd.everything.weather.wind.avg_speed.bft).toInteger() == 12) { Summary_Wind_string = "wdwind_bft_string" }
 
 	if(sourcelocation){
-		sendEvent(name: "city", value: wd.station.name.split(/ /)[0], isStateChange: true)
-        sendEvent(name: "state", value: wd.station.name.split(/ /)[1], isStateChange: true)
-        sendEvent(name: "country", value: wd.station.name.split(/ /)[2], isStateChange: true)
-        sendEvent(name: "location", value: wd.station.name.split(/ /)[0] + ", " + wd.station.name.split(/ /)[1], isStateChange: true)
-//      sendEvent(name: "latitude", value: wd.station.latitude, isStateChange: true)   // WD is less precise
-//		sendEvent(name: "longtitude", value: wd.station.longitude, isStateChange: true)  // WD is less precise
-        sendEvent(name: "latitude", value: xu.location.lat, isStateChange: true)
-    	sendEvent(name: "longitude", value: xu.location.lon, isStateChange: true)
-	    sendEvent(name: "tz_id", value: xu.location.tz_id, isStateChange: true)
-	    sendEvent(name: "localtime_epoch", value: xu.location.localtime_epoch, isStateChange: true)
-        sendEvent(name: "local_time", value: Date.parse("HH:mm", wd.time.time).format("${timeFormat}"), isStateChange: true)
-        sendEvent(name: "local_date", value: Date.parse("d/M/yyyy", wd.time.date).format("${dateFormat}"))
-	    sendEvent(name: "last_updated_epoch", value: xu.current.last_updated_epoch, isStateChange: true)
-        sendEvent(name: "last_updated", value: Date.parse("d/M/yyyy", wd.time.date).format("${dateFormat}") + ", " + Date.parse("hh:mm", wd.time.time).format("${timeFormat}"))
+		sendEvent(name: "city", value: wd.station.name.split(/ /)[0], isStateChange: true, display: true)
+        sendEvent(name: "state", value: wd.station.name.split(/ /)[1], isStateChange: true, display: true)
+        sendEvent(name: "country", value: wd.station.name.split(/ /)[2], isStateChange: true, display: true)
+        sendEvent(name: "location", value: wd.station.name.split(/ /)[0] + ", " + wd.station.name.split(/ /)[1], isStateChange: true, display: true)
+//      sendEvent(name: "latitude", value: wd.station.latitude, isStateChange: true, display: true)   // WD is less precise
+//		sendEvent(name: "longtitude", value: wd.station.longitude, isStateChange: true, display: true)  // WD is less precise
+        sendEvent(name: "latitude", value: xu.location.lat, isStateChange: true, display: true)
+    	sendEvent(name: "longitude", value: xu.location.lon, isStateChange: true, display: true)
+	    sendEvent(name: "tz_id", value: xu.location.tz_id, isStateChange: true, display: true)
+	    sendEvent(name: "localtime_epoch", value: xu.location.localtime_epoch, isStateChange: true, display: false)
+        sendEvent(name: "local_time", value: Date.parse("HH:mm", wd.time.time).format("${timeFormat}"), isStateChange: true, display: true)
+        sendEvent(name: "local_date", value: Date.parse("d/M/yyyy", wd.time.date).format("${dateFormat}"), display: true)
+	    sendEvent(name: "last_updated_epoch", value: xu.current.last_updated_epoch, isStateChange: true, display: false)
+        sendEvent(name: "last_updated", value: Date.parse("d/M/yyyy", wd.time.date).format("${dateFormat}") + ", " + Date.parse("hh:mm", wd.time.time).format("${timeFormat}"), display: true)
         Summary_city = wd.station.name.split(/ /)[0]
         Summary_state = wd.station.name.split(/ /)[1]
         Summary_last_updated_date = Date.parse("d/M/yyyy", wd.time.date).format("${dateFormat}").toString()
         Summary_last_updated_time = Date.parse("HH:mm", wd.time.time).format("${timeFormat}").toString()        
 	} else {
-		sendEvent(name: "city", value: xu.location.name, isStateChange: true)
-        sendEvent(name: "state", value: xu.location.region)
-        sendEvent(name: "country", value: xu.location.country, isStateChange: true)
-        sendEvent(name: "location", value: xu.location.name + ", " + xu.location.region, isStateChange: true)
-        sendEvent(name: "latitude", value: xu.location.lat, isStateChange: true)
-    	sendEvent(name: "longitude", value: xu.location.lon, isStateChange: true)
-	    sendEvent(name: "tz_id", value: xu.location.tz_id, isStateChange: true)
-	    sendEvent(name: "localtime_epoch", value: xu.location.localtime_epoch, isStateChange: true)
-    	sendEvent(name: "local_time", value: Date.parse("yyyy-MM-dd HH:mm", xu.location.localtime).format("${timeFormat}"), isStateChange: true)
-    	sendEvent(name: "local_date", value: Date.parse("yyyy-MM-dd HH:mm", xu.location.localtime).format("${dateFormat}"), isStateChange: true)
-	    sendEvent(name: "last_updated_epoch", value: xu.current.last_updated_epoch, isStateChange: true)
-    	sendEvent(name: "last_updated", value: Date.parse("yyyy-MM-dd HH:mm", xu.current.last_updated).format("${DTFormat}"), isStateChange: true)
+		sendEvent(name: "city", value: xu.location.name, isStateChange: true, display: true)
+        sendEvent(name: "state", value: xu.location.region, display: true)
+        sendEvent(name: "country", value: xu.location.country, isStateChange: true, display: true)
+        sendEvent(name: "location", value: xu.location.name + ", " + xu.location.region, isStateChange: true, display: true)
+        sendEvent(name: "latitude", value: xu.location.lat, isStateChange: true, display: true)
+    	sendEvent(name: "longitude", value: xu.location.lon, isStateChange: true, display: true)
+	    sendEvent(name: "tz_id", value: xu.location.tz_id, isStateChange: true, display: true)
+	    sendEvent(name: "localtime_epoch", value: xu.location.localtime_epoch, isStateChange: true, display: false)
+    	sendEvent(name: "local_time", value: Date.parse("yyyy-MM-dd HH:mm", xu.location.localtime).format("${timeFormat}"), isStateChange: true, display: true)
+    	sendEvent(name: "local_date", value: Date.parse("yyyy-MM-dd HH:mm", xu.location.localtime).format("${dateFormat}"), isStateChange: true, display: true)
+	    sendEvent(name: "last_updated_epoch", value: xu.current.last_updated_epoch, isStateChange: true, display: false)
+    	sendEvent(name: "last_updated", value: Date.parse("yyyy-MM-dd HH:mm", xu.current.last_updated).format("${DTFormat}"), isStateChange: true, display: true)
         Summary_city = xu.location.name
         Summary_state = xu.location.region
         Summary_last_updated_date = Date.parse("yyyy-MM-dd HH:mm", xu.current.last_updated).format("${dateFormat}").toString()
         Summary_last_updated_time = Date.parse("yyyy-MM-dd HH:mm", xu.current.last_updated).format("${timeFormat}").toString()
 	}		
 	if(sourceastronomy.toInteger() == 1){
-        sendEvent(name: "localSunset", value: "${sslocalSunset}", descriptionText: "Sunset today at is $localSunset", isStateChange: true)
-        sendEvent(name: "localSunrise", value: "${sslocalSunrise}", descriptionText: "Sunrise today is at $localSunrise", isStateChange: true)
+        sendEvent(name: "localSunset", value: "${sslocalSunset}", descriptionText: "Sunset today at is $localSunset", isStateChange: true, display: true)
+        sendEvent(name: "localSunrise", value: "${sslocalSunrise}", descriptionText: "Sunrise today is at $localSunrise", isStateChange: true, display: true)
 	}
     if(sourceastronomy.toInteger() == 2){
-        sendEvent(name: "localSunset", value: "${wdlocalSunset}", descriptionText: "Sunset today at is $localSunset", isStateChange: true)
-        sendEvent(name: "localSunrise", value: "${wdlocalSunrise}", descriptionText: "Sunrise today is at $localSunrise", isStateChange: true)
+        sendEvent(name: "localSunset", value: "${wdlocalSunset}", descriptionText: "Sunset today at is $localSunset", isStateChange: true, display: true)
+        sendEvent(name: "localSunrise", value: "${wdlocalSunrise}", descriptionText: "Sunrise today is at $localSunrise", isStateChange: true, display: true)
     }
     if(sourceastronomy.toInteger() == 3){
-        sendEvent(name: "localSunset", value: "${xulocalSunset}", descriptionText: "Sunset today at is $localSunset", isStateChange: true)
-        sendEvent(name: "localSunrise", value: "${xulocalSunrise}", descriptionText: "Sunrise today is at $localSunrise", isStateChange: true)
+        sendEvent(name: "localSunset", value: "${xulocalSunset}", descriptionText: "Sunset today at is $localSunset", isStateChange: true, display: true)
+        sendEvent(name: "localSunrise", value: "${xulocalSunrise}", descriptionText: "Sunrise today is at $localSunrise", isStateChange: true, display: true)
     }    
-    sendEvent(name: "moonAge", value: wd.everything.astronomy.moon.moon_age.toDouble(), isStateChange: true)
-    if (wd.everything.astronomy.moon.moon_age.toDouble() >= 0 && wd.everything.astronomy.moon.moon_age.toDouble() < 4) {sendEvent(name: "moonPhase", value: "New Moon", isStateChange: true)}
-    if (wd.everything.astronomy.moon.moon_age.toDouble() >= 4 && wd.everything.astronomy.moon.moon_age.toDouble() < 7) {sendEvent(name: "moonPhase", value: "Waxing Crescent", isStateChange: true)}
-    if (wd.everything.astronomy.moon.moon_age.toDouble() >= 7 && wd.everything.astronomy.moon.moon_age.toDouble() < 10) {sendEvent(name: "moonPhase", value: "First Quarter", isStateChange: true)}
-    if (wd.everything.astronomy.moon.moon_age.toDouble() >= 10 && wd.everything.astronomy.moon.moon_age.toDouble() < 14) {sendEvent(name: "moonPhase", value: "Waxing Gibbous", isStateChange: true)}
-    if (wd.everything.astronomy.moon.moon_age.toDouble() >= 14 && wd.everything.astronomy.moon.moon_age.toDouble() < 18) {sendEvent(name: "moonPhase", value: "Full Moon", isStateChange: true)}
-    if (wd.everything.astronomy.moon.moon_age.toDouble() >= 18 && wd.everything.astronomy.moon.moon_age.toDouble() < 22) {sendEvent(name: "moonPhase", value: "Waning Gibbous", isStateChange: true)}
-    if (wd.everything.astronomy.moon.moon_age.toDouble() >= 22 && wd.everything.astronomy.moon.moon_age.toDouble() < 26) {sendEvent(name: "moonPhase", value: "Last Quarter", isStateChange: true)}
-    if (wd.everything.astronomy.moon.moon_age.toDouble() >= 26) {sendEvent(name: "moonPhase", value: "Waxing Gibbous", isStateChange: true)}
-    sendEvent(name: "moonIllumination", value: wd.everything.astronomy.moon.moon_phase + "%", isStateChange: true)
+    sendEvent(name: "moonAge", value: wd.everything.astronomy.moon.moon_age.toDouble(), isStateChange: true, display: true)
+    if (wd.everything.astronomy.moon.moon_age.toDouble() >= 0 && wd.everything.astronomy.moon.moon_age.toDouble() < 4) {sendEvent(name: "moonPhase", value: "New Moon", isStateChange: true, display: true)}
+    if (wd.everything.astronomy.moon.moon_age.toDouble() >= 4 && wd.everything.astronomy.moon.moon_age.toDouble() < 7) {sendEvent(name: "moonPhase", value: "Waxing Crescent", isStateChange: true, display: true)}
+    if (wd.everything.astronomy.moon.moon_age.toDouble() >= 7 && wd.everything.astronomy.moon.moon_age.toDouble() < 10) {sendEvent(name: "moonPhase", value: "First Quarter", isStateChange: true, display: true)}
+    if (wd.everything.astronomy.moon.moon_age.toDouble() >= 10 && wd.everything.astronomy.moon.moon_age.toDouble() < 14) {sendEvent(name: "moonPhase", value: "Waxing Gibbous", isStateChange: true, display: true)}
+    if (wd.everything.astronomy.moon.moon_age.toDouble() >= 14 && wd.everything.astronomy.moon.moon_age.toDouble() < 18) {sendEvent(name: "moonPhase", value: "Full Moon", isStateChange: true, display: true)}
+    if (wd.everything.astronomy.moon.moon_age.toDouble() >= 18 && wd.everything.astronomy.moon.moon_age.toDouble() < 22) {sendEvent(name: "moonPhase", value: "Waning Gibbous", isStateChange: true, display: true)}
+    if (wd.everything.astronomy.moon.moon_age.toDouble() >= 22 && wd.everything.astronomy.moon.moon_age.toDouble() < 26) {sendEvent(name: "moonPhase", value: "Last Quarter", isStateChange: true, display: true)}
+    if (wd.everything.astronomy.moon.moon_age.toDouble() >= 26) {sendEvent(name: "moonPhase", value: "Waxing Gibbous", isStateChange: true, display: true)}
+    sendEvent(name: "moonIllumination", value: wd.everything.astronomy.moon.moon_phase + "%", isStateChange: true, display: true)
 	if(sourceIllumination){
-		sendEvent(name: "illuminance", value: wd.everything.weather.solar.irradiance.wm2, unit: "lux", isStateChange: true)
-       	sendEvent(name: "solarradiation", value: wd.everything.weather.solar.irradiance.wm2, unit: "wm2", isStateChange: true)
+		sendEvent(name: "illuminance", value: wd.everything.weather.solar.irradiance.wm2, unit: "lux", isStateChange: true, display: true)
+       	sendEvent(name: "solarradiation", value: wd.everything.weather.solar.irradiance.wm2, unit: "wm2", isStateChange: true, display: true)
 	} else {
-        sendEvent(name: "illuminance", value: xu_lux, unit: "lux", isStateChange: true)
+        sendEvent(name: "illuminance", value: xu_lux, unit: "lux", isStateChange: true, display: true)
         if(!wd.everything.weather.solar.irradiance.wm2){
-            sendEvent(name: "solarradiation", value: "This station does not send Solar Radiation data", isStateChange: true)
+            sendEvent(name: "solarradiation", value: "This station does not send Solar Radiation data", isStateChange: true, display: true)
         } else {
-            sendEvent(name: "solarradiation", value: wd.everything.weather.solar.irradiance.wm2, unit: "wm2", isStateChange: true)
+            sendEvent(name: "solarradiation", value: wd.everything.weather.solar.irradiance.wm2, unit: "wm2", isStateChange: true, display: true)
         }
     }
 
-    sendEvent(name: "cloud", value: xu.current.cloud, unit: "%", isStateChange: true)
-    sendEvent(name: "condition_text", value: xu.current.condition.text, isStateChange: true)
-    sendEvent(name: "weather", value: xu.current.condition.text, isStateChange: true)
-    sendEvent(name: "condition_icon", value: wd.everything.forecast.icon.code, isStateChange: true)
-	sendEvent(name: "condition_code", value: xu.current.condition.code, isStateChange: true)
-	sendEvent(name: "dewpoint", value: (isFahrenheit ? wd.everything.weather.dew_point.current.f : wd.everything.weather.dew_point.current.f), unit: "${(isFahrenheit ? '°F' : '°C')}")
+    sendEvent(name: "cloud", value: xu.current.cloud, unit: "%", isStateChange: true, display: true)
+    
+    sendEvent(name: "condition_text", value: (iconType ? xu.current.condition.text : xu.forecast.forecastday[0].day.condition.text), isStateChange: true, displayed: true)
+    sendEvent(name: "condition_code", value: (iconType ? xu.current.condition.code : xu.forecast.forecastday[0].day.condition.code), isStateChange: true, displayed: true)
+    sendEvent(name: "condition_icon", value: (iconType ? '<img src=http:' + xu.current.condition.icon + '>' : '<img src=http:' + xu.forecast.forecastday[0].day.condition.icon + '>'), isStateChange: true, displayed: true)
+    sendEvent(name: "condition_icon_url", value: (iconType ? 'https:' + xu.current.condition.icon : 'https:' + xu.forecast.forecastday[0].day.condition.icon), isStateChange: true, displayed: true)
+    sendEvent(name: "condition_icon_only", value: (iconType ? xu.current.condition.icon.split("/")[-1] : xu.forecast.forecastday[0].day.condition.icon.split("/")[-1]), isStateChange: true, displayed: true)
+    sendEvent(name: "weather", value: (iconType ? xu.current.condition.text : xu.forecast.forecastday[0].day.condition.text), isStateChange: true, displayed: true)
+	sendEvent(name: "dewpoint", value: (isFahrenheit ? wd.everything.weather.dew_point.current.f : wd.everything.weather.dew_point.current.f), unit: "${(isFahrenheit ? '°F' : '°C')}", display: true)
     if(sourcefeelsLike){
-        sendEvent(name: "feelslike", value: (isFahrenheit ? wd.everything.weather.apparent_temperature.current.f : wd.everything.weather.apparent_temperature.current.c), unit: "${(isFahrenheit ? '°F' : '°C')}")
-        sendEvent(name: "feelsLike", value: (isFahrenheit ? wd.everything.weather.apparent_temperature.current.f : wd.everything.weather.apparent_temperature.current.c), unit: "${(isFahrenheit ? '°F' : '°C')}")
+        sendEvent(name: "feelslike", value: (isFahrenheit ? wd.everything.weather.apparent_temperature.current.f : wd.everything.weather.apparent_temperature.current.c), unit: "${(isFahrenheit ? '°F' : '°C')}", display: true)
+        sendEvent(name: "feelsLike", value: (isFahrenheit ? wd.everything.weather.apparent_temperature.current.f : wd.everything.weather.apparent_temperature.current.c), unit: "${(isFahrenheit ? '°F' : '°C')}", display: true)
         Summary_feelsLike = (isFahrenheit ? wd.everything.weather.apparent_temperature.current.f : wd.everything.weather.apparent_temperature.current.c)
-        sendEvent(name: "forecastConditions_text", value: wd.everything.forecast.davis_forecast, isStateChange: true)
+        sendEvent(name: "forecastConditions_text", value: wd.everything.forecast.davis_forecast, isStateChange: true, display: true)
 	} else {
-        sendEvent(name: "feelslike", value: (isFahrenheit ? xu.current.feelslike_f : xu.current.feelslike_c), unit: "${(isFahrenheit ? '°F' : '°C')}", isStateChange: true)
-        sendEvent(name: "feelsLike", value: (isFahrenheit ? xu.current.feelslike_f : xu.current.feelslike_c), unit: "${(isFahrenheit ? '°F' : '°C')}", isStateChange: true)
+        sendEvent(name: "feelslike", value: (isFahrenheit ? xu.current.feelslike_f : xu.current.feelslike_c), unit: "${(isFahrenheit ? '°F' : '°C')}", isStateChange: true, display: true)
+        sendEvent(name: "feelsLike", value: (isFahrenheit ? xu.current.feelslike_f : xu.current.feelslike_c), unit: "${(isFahrenheit ? '°F' : '°C')}", isStateChange: true, display: true)
         Summary_feelsLike = (isFahrenheit ? xu.current.feelslike_f : xu.current.feelslike_c)
-        sendEvent(name: "forecastCondition_text", value: xu.forecast.forecastday[0].day.condition.text, isStateChange: true)            
+        sendEvent(name: "forecastCondition_text", value: xu.forecast.forecastday[0].day.condition.text, isStateChange: true, display: true)            
 	}
-    sendEvent(name: "humidity", value: wd.everything.weather.humidity.current, isStateChange: true)
-    sendEvent(name: "Humidity", value: wd.everything.weather.humidity.current.toString() + "%", isStateChange: true)
-    sendEvent(name: "lux", value: (sourceIllumination ? wd.everything.weather.solar.irradiance.wm2 : String.format("%,d", xu_lux)), unit: "lux", isStateChange: true)
-    sendEvent(name: "xuis_day", value: xu.current.is_day, isStateChange: true)
-	sendEvent(name: "precip_today", value: (isRainMetric ? wd.everything.weather.rainfall.daily.mm : wd.everything.weather.rainfall.daily.in), unit: "${(isRainMetric ? 'MM' : 'IN')}")
-	sendEvent(name: "pressure", value: (isPressureMetric ? wd.everything.weather.pressure.current.mb : wd.everything.weather.pressure.current.inhg), unit: "${(isDistanceMetric ? 'In' : 'MB')}")
-	sendEvent(name: "temp", value: (isFahrenheit ? wd.everything.weather.temperature.current.f : wd.everything.weather.temperature.current.c), unit: "${(isFahrenheit ? '°F' : '°C')}")	
-    sendEvent(name: "temperature", value: (isFahrenheit ? wd.everything.weather.temperature.current.f : wd.everything.weather.temperature.current.c), unit: "${(isFahrenheit ? '°F' : '°C')}")
-	if(sourceUV){
-		sendEvent(name: "UV", value: wd.everything.weather.uv.uvi, isStateChange: true)
-	} else {
-		sendEvent(name: "UV", value: xu.forecast.forecastday[0].day.uv, isStateChange: true)
-	}
-    sendEvent(name: "vis", value: (isDistanceMetric ? xu.current.vis_km : xu.current.vis_miles), unit: "${(isDistanceMetric ? 'KM' : 'MILES')}", isStateChange: true)
-	sendEvent(name: "wind", value: (isDistanceMetric ? wd.everything.weather.wind.avg_speed.kmh : wd.everything.weather.wind.avg_speed.mph), unit: "${(isDistanceMetric ? 'MPH' : 'KPH')}")
-	sendEvent(name: "wind_gust", value: (isDistanceMetric ? wd.everything.weather.wind.max_gust_speed.kmh : wd.everything.weather.wind.max_gust_speed.mph), unit: "${(isDistanceMetric ? 'MPH' : 'KPH')}")
-	sendEvent(name: "wind_degree", value: wd.everything.weather.wind.direction.degrees, isStateChange: true)
-	sendEvent(name: "wind_dir", value: wd.everything.weather.wind.direction.cardinal, isStateChange: true)
-    sendEvent(name: "wind_bft", value: wd.everything.weather.wind.avg_speed.bft, isStateChange: true)
-    sendEvent(name: "wind_string_bft", value: "${Summary_Wind_string}", isStateChange: true) 
-    sendEvent(name: "wind_string", value: "Wind: ${Summary_Wind_string} from the " + wd.everything.weather.wind.direction.cardinal + " at " + (isDistanceMetric ? wd.everything.weather.wind.avg_speed.kmh + " KPH" : wd.everything.weather.wind.avg_speed.mph + " MPH"))
+    sendEvent(name: "humidity", value: wd.everything.weather.humidity.current, isStateChange: true, display: true)
+    sendEvent(name: "Humidity", value: wd.everything.weather.humidity.current.toString() + "%", isStateChange: true, display: true)
+    sendEvent(name: "lux", value: (sourceIllumination ? wd.everything.weather.solar.irradiance.wm2 : String.format("%,d", xu_lux)), unit: "lux", isStateChange: true, display: true)
+    sendEvent(name: "xuis_day", value: xu.current.is_day, isStateChange: true, display: true)
+	sendEvent(name: "precip_today", value: (isRainMetric ? wd.everything.weather.rainfall.daily.mm : wd.everything.weather.rainfall.daily.in), unit: "${(isRainMetric ? 'MM' : 'IN')}", display: true)
+	sendEvent(name: "pressure", value: (isPressureMetric ? wd.everything.weather.pressure.current.mb : wd.everything.weather.pressure.current.inhg), unit: "${(isDistanceMetric ? 'In' : 'MB')}", display: true)
+	sendEvent(name: "temp", value: (isFahrenheit ? wd.everything.weather.temperature.current.f : wd.everything.weather.temperature.current.c), unit: "${(isFahrenheit ? '°F' : '°C')}", display: true)	
+    sendEvent(name: "temperature", value: (isFahrenheit ? wd.everything.weather.temperature.current.f : wd.everything.weather.temperature.current.c), unit: "${(isFahrenheit ? '°F' : '°C')}", display: true)
+    sendEvent(name: "UV", value: (sourceUV ? wd.everything.weather.uv.uvi : xu.forecast.forecastday[0].day.uv), isStateChange: true, display: true)
+    sendEvent(name: "vis", value: (isDistanceMetric ? xu.current.vis_km : xu.current.vis_miles), unit: "${(isDistanceMetric ? 'KM' : 'MILES')}", isStateChange: true, display: true)
+	sendEvent(name: "wind", value: (isDistanceMetric ? wd.everything.weather.wind.avg_speed.kmh : wd.everything.weather.wind.avg_speed.mph), unit: "${(isDistanceMetric ? 'MPH' : 'KPH')}", display: true)
+	sendEvent(name: "wind_gust", value: (isDistanceMetric ? wd.everything.weather.wind.max_gust_speed.kmh : wd.everything.weather.wind.max_gust_speed.mph), unit: "${(isDistanceMetric ? 'MPH' : 'KPH')}", display: true)
+	sendEvent(name: "wind_degree", value: wd.everything.weather.wind.direction.degrees, isStateChange: true, display: true)
+	sendEvent(name: "wind_dir", value: wd.everything.weather.wind.direction.cardinal, isStateChange: true, display: true)
+    sendEvent(name: "wind_bft", value: wd.everything.weather.wind.avg_speed.bft, isStateChange: true, display: true)
+    sendEvent(name: "wind_string_bft", value: "${Summary_Wind_string}", isStateChange: true, display: true) 
+    sendEvent(name: "wind_string", value: "Wind: ${Summary_Wind_string} from the " + wd.everything.weather.wind.direction.cardinal + " at " + (isDistanceMetric ? wd.everything.weather.wind.avg_speed.kmh + " KPH" : wd.everything.weather.wind.avg_speed.mph + " MPH"), display: true)
+    
     def imgName = getImgName(iconType ? xu.current.condition.code : xu.forecast.forecastday[0].day.condition.code, xu.current.is_day)
-    sendEvent(name: "visualIconOnly", value: '<img src=' + imgName + '>', isStateChange: true, displayed: true)
-    sendEvent(name: "visualIconWithText", value: '<img src=' + imgName + '><br>' + (iconType ? xu.current.condition.text : xu.forecast.forecastday[0].day.condition.text), isStateChange: true, displayed: true)
-    sendEvent(name: "condition_icon", value: (iconType ? '<img src=http:' + xu.current.condition.icon + '>' : '<img src=http:' + xu.forecast.forecastday[0].day.condition.icon + '>'), isStateChange: true)
-    sendEvent(name: "weatherIcon", value: (iconType ? xu.current.condition.text.replace(" ", "").toLowerCase() : xu.forecast.forecastday[0].day.condition.text.replace(" ", "").toLowerCase()), isStateChange: true)
+    sendEvent(name: "visualIconOnly", value: '<img src=' + imgName + '>', isStateChange: true, displayed: true, display: true)
+    sendEvent(name: "visualIconWithText", value: '<img src=' + imgName + '><br>' + (iconType ? xu.current.condition.text : xu.forecast.forecastday[0].day.condition.text), isStateChange: true, displayed: true, display: true)
+    
     sendEvent(name: "percentPrecip", value: "Not Available", isStateChange: true)
-    sendEvent(name: "forecastHigh", value: (isFahrenheit ? xu.forecast.forecastday[0].day.maxtemp_f : xu.forecast.forecastday[0].day.maxtemp_c), unit: "${(isFahrenheit ? '°F' : '°C')}")
-    sendEvent(name: "forecastLow", value: (isFahrenheit ? xu.forecast.forecastday[0].day.mintemp_f : xu.forecast.forecastday[0].day.mintemp_c), unit: "${(isFahrenheit ? '°F' : '°C')}")
-    sendEvent(name: "rainTomorrow", value: (isRainMetric ? xu.forecast.forecastday[1].day.totalprecip_mm : xu.forecast.forecastday[1].day.totalprecip_in), unit: "${(isRainMetric ? 'mm' : 'in')}")
-    sendEvent(name: "rainDayAfterTomorrow", value: (isRainMetric ? xu.forecast.forecastday[2].day.totalprecip_mm : xu.forecast.forecastday[2].day.totalprecip_in), unit: "${(isRainMetric ? 'mm' : 'in')}")
+    sendEvent(name: "forecastHigh", value: (isFahrenheit ? xu.forecast.forecastday[0].day.maxtemp_f : xu.forecast.forecastday[0].day.maxtemp_c), unit: "${(isFahrenheit ? '°F' : '°C')}", display: true)
+    sendEvent(name: "forecastLow", value: (isFahrenheit ? xu.forecast.forecastday[0].day.mintemp_f : xu.forecast.forecastday[0].day.mintemp_c), unit: "${(isFahrenheit ? '°F' : '°C')}", display: true)
+    sendEvent(name: "rainTomorrow", value: (isRainMetric ? xu.forecast.forecastday[1].day.totalprecip_mm : xu.forecast.forecastday[1].day.totalprecip_in), unit: "${(isRainMetric ? 'mm' : 'in')}", display: true)
+    sendEvent(name: "rainDayAfterTomorrow", value: (isRainMetric ? xu.forecast.forecastday[2].day.totalprecip_mm : xu.forecast.forecastday[2].day.totalprecip_in), unit: "${(isRainMetric ? 'mm' : 'in')}", display: true)
 
     Summary_condition_text = (iconType ? xu.current.condition.text : xu.forecast.forecastday[0].day.condition.text)
     Summary_Humidity = wd.everything.weather.humidity.current.toString() + "%"
@@ -685,13 +684,13 @@ def poll(){
                   + "${Summary_forecastLow}${Summary_degree}. Humidity is currently around ${Summary_Humidity} and temperature is ${Summary_temp}${Summary_degree}. " 
                   + " The temperature feels like it's ${Summary_feelsLike}${Summary_degree}.  Wind: ${Summary_Wind_string} from the ${Summary_wind_dir} at ${Summary_wind} " + (isDistanceMetric ? "KPH" : "MPH")
 			+ ", with gusts up to ${Summary_wind_gust} " + (isDistanceMetric ? "KPH" : "MPH") + ".  Visibility is around ${Summary_vis} " 
-            + (isDistanceMetric ? "kilometers" : "miles") + "." , isStateChange: true
+            + (isDistanceMetric ? "kilometers" : "miles") + "." , isStateChange: true, display: true
 			)
 	}    
 	if(summaryType == false){
         sendEvent(name: "weatherSummary", value: "${Summary_condition_text}. Today's High: ${Summary_forecastHigh}${Summary_Degree}, Today's Low: ${Summary_forecastLow}${Summary_Degree}" 
                   + ". Humidity: ${Summary_Humidity} Temperature: ${Summary_temp}${Summary_degree}. Wind Direction: ${Summary_wind_dir}. Wind Speed: ${Summary_wind} "  + (isDistanceMetric ? "KPH" : "MPH") + "."
-			+ ", Gust: ${Summary_wind_gust} " + (isDistanceMetric ? "KPH" : "MPH") + ".", isStateChange: true
+			+ ", Gust: ${Summary_wind_gust} " + (isDistanceMetric ? "KPH" : "MPH") + ".", isStateChange: true, display: true
 			)  
 	}
     return 
