@@ -432,8 +432,8 @@ def poll(){
         	wu_lux = null
     } else {
 	        wu_lux = estimateLux(localTime, sunriseTime, sunsetTime, noonTime, twilight_begin, twilight_end, wucondition_code, wucloud, wutz_id)
-		    sendEvent(name: "wuilluminance", value: String.format("%,d", wu_lux), displayed: (presentWU ? true : false))
-    		sendEvent(name: "wulux", value: String.format("%,d", wu_lux), unit: "lux", display: (presentWU ? true : false))
+		    sendEvent(name: "wuilluminance", value: wu_lux, unit: "lux", displayed: (presentWU ? true : false))
+    		sendEvent(name: "wulux", value: wu_lux, unit: "lux", display: (presentWU ? true : false))
     }
     def wulocalSunset = Date.parse("HH:mm", wu.sun_phase.sunset.hour + ":" + wu.sun_phase.sunset.minute).format("$timeFormat}")
     def wulocalSunrise = Date.parse("HH:mm", wu.sun_phase.sunrise.hour + ":" + wu.sun_phase.sunrise.minute).format("$timeFormat}")
@@ -658,9 +658,9 @@ def poll(){
         sendEvent(name: "forecastCondition_text", value: wu.forecast.simpleforecast.forecastday[0].conditions, isStateChange: true, displayed: true)            
         Summary_feelsLike = (isFahrenheit ? wu.current_observation.feelslike_f : wu.current_observation.feelslike_c)
 	}
-    sendEvent(name: "humidity", value: wd.everything.weather.humidity.current, isStateChange: true, displayed: true)
+    sendEvent(name: "humidity", value: wd.everything.weather.humidity.current, unit: "%", isStateChange: true, displayed: true)
     sendEvent(name: "Humidity", value: wd.everything.weather.humidity.current.toString() + "%", isStateChange: true, displayed: true)
-    sendEvent(name: "lux", value: (sourceIllumination ? wd.everything.weather.solar.irradiance.wm2 : String.format("%,d",wu_lux)), unit: "lux", isStateChange: true, displayed: true)    
+    sendEvent(name: "lux", value: (sourceIllumination ? wd.everything.weather.solar.irradiance.wm2 : wu_lux), unit: "lux", isStateChange: true, displayed: true)    
 	sendEvent(name: "precip_today", value: (isRainMetric ? wd.everything.weather.rainfall.daily.mm : wd.everything.weather.rainfall.daily.in), unit: "${(isRainMetric ? 'MM' : 'IN')}", displayed: true)
 	sendEvent(name: "pressure", value: (isPressureMetric ? wd.everything.weather.pressure.current.mb : wd.everything.weather.pressure.current.inhg), unit: "${(isDistanceMetric ? 'In' : 'MB')}", displayed: true)
 	sendEvent(name: "temp", value: (isFahrenheit ? wd.everything.weather.temperature.current.f : wd.everything.weather.temperature.current.c), unit: "${(isFahrenheit ? '°F' : '°C')}", displayed: true)	
