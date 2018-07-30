@@ -641,10 +641,9 @@ def poll(){
 	sendEvent(name: "dewpoint", value: (isFahrenheit ? wd.everything.weather.dew_point.current.f : wd.everything.weather.dew_point.current.f), unit: "${(isFahrenheit ? '°F' : '°C')}", isStateChange: true, displayed: true)
     sendEvent(name: "is_day", value: "${wuis_day}".toInteger(), isStateChange: true, displayed: true)
     
-    imgCondition1 = wu.current_observation.icon
-    LOGINFO("imgCondition: ${imgCondition}")
-    imgCondition2 = wu.forecast.simpleforecast.forecastday[0].icon
-    def imgName = getImgName(iconType ? imgCondition1 : imgCondition2, "${wuis_day}".toInteger())
+    LOGINFO("getImgName: " + (iconType ? wu.current_observation.icon : wu.forecast.simpleforecast.forecastday[0].icon))
+//    def imgName = getImgName(iconType ? wu.current_observation.icon : wu.forecast.simpleforecast.forecastday[0].icon, "${wuis_day}".toInteger())
+    def imgName = getImgName(iconType ? wu.current_observation.icon : wu.forecast.simpleforecast.forecastday[0].icon)    
     sendEvent(name: "visualIconOnly", value: '<img src=' + imgName + '>', isStateChange: true, displayed: true)
     sendEvent(name: "visualIconWithText", value: '<img src=' + imgName + '><br>' + (iconType ? wu.current_observation.weather : wu.forecast.simpleforecast.forecastday[0].conditions), isStateChange: true, displayed: true)
 
@@ -888,10 +887,13 @@ def LOGINFO(txt){
 	"tstorms":['Thunderstorm',0.3],
 	"unknown":['Unknown',0.5]]
 
-private getImgName(wCode, is_day)       {
+//private getImgName(wCode, is_day)       {
+private getImgName(wCode)       {    
     def url = "https://cdn.rawgit.com/adey/bangali/master/resources/icons/weather/"
-    LOGINFO("wCode: " + wCode + " is_day: " + is_day)
-    def imgItem = imgNames.find{ it.code == wCode && it.day == is_day}
+//    LOGINFO("wCode: " + wCode + " is_day: " + is_day)
+    LOGINFO("wCode: " + wCode)    
+//    def imgItem = imgNames.find{ it.code == wCode && it.day == is_day}
+    def imgItem = imgNames.find{ it.code == wCode}    
     LOGINFO("image url: " + url + (imgItem ? imgItem.img : 'na.png'))
     return (url + (imgItem ? imgItem.img : 'na.png'))
 }
