@@ -288,6 +288,7 @@ metadata {
 		    input "sourceIllumination", "bool", required: true, title: "Illuminance from Weather-Display?", defaultValue: true
             input "sourcelocation", "bool", required: true, title: "Location from Weather-Display?", defaultValue: true
             input "sourceUV", "bool", required: true, title: "UV from Weather-Display?", defaultValue: true
+            input "sourceImg", "bool", required: true, defaultValue: true, title: "Icons from: On = WeatherUnderground - Off = Alternative?"            
        }
     }
 }
@@ -642,9 +643,9 @@ def poll(){
 	sendEvent(name: "dewpoint", value: (isFahrenheit ? wd.everything.weather.dew_point.current.f : wd.everything.weather.dew_point.current.f), unit: "${(isFahrenheit ? '°F' : '°C')}", isStateChange: true, displayed: true)
     sendEvent(name: "is_day", value: "${wuis_day}".toInteger(), isStateChange: true, displayed: true)
     
-    LOGINFO("getImgName: " + (iconType ? wu.current_observation.icon : wu.forecast.simpleforecast.forecastday[0].icon))
-//    def imgName = getImgName(iconType ? wu.current_observation.icon : wu.forecast.simpleforecast.forecastday[0].icon, "${wuis_day}".toInteger())
-    def imgName = getImgName(iconType ? wu.current_observation.icon : wu.forecast.simpleforecast.forecastday[0].icon)    
+    LOGINFO("getImgName: " + (iconType ? wu.current_observation.weather : wu.forecast.simpleforecast.forecastday[0].conditions) + "  is_day: " + is_day)
+    def imgName = getImgName(iconType ? wu.current_observation.weather : wu.forecast.simpleforecast.forecastday[0].conditions, "${wuis_day}".toInteger())
+//    def imgName = getImgName(iconType ? wu.current_observation.icon : wu.forecast.simpleforecast.forecastday[0].icon)    
     sendEvent(name: "visualIconOnly", value: '<img src=' + imgName + '>', isStateChange: true, displayed: true)
     sendEvent(name: "visualIconWithText", value: '<img src=' + imgName + '><br>' + (iconType ? wu.current_observation.weather : wu.forecast.simpleforecast.forecastday[0].conditions), isStateChange: true, displayed: true)
 
@@ -888,15 +889,207 @@ def LOGINFO(txt){
 	"tstorms":['Thunderstorm',0.3],
 	"unknown":['Unknown',0.5]]
 
-//private getImgName(wCode, is_day)       {
-private getImgName(wCode)       {    
+private getImgName(wCode, is_day)       {
+//private getImgName(wCode)       {    
     def url = "https://github.com/Scottma61/WeatherIcons/blob/master/"
-    LOGINFO("wCode: " + wCode)    
-    def imgItem = imgNames.find{ it.code == wCode}    
-    LOGINFO("image url: " + url + (imgItem ? imgItem.img : 'na.png'))
-    return (url + (imgItem ? imgItem.img : 'na.png') + "?raw=true")
+    LOGINFO("wCode: " + wCode + "  is_day: " + is_day)    
+//    def imgItem = imgNames.find{ it.code == wCode}  
+	def imgItem = imgNames.find{ it.code == wCode && it.day == is_day }    
+//    def imgItem = imgNames.find{ it.code == wCode}    
+    LOGINFO("image url: " + url + (imgItem ? (sourceImg ? imgItem.wuimg : imgItem.img) : 'na.png') + "?raw=true")
+//    return (url + (imgItem ? imgItem.img : 'na.png') + "?raw=true")
+    return (url + (imgItem ? (sourceImg ? imgItem.wuimg : imgItem.img) : 'na.png') + "?raw=true")    
 }
 
+@Field final List    imgNames =     [
+     [code: "Drizzle", day: 1, img: '11.png', wuimg: '1266.png'],  // DAY - Light drizzle
+     [code: "Rain", day: 1, img: '12.png', wuimg: '1302.png'],  // DAY - Moderate rain
+     [code: "Snow", day: 1, img: '16.png', wuimg: '1332.png'],  // DAY - Moderate snow
+     [code: "Snow Grains", day: 1, img: '18.png', wuimg: '1350.png'],  // DAY - Ice pellets
+     [code: "Ice Crystals", day: 1, img: '18.png', wuimg: '1350.png'],  // DAY - Ice pellets
+     [code: "Ice Pellets", day: 1, img: '18.png', wuimg: '1350.png'],  // DAY - Ice pellets
+     [code: "Hail", day: 1, img: '5.png', wuimg: '1317.png'],  // DAY - Light sleet
+     [code: "Mist", day: 1, img: '21.png', wuimg: '1248.png'],  // DAY - Fog
+     [code: "Fog", day: 1, img: '21.png', wuimg: '1248.png'],  // DAY - Fog
+     [code: "Fog Patches", day: 1, img: '21.png', wuimg: '1248.png'],  // DAY - Fog
+     [code: "Low Drifting Snow", day: 1, img: '15.png', wuimg: '1227.png'],  // DAY - Blowing snow
+     [code: "Blowing Snow", day: 1, img: '15.png', wuimg: '1227.png'],  // DAY - Blowing snow
+     [code: "Rain Mist", day: 1, img: '11.png', wuimg: '1266.png'],  // DAY - Light drizzle
+     [code: "Rain Showers", day: 1, img: '12.png', wuimg: '1356.png'],  // DAY - Moderate or heavy rain shower
+     [code: "Snow Showers", day: 1, img: '16.png', wuimg: '1371.png'],  // DAY - Moderate or heavy snow showers
+     [code: "Snow Blowing Snow Mist", day: 1, img: '16.png', wuimg: '1371.png'],  // DAY - Moderate or heavy snow showers
+     [code: "Ice Pellet Showers", day: 1, img: '6.png', wuimg: '1365.png'],  // DAY - Moderate or heavy sleet showers
+     [code: "Hail Showers", day: 1, img: '10.png', wuimg: '1377.png'],  // DAY - Moderate or heavy showers of ice pellets
+     [code: "Small Hail Showers", day: 1, img: '6.png', wuimg: '1365.png'],  // DAY - Moderate or heavy sleet showers
+     [code: "Thunderstorm", day: 1, img: '35.png', wuimg: '1389.png'],  // DAY - Moderate or heavy rain with thunder
+     [code: "Thunderstorms and Rain", day: 1, img: '35.png', wuimg: '1389.png'],  // DAY - Moderate or heavy rain with thunder
+     [code: "Thunderstorms and Snow", day: 1, img: '18.png', wuimg: '1395.png'],  // DAY - Moderate or heavy snow with thunder
+     [code: "Thunderstorms and Ice Pellets", day: 1, img: '18.png', wuimg: '1395.png'],  // DAY - Moderate or heavy snow with thunder
+     [code: "Thunderstorms with Hail", day: 1, img: '35.png', wuimg: '1389.png'],  // DAY - Moderate or heavy rain with thunder
+     [code: "Thunderstorms with Small Hail", day: 1, img: '10.png', wuimg: '1377.png'],  // DAY - Moderate or heavy showers of ice pellets
+     [code: "Freezing Drizzle", day: 1, img: '8.png', wuimg: '1281.png'],  // DAY - Freezing drizzle
+     [code: "Freezing Rain", day: 1, img: '6.png', wuimg: '1365.png'],  // DAY - Moderate or heavy sleet showers
+     [code: "Freezing Fog", day: 1, img: '21.png', wuimg: '1260.png'],  // DAY - Freezing fog
+     [code: "Patches of Fog", day: 1, img: '21.png', wuimg: '1260.png'],  // DAY - Freezing fog
+     [code: "Shallow Fog", day: 1, img: '21.png', wuimg: '1248.png'],  // DAY - Fog
+     [code: "Partial Fog", day: 1, img: '21.png', wuimg: '1248.png'],  // DAY - Fog
+     [code: "Overcast", day: 1, img: '26.png', wuimg: '1122.png'],  // DAY - Overcast
+     [code: "Clear", day: 1, img: '32.png', wuimg: '1113.png'],  // DAY - Sunny
+     [code: "Partly Cloudy", day: 1, img: '30.png', wuimg: '1116.png'],  // DAY - Partly cloudy
+     [code: "Mostly Cloudy", day: 1, img: '28.png', wuimg: '1119.png'],  // DAY - Cloudy
+     [code: "Scattered Clouds", day: 1, img: '30.png', wuimg: '1116.png'],  // DAY - Partly cloudy
+     [code: "Small Hail", day: 1, img: '5.png', wuimg: '1317.png'],  // DAY - Light sleet
+     [code: "Light Drizzle", day: 1, img: '11.png', wuimg: '1266.png'],  // DAY - Light drizzle
+     [code: "Light Rain", day: 1, img: '11.png', wuimg: '1296.png'],  // DAY - Light rain
+     [code: "Light Snow", day: 1, img: '18.png', wuimg: '1326.png'],  // DAY - Light snow
+     [code: "Light Snow Grains", day: 1, img: '5.png', wuimg: '1317.png'],  // DAY - Light sleet
+     [code: "Light Ice Crystals", day: 1, img: '5.png', wuimg: '1317.png'],  // DAY - Light sleet
+     [code: "Light Ice Pellets", day: 1, img: '5.png', wuimg: '1317.png'],  // DAY - Light sleet
+     [code: "Light Hail", day: 1, img: '5.png', wuimg: '1317.png'],  // DAY - Light sleet
+     [code: "Light Mist", day: 1, img: '11.png', wuimg: '1266.png'],  // DAY - Light drizzle
+     [code: "Light Fog", day: 1, img: '21.png', wuimg: '1248.png'],  // DAY - Fog
+     [code: "Light Fog Patches", day: 1, img: '21.png', wuimg: '1248.png'],  // DAY - Fog
+     [code: "Light Low Drifting Snow", day: 1, img: '15.png', wuimg: '1227.png'],  // DAY - Blowing snow
+     [code: "Light Blowing Snow", day: 1, img: '15.png', wuimg: '1227.png'],  // DAY - Blowing snow
+     [code: "Light Rain Mist", day: 1, img: '11.png', wuimg: '1266.png'],  // DAY - Light drizzle
+     [code: "Light Rain Showers", day: 1, img: '11.png', wuimg: '1353.png'],  // DAY - Light rain shower
+     [code: "Light Snow Showers", day: 1, img: '16.png', wuimg: '1368.png'],  // DAY - Light snow showers
+     [code: "Light Snow Blowing Snow Mist", day: 1, img: '15.png', wuimg: '1227.png'],  // DAY - Blowing snow
+     [code: "Light Ice Pellet Showers", day: 1, img: '8.png', wuimg: '1374.png'],  // DAY - Light showers of ice pellets
+     [code: "Light Hail Showers", day: 1, img: '8.png', wuimg: '1374.png'],  // DAY - Light showers of ice pellets
+     [code: "Light Small Hail Showers", day: 1, img: '8.png', wuimg: '1374.png'],  // DAY - Light showers of ice pellets
+     [code: "Light Thunderstorm", day: 1, img: '38.png', wuimg: '1386.png'],  // DAY - Patchy light rain with thunder
+     [code: "Light Thunderstorms and Rain", day: 1, img: '38.png', wuimg: '1386.png'],  // DAY - Patchy light rain with thunder
+     [code: "Light Thunderstorms and Snow", day: 1, img: '41.png', wuimg: '1392.png'],  // DAY - Patchy light snow with thunder
+     [code: "Light Thunderstorms and Ice Pellets", day: 1, img: '41.png', wuimg: '1392.png'],  // DAY - Patchy light snow with thunder
+     [code: "Light Thunderstorms with Hail", day: 1, img: '5.png', wuimg: '1362.png'],  // DAY - Light sleet showers
+     [code: "Light Thunderstorms with Small Hail", day: 1, img: '8.png', wuimg: '1374.png'],  // DAY - Light showers of ice pellets
+     [code: "Light Freezing Drizzle", day: 1, img: '8.png', wuimg: '1281.png'],  // DAY - Freezing drizzle
+     [code: "Light Freezing Rain", day: 1, img: '8.png', wuimg: '1311.png'],  // DAY - Light freezing rain
+     [code: "Light Freezing Fog", day: 1, img: '21.png', wuimg: '1260.png'],  // DAY - Freezing fog
+     [code: "Heavy Drizzle", day: 1, img: '12.png', wuimg: '1302.png'],  // DAY - Moderate rain
+     [code: "Heavy Rain", day: 1, img: '12.png', wuimg: '1308.png'],  // DAY - Heavy rain
+     [code: "Heavy Snow", day: 1, img: '16.png', wuimg: '1371.png'],  // DAY - Moderate or heavy snow showers
+     [code: "Heavy Snow Grains", day: 1, img: '6.png', wuimg: '1365.png'],  // DAY - Moderate or heavy sleet showers
+     [code: "Heavy Ice Crystals", day: 1, img: '10.png', wuimg: '1377.png'],  // DAY - Moderate or heavy showers of ice pellets
+     [code: "Heavy Ice Pellets", day: 1, img: '10.png', wuimg: '1377.png'],  // DAY - Moderate or heavy showers of ice pellets
+     [code: "Heavy Hail", day: 1, img: '10.png', wuimg: '1377.png'],  // DAY - Moderate or heavy showers of ice pellets
+     [code: "Heavy Mist", day: 1, img: '11.png', wuimg: '1296.png'],  // DAY - Light rain
+     [code: "Heavy Fog", day: 1, img: '21.png', wuimg: '1248.png'],  // DAY - Fog
+     [code: "Heavy Fog Patches", day: 1, img: '21.png', wuimg: '1248.png'],  // DAY - Fog
+     [code: "Heavy Low Drifting Snow", day: 1, img: '15.png', wuimg: '1227.png'],  // DAY - Blowing snow
+     [code: "Heavy Blowing Snow", day: 1, img: '15.png', wuimg: '1227.png'],  // DAY - Blowing snow
+     [code: "Heavy Rain Mist", day: 1, img: '11.png', wuimg: '1296.png'],  // DAY - Light rain
+     [code: "Heavy Rain Showers", day: 1, img: '12.png', wuimg: '1356.png'],  // DAY - Moderate or heavy rain shower
+     [code: "Heavy Snow Showers", day: 1, img: '16.png', wuimg: '1371.png'],  // DAY - Moderate or heavy snow showers
+     [code: "Heavy Snow Blowing Snow Mist", day: 1, img: '15.png', wuimg: '1227.png'],  // DAY - Blowing snow
+     [code: "Heavy Ice Pellet Showers", day: 1, img: '10.png', wuimg: '1377.png'],  // DAY - Moderate or heavy showers of ice pellets
+     [code: "Heavy Hail Showers", day: 1, img: '10.png', wuimg: '1377.png'],  // DAY - Moderate or heavy showers of ice pellets
+     [code: "Heavy Small Hail Showers", day: 1, img: '6.png', wuimg: '1365.png'],  // DAY - Moderate or heavy sleet showers
+     [code: "Heavy Thunderstorm", day: 1, img: '35.png', wuimg: '1389.png'],  // DAY - Moderate or heavy rain with thunder
+     [code: "Heavy Thunderstorms and Rain", day: 1, img: '35.png', wuimg: '1389.png'],  // DAY - Moderate or heavy rain with thunder
+     [code: "Heavy Thunderstorms and Snow", day: 1, img: '18.png', wuimg: '1395.png'],  // DAY - Moderate or heavy snow with thunder
+     [code: "Heavy Thunderstorms and Ice Pellets", day: 1, img: '10.png', wuimg: '1377.png'],  // DAY - Moderate or heavy showers of ice pellets
+     [code: "Heavy Thunderstorms with Hail", day: 1, img: '10.png', wuimg: '1377.png'],  // DAY - Moderate or heavy showers of ice pellets
+     [code: "Heavy Thunderstorms with Small Hail", day: 1, img: '10.png', wuimg: '1377.png'],  // DAY - Moderate or heavy showers of ice pellets
+     [code: "Heavy Freezing Drizzle", day: 1, img: '10.png', wuimg: '1284.png'],  // DAY - Heavy freezing drizzle
+     [code: "Heavy Freezing Rain", day: 1, img: '10.png', wuimg: '1314.png'],  // DAY - Moderate or heavy freezing rain
+     [code: "Heavy Freezing Fog", day: 1, img: '21.png', wuimg: '1260.png'],  // DAY - Freezing fog
+     [code: "Drizzle", day: 0, img: '11.png', wuimg: '2266.png'],  // NIGHT - Light drizzle
+     [code: "Rain", day: 0, img: '12.png', wuimg: '2302.png'],  // NIGHT - Moderate rain
+     [code: "Snow", day: 0, img: '16.png', wuimg: '2332.png'],  // NIGHT - Moderate snow
+     [code: "Snow Grains", day: 0, img: '18.png', wuimg: '2350.png'],  // NIGHT - Ice pellets
+     [code: "Ice Crystals", day: 0, img: '18.png', wuimg: '2350.png'],  // NIGHT - Ice pellets
+     [code: "Ice Pellets", day: 0, img: '18.png', wuimg: '2350.png'],  // NIGHT - Ice pellets
+     [code: "Hail", day: 0, img: '5.png', wuimg: '2317.png'],  // NIGHT - Light sleet
+     [code: "Mist", day: 0, img: '21.png', wuimg: '2248.png'],  // NIGHT - Fog
+     [code: "Fog", day: 0, img: '21.png', wuimg: '2248.png'],  // NIGHT - Fog
+     [code: "Fog Patches", day: 0, img: '21.png', wuimg: '2248.png'],  // NIGHT - Fog
+     [code: "Low Drifting Snow", day: 0, img: '15.png', wuimg: '2227.png'],  // NIGHT - Blowing snow
+     [code: "Blowing Snow", day: 0, img: '15.png', wuimg: '2227.png'],  // NIGHT - Blowing snow
+     [code: "Rain Mist", day: 0, img: '11.png', wuimg: '2266.png'],  // NIGHT - Light drizzle
+     [code: "Rain Showers", day: 0, img: '12.png', wuimg: '2356.png'],  // NIGHT - Moderate or heavy rain shower
+     [code: "Snow Showers", day: 0, img: '16.png', wuimg: '2371.png'],  // NIGHT - Moderate or heavy snow showers
+     [code: "Snow Blowing Snow Mist", day: 0, img: '16.png', wuimg: '2371.png'],  // NIGHT - Moderate or heavy snow showers
+     [code: "Ice Pellet Showers", day: 0, img: '6.png', wuimg: '2365.png'],  // NIGHT - Moderate or heavy sleet showers
+     [code: "Hail Showers", day: 0, img: '10.png', wuimg: '2377.png'],  // NIGHT - Moderate or heavy showers of ice pellets
+     [code: "Small Hail Showers", day: 0, img: '6.png', wuimg: '2365.png'],  // NIGHT - Moderate or heavy sleet showers
+     [code: "Thunderstorm", day: 0, img: '35.png', wuimg: '2389.png'],  // NIGHT - Moderate or heavy rain with thunder
+     [code: "Thunderstorms and Rain", day: 0, img: '35.png', wuimg: '2389.png'],  // NIGHT - Moderate or heavy rain with thunder
+     [code: "Thunderstorms and Snow", day: 0, img: '18.png', wuimg: '2395.png'],  // NIGHT - Moderate or heavy snow with thunder
+     [code: "Thunderstorms and Ice Pellets", day: 0, img: '18.png', wuimg: '2395.png'],  // NIGHT - Moderate or heavy snow with thunder
+     [code: "Thunderstorms with Hail", day: 0, img: '35.png', wuimg: '2389.png'],  // NIGHT - Moderate or heavy rain with thunder
+     [code: "Thunderstorms with Small Hail", day: 0, img: '10.png', wuimg: '2377.png'],  // NIGHT - Moderate or heavy showers of ice pellets
+     [code: "Freezing Drizzle", day: 0, img: '8.png', wuimg: '2281.png'],  // NIGHT - Freezing drizzle
+     [code: "Freezing Rain", day: 0, img: '6.png', wuimg: '2365.png'],  // NIGHT - Moderate or heavy sleet showers
+     [code: "Freezing Fog", day: 0, img: '21.png', wuimg: '2260.png'],  // NIGHT - Freezing fog
+     [code: "Patches of Fog", day: 0, img: '21.png', wuimg: '2260.png'],  // NIGHT - Freezing fog
+     [code: "Shallow Fog", day: 0, img: '21.png', wuimg: '2248.png'],  // NIGHT - Fog
+     [code: "Partial Fog", day: 0, img: '21.png', wuimg: '2248.png'],  // NIGHT - Fog
+     [code: "Overcast", day: 0, img: '26.png', wuimg: '2122.png'],  // NIGHT - Overcast
+     [code: "Clear", day: 0, img: '31.png', wuimg: '2113.png'],  // NIGHT - Clear
+     [code: "Partly Cloudy", day: 0, img: '29.png', wuimg: '2116.png'],  // NIGHT - Partly cloudy
+     [code: "Mostly Cloudy", day: 0, img: '27.png', wuimg: '2119.png'],  // NIGHT - Cloudy
+     [code: "Scattered Clouds", day: 0, img: '29.png', wuimg: '2116.png'],  // NIGHT - Partly cloudy
+     [code: "Small Hail", day: 0, img: '5.png', wuimg: '2317.png'],  // NIGHT - Light sleet
+     [code: "Light Drizzle", day: 0, img: '11.png', wuimg: '2266.png'],  // NIGHT - Light drizzle
+     [code: "Light Rain", day: 0, img: '11.png', wuimg: '2296.png'],  // NIGHT - Light rain
+     [code: "Light Snow", day: 0, img: '18.png', wuimg: '2326.png'],  // NIGHT - Light snow
+     [code: "Light Snow Grains", day: 0, img: '5.png', wuimg: '2317.png'],  // NIGHT - Light sleet
+     [code: "Light Ice Crystals", day: 0, img: '5.png', wuimg: '2317.png'],  // NIGHT - Light sleet
+     [code: "Light Ice Pellets", day: 0, img: '5.png', wuimg: '2317.png'],  // NIGHT - Light sleet
+     [code: "Light Hail", day: 0, img: '5.png', wuimg: '2317.png'],  // NIGHT - Light sleet
+     [code: "Light Mist", day: 0, img: '11.png', wuimg: '2266.png'],  // NIGHT - Light drizzle
+     [code: "Light Fog", day: 0, img: '21.png', wuimg: '2248.png'],  // NIGHT - Fog
+     [code: "Light Fog Patches", day: 0, img: '21.png', wuimg: '2248.png'],  // NIGHT - Fog
+     [code: "Light Low Drifting Snow", day: 0, img: '15.png', wuimg: '2227.png'],  // NIGHT - Blowing snow
+     [code: "Light Blowing Snow", day: 0, img: '15.png', wuimg: '2227.png'],  // NIGHT - Blowing snow
+     [code: "Light Rain Mist", day: 0, img: '11.png', wuimg: '2266.png'],  // NIGHT - Light drizzle
+     [code: "Light Rain Showers", day: 0, img: '11.png', wuimg: '2353.png'],  // NIGHT - Light rain shower
+     [code: "Light Snow Showers", day: 0, img: '16.png', wuimg: '2368.png'],  // NIGHT - Light snow showers
+     [code: "Light Snow Blowing Snow Mist", day: 0, img: '15.png', wuimg: '2227.png'],  // NIGHT - Blowing snow
+     [code: "Light Ice Pellet Showers", day: 0, img: '8.png', wuimg: '2374.png'],  // NIGHT - Light showers of ice pellets
+     [code: "Light Hail Showers", day: 0, img: '8.png', wuimg: '2374.png'],  // NIGHT - Light showers of ice pellets
+     [code: "Light Small Hail Showers", day: 0, img: '8.png', wuimg: '2374.png'],  // NIGHT - Light showers of ice pellets
+     [code: "Light Thunderstorm", day: 0, img: '47.png', wuimg: '2386.png'],  // NIGHT - Patchy light rain with thunder
+     [code: "Light Thunderstorms and Rain", day: 0, img: '47.png', wuimg: '2386.png'],  // NIGHT - Patchy light rain with thunder
+     [code: "Light Thunderstorms and Snow", day: 0, img: '46.png', wuimg: '2392.png'],  // NIGHT - Patchy light snow with thunder
+     [code: "Light Thunderstorms and Ice Pellets", day: 0, img: '46.png', wuimg: '2392.png'],  // NIGHT - Patchy light snow with thunder
+     [code: "Light Thunderstorms with Hail", day: 0, img: '5.png', wuimg: '2362.png'],  // NIGHT - Light sleet showers
+     [code: "Light Thunderstorms with Small Hail", day: 0, img: '8.png', wuimg: '2374.png'],  // NIGHT - Light showers of ice pellets
+     [code: "Light Freezing Drizzle", day: 0, img: '8.png', wuimg: '2281.png'],  // NIGHT - Freezing drizzle
+     [code: "Light Freezing Rain", day: 0, img: '8.png', wuimg: '2311.png'],  // NIGHT - Light freezing rain
+     [code: "Light Freezing Fog", day: 0, img: '21.png', wuimg: '2260.png'],  // NIGHT - Freezing fog
+     [code: "Heavy Drizzle", day: 0, img: '12.png', wuimg: '2302.png'],  // NIGHT - Moderate rain
+     [code: "Heavy Rain", day: 0, img: '12.png', wuimg: '2308.png'],  // NIGHT - Heavy rain
+     [code: "Heavy Snow", day: 0, img: '16.png', wuimg: '2371.png'],  // NIGHT - Moderate or heavy snow showers
+     [code: "Heavy Snow Grains", day: 0, img: '6.png', wuimg: '2365.png'],  // NIGHT - Moderate or heavy sleet showers
+     [code: "Heavy Ice Crystals", day: 0, img: '10.png', wuimg: '2377.png'],  // NIGHT - Moderate or heavy showers of ice pellets
+     [code: "Heavy Ice Pellets", day: 0, img: '10.png', wuimg: '2377.png'],  // NIGHT - Moderate or heavy showers of ice pellets
+     [code: "Heavy Hail", day: 0, img: '10.png', wuimg: '2377.png'],  // NIGHT - Moderate or heavy showers of ice pellets
+     [code: "Heavy Mist", day: 0, img: '11.png', wuimg: '2296.png'],  // NIGHT - Light rain
+     [code: "Heavy Fog", day: 0, img: '21.png', wuimg: '2248.png'],  // NIGHT - Fog
+     [code: "Heavy Fog Patches", day: 0, img: '21.png', wuimg: '2248.png'],  // NIGHT - Fog
+     [code: "Heavy Low Drifting Snow", day: 0, img: '15.png', wuimg: '2227.png'],  // NIGHT - Blowing snow
+     [code: "Heavy Blowing Snow", day: 0, img: '15.png', wuimg: '2227.png'],  // NIGHT - Blowing snow
+     [code: "Heavy Rain Mist", day: 0, img: '11.png', wuimg: '2296.png'],  // NIGHT - Light rain
+     [code: "Heavy Rain Showers", day: 0, img: '12.png', wuimg: '2356.png'],  // NIGHT - Moderate or heavy rain shower
+     [code: "Heavy Snow Showers", day: 0, img: '16.png', wuimg: '2371.png'],  // NIGHT - Moderate or heavy snow showers
+     [code: "Heavy Snow Blowing Snow Mist", day: 0, img: '15.png', wuimg: '2227.png'],  // NIGHT - Blowing snow
+     [code: "Heavy Ice Pellet Showers", day: 0, img: '10.png', wuimg: '2377.png'],  // NIGHT - Moderate or heavy showers of ice pellets
+     [code: "Heavy Hail Showers", day: 0, img: '10.png', wuimg: '2377.png'],  // NIGHT - Moderate or heavy showers of ice pellets
+     [code: "Heavy Small Hail Showers", day: 0, img: '6.png', wuimg: '2365.png'],  // NIGHT - Moderate or heavy sleet showers
+     [code: "Heavy Thunderstorm", day: 0, img: '35.png', wuimg: '2389.png'],  // NIGHT - Moderate or heavy rain with thunder
+     [code: "Heavy Thunderstorms and Rain", day: 0, img: '35.png', wuimg: '2389.png'],  // NIGHT - Moderate or heavy rain with thunder
+     [code: "Heavy Thunderstorms and Snow", day: 0, img: '18.png', wuimg: '2395.png'],  // NIGHT - Moderate or heavy snow with thunder
+     [code: "Heavy Thunderstorms and Ice Pellets", day: 0, img: '10.png', wuimg: '2377.png'],  // NIGHT - Moderate or heavy showers of ice pellets
+     [code: "Heavy Thunderstorms with Hail", day: 0, img: '10.png', wuimg: '2377.png'],  // NIGHT - Moderate or heavy showers of ice pellets
+     [code: "Heavy Thunderstorms with Small Hail", day: 0, img: '10.png', wuimg: '2377.png'],  // NIGHT - Moderate or heavy showers of ice pellets
+     [code: "Heavy Freezing Drizzle", day: 0, img: '10.png', wuimg: '2284.png'],  // NIGHT - Heavy freezing drizzle
+     [code: "Heavy Freezing Rain", day: 0, img: '10.png', wuimg: '2314.png'],  // NIGHT - Moderate or heavy freezing rain
+     [code: "Heavy Freezing Fog", day: 0, img: '21.png', wuimg: '2260.png'],  // NIGHT - Freezing fog    
+]    
+/*
 @Field final List    imgNames =     [
      [code: "sleet", day: 1, img: '5.png', ],  // Light Sleet/Sleet Showers
      [code: "rain", day: 1, img: '10.png', ],  // Heavy Moderate Rain/Drizzle/Ice Pellets
@@ -937,3 +1130,4 @@ private getImgName(wCode)       {
      [code: "nt_mostlysunny", day: 0, img: '29.png', ],  // NIGHT Partly cloudy
      [code: "nt_partlysunny", day: 0, img: '29.png', ],  // NIGHT Partly cloudy
 ]
+*/
