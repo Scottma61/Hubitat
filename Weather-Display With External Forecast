@@ -1,0 +1,1224 @@
+/*
+ *  Weather-Display With External Forecast Driver
+ *
+ *  Copyright 2018 @Matthew (Scottma61)
+ *
+ *  Many people contributed to the creation of this driver.  Significant contributors include
+ *  @Cobra who adapted it from @mattw01's work and I thank them for that!  A large 'Thank you' 
+ *  to @bangali for his APIXU.COM base code that much of this was adapted from. Also from @bangali
+ *  is the Sunrise-Sunset.org code used to calculate illuminance/lux.  I learned a lot
+ *  from his work and incorporated a lot of that here.  @bangali also contributed the icon work from
+ *  https://github.com/jebbett for new cooler 'Alternative' weather icons with icons courtesy
+ *  of https://www.deviantart.com/vclouds/art/VClouds-Weather-Icons-179152045.
+ *
+ *  With all of that collaboration I have heavily modified/created new code myself @Matthew (Scottma61)
+ *  with lots of help from the Hubitat community.  This driver is free to use.  I do not accept donations.
+ *  Please feel free to contribute to those mentioned here if you like this work, as it would not have
+ *  possible without them.
+ *
+ *  *** PLEASE NOTE: You should download and store these 'Alternative' icons on your own server and
+ *  change the reference to that location in the driver. There is no assurance that those icon files will
+ *  remain in my github repository.    ***
+ *
+ *  This driver is intended to pull data from data files on a web server created by Weather-Display software
+ *  (http://www.weather-display.com).  It will also supplement forecast data from  your choice of
+ *  WeatherUnderground (WU)(http://www.wunderground.com) or APIXU.com (XU), but not both simultaneouly. 
+ *  You will need your API keys for each of those APIs to use the forecast from those sites, but it will work
+ *  without either too.
+ *
+ *  The driver uses the Weather-Display data as the primary dataset.  There are a few options you can select
+ *  from like using your forecast source for illuminance/solar radiation/lux if you do not have those sensors.
+ *  You can also select to use a base set of condition icons from the forecast source, or an 'alternative'
+ *  (fancier) set.  The base set will be from WeatherUnderground if you choose eith er 'None' or 'WeatherUnderground'
+ *  as your forecast source, or from APIXU.com if you choose APIXU as your forecast source.  You may choose the
+ *  fancier 'Alternative' icon set if you have a forecast source other than 'None'.
+ *
+ *  The driver exposes both metric and imperial measurements for you to select from.
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ *  in compliance with the License. You may obtain a copy of the License at:
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software distributed under the License is distributed
+ *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
+ *  for the specific language governing permissions and limitations under the License.
+ *
+ *  Last Update 08/10/2018
+ * { Left room below to document version changes...}
+ *
+ *  
+ *  
+ *  
+ *  
+ *  
+ *
+ *  
+ *  
+ *  
+ *  
+ *  
+ *
+ *  
+ *  
+ *  
+ *  
+ *  
+ *  V2.0.0 - New version completely rebuilt 08/10/2018
+ *
+ */
+import groovy.transform.Field
+
+metadata {
+    definition (name: "Weather-Display With External Forecast Driver", namespace: "Matthew", author: "Scottma61") {
+        capability "Actuator"
+        capability "Sensor"
+        capability "Temperature Measurement"
+        capability "Illuminance Measurement"
+        capability "Relative Humidity Measurement"
+        
+        command "PollStationAndForecast"
+        
+// Presentation variables
+// - Location
+        attribute "city", "string"
+        attribute "state", "string"
+        attribute "country", "string"
+        attribute "location", "string"
+        attribute "latitude", "string"
+        attribute "longitude", "string"
+        attribute "tz_id", "string"
+        attribute "local_time", "string"
+        attribute "local_date", "string"
+        attribute "last_updated_Station", "string"
+        attribute "last_updated_Forecast", "string"
+        
+// - Astronomy        
+        attribute "localSunset", "string"  //  - required for SmartTiles dashboard
+        attribute "localSunrise", "string"  //  - required for SmartTiles dashboard        
+        attribute "moonAge", "string"
+        attribute "moonPhase", "string"
+        attribute "moonIllumination", "string"
+
+// - Current Conditions
+        attribute "cloud", "number"
+        attribute "condition_text", "string"
+//        attribute "condition_code", "string"
+        attribute "icon", "string"
+        attribute "iconWithText", "string"
+        attribute "icon_url", "string"
+//        attribute "icon_only", "string"
+		attribute "weather", "string"  //  - required for SmartTiles dashboard
+        attribute "weatherIcon", "string"  // same as 'condition_code' - required for SmartTiles dashboard
+        attribute "dewpoint", "number"
+//        attribute "is_day", "string"
+		attribute "feelsLike", "string"  //  - required for SmartTiles dashboard
+        attribute "lux", "string" 
+        attribute "precip_today", "number"
+        attribute "percentPrecip", "string"  // same as 'chanceOfRain' - required for SmartTiles dashboard
+        attribute "chanceOfRain", "string"
+        attribute "pressure", "string"
+//        attribute "temp", "string"
+		attribute "temperature", "string"  // same as 'temp' - required for SmartTiles dashboard
+        attribute "solarradiation", "string"
+        attribute "UV", "number"
+        attribute "vis", "string"
+        attribute "wind", "string"
+        attribute "wind_gust", "string"
+        attribute "wind_degree", "string"
+        attribute "wind_dir", "string"
+//        attribute "wind_bft", "number"
+//        attribute "wind_bft_string", "string"
+        attribute "wind_string", "string"
+
+// Forecast
+        attribute "forecastHigh", "string"
+        attribute "forecastLow", "string"
+        attribute "rainTomorrow", "string"
+        attribute "rainDayAfterTomorrow", "string"
+
+// SunriseSunSet Sourced variables
+        attribute "twilight_begin", "string"
+        attribute "twilight_end", "string"
+        attribute "sunsetTime", "string"
+        attribute "sunriseTime", "string"
+        
+    }
+    preferences() {
+        datetimeFormat = 1
+        sourceastronomy = 1
+        extSource = 0
+        is_day = 0
+        sourceImg = true 
+        iconStore = "https://github.com/Scottma61/WeatherIcons/blob/master/"
+        section("Query Inputs"){
+            input "extSource", "enum", title: "Select External Source", required:true, defaultValue: "None", options: [1:"None", 2:"WeatherUnderground", 3:"Apixu"]
+            input "pollIntervalStation", "enum", title: "Station Poll Interval", required: true, defaultValue: "3 Hours", options: ["Manual Poll Only", "5 Minutes", "10 Minutes", "15 Minutes", "30 Minutes", "1 Hour", "3 Hours"]
+            input "pollLocationStation", "text", required: true, title: "Station Data File Location:", defaultValue: "http://"
+            LOGINFO("extSource: ${extSource}")
+            if(extSource.toInteger() != 1){
+                input "apiKey", "text", required: true, title: "API Key"
+                input "pollIntervalForecast", "enum", title: "External Source Poll Interval", required: true, defaultValue: "3 Hours", options: ["Manual Poll Only", "5 Minutes", "10 Minutes", "15 Minutes", "30 Minutes", "1 Hour", "3 Hours"]
+                input "pollLocationForecast", "text", required: true, title: "ZIP Code or Location"
+				LOGINFO("pollLocationForecast: ${pollLocationForecast}")                
+                input "sourceImg", "bool", required: true, defaultValue: true, title: "Icons from: On = Standard - Off = Alternative"
+                input "iconStore", "text", required: true, defaultValue: "https://github.com/Scottma61/WeatherIcons/blob/master/", title: "Alternative Icon Location:"
+            }
+            input "iconType", "bool", title: "Icon: On = Current - Off = Forecast", required: true, defaultValue: false
+	    	input "tempFormat", "enum", required: true, defaultValue: "Fahrenheit", title: "Display Unit - Temperature: Fahrenheit (°F) or Celsius (°C)",  options: ["Fahrenheit (°F)", "Celsius (°C)"]
+            input "datetimeFormat", "enum", required: true, defaultValue: "m/d/yyyy 12 hour (am|pm)", title: "Display Unit - Date-Time Format",  options: [1:"m/d/yyyy 12 hour (am|pm)", 2:"m/d/yyyy 24 hour", 3:"mm/dd/yyyy 12 hour (am|pm)", 4:"mm/dd/yyyy 24 hour", 5:"d/m/yyyy 12 hour (am|pm)", 6:"d/m/yyyy 24 hour", 7:"dd/mm/yyyy 12 hour (am|pm)", 8:"dd/mm/yyyy 24 hour", 9:"yyyy/mm/dd 24 hour"]
+            input "distanceFormat", "enum", required: true, defaultValue: "Miles (mph)", title: "Display Unit - Distance/Speed: Miles or Kilometres",  options: ["Miles (mph)", "Kilometers (kph)"]
+            input "pressureFormat", "enum", required: true, defaultValue: "Inches", title: "Display Unit - Pressure: Inches or Millibar",  options: ["Inches", "Millibar"]
+            input "rainFormat", "enum", required: true, defaultValue: "Inches", title: "Display Unit - Precipitation: Inches or Millimetres",  options: ["Inches", "Millimetres"]
+            input "summaryType", "bool", title: "Full Weather Summary", required: true, defaultValue: false
+            input "logSet", "bool", title: "Create extended Logging", required: true, defaultValue: false
+            
+
+            input "sourcefeelsLike", "bool", required: true, title: "Feelslike from Weather-Display?", defaultValue: true
+		    input "sourceIllumination", "bool", required: true, title: "Illuminance from Weather-Display?", defaultValue: true
+            input "sourceUV", "bool", required: true, title: "UV from Weather-Display?", defaultValue: true
+            input "sourceastronomy", "enum", required: true, defaultValue: "Sunrise-Sunset.org", title: "Astronomy Source:", options: [1:"Sunrise-Sunset.org", 2:"Weather-Display", 3:"WeatherUnderground.com", 4:"APIXU.com"]
+        }
+    }
+}
+
+def updated() {
+    unschedule()
+    logCheck()
+    state.driverVersion = "2.0.0"    // ************************* Update as required *************************************
+	state.driverNameSpace = "Matthew"
+    state.extSource = extSource.toInteger()
+    state.pollIntervalStation = pollIntervalStation
+    state.pollLocationStation = pollLocationStation
+    state.pollIntervalForecast = pollIntervalForecast
+    state.pollLocationForecast = pollLocationForecast
+    state.datetimeFormat = datetimeFormat.toInteger()
+    state.distanceFormat = distanceFormat
+    state.pressureFormat = pressureFormat
+    state.rainFormat = rainFormat
+    state.tempFormat = tempFormat
+	state.iconType = iconType
+    state.logSet = logSet
+    state.sourcefeelsLike = sourcefeelsLike
+    state.sourceIllumination = sourceIllumination
+    state.sourceImg = sourceImg
+    state.sourceUV = sourceUV
+    state.sourceastronomy = sourceastronomy.toInteger()
+    state.summaryType = summaryType
+    state.iconStore = iconStore
+
+    PollStationNow()
+	PollExternal()
+    pollIntervalStation = (settings?.pollIntervalStation ?: "3 Hours").replace(" ", "")
+    if(pollIntervalStation == "Manual Poll Only"){
+        LOGINFO("MANUAL POLLING ONLY")
+    } else {
+        "runEvery${pollIntervalStation}"(pollScheduleStation)
+        LOGINFO("pollIntervalStation: $pollIntervalStation")
+    }
+    if(state.extSource > 1){
+        pollIntervalForecast = (settings?.pollIntervalForecast ?: "3 Hours").replace(" ", "")
+        if(pollIntervalForecast == "Manual Poll Only"){
+            LOGINFO("MANUAL POLLING ONLY")
+        } else {
+            "runEvery${pollIntervalForecast}"(pollScheduleForecast)
+        }
+    }
+    LOGINFO("pollIntervalForecast: $pollIntervalForecast")
+}
+
+
+def pollScheduleForecast(){
+    PollExternal()
+}
+def PollStation(){
+    PollStationNow()
+}
+
+def pollScheduleStation(){
+    PollStationNow()
+}
+def parse(String description) {
+}
+
+def PollStationNow() {
+//  *****  refresh Weather-Display data *****
+    log.info "Weather-Display Driver - INFO: Weather-Display: Executing 'poll', location: ${location.name}"    
+    wd = [:]
+    paramsWD = [ uri: "${pollLocationStation}everything.php" ]
+    try {
+        httpGet(paramsWD)		{ resp -> wd << resp.data }
+    } catch (e) { log.error "Weather-Display Driver - ERROR: http call failed for Weather-Display weather api: $e" }
+
+    if(state.logSet == true){  
+        LOGINFO("paramsWD: ${paramsWD}")
+        LOGINFO("response data: ${wd}")
+    } 
+    if(state.logSet == false){ 
+        LOGINFO("Further Weather-Display data logging disabled")
+    }        
+    if (!wd){
+        log.warn "Weather-Display Driver - WARNING: No response from Weather-Display API"
+	}
+    //  *****  stage Weather-Display variables  *****
+    if(state.extSource==1){
+	    possAlert = null
+        if(!alert){alert = " Weather alerts are not available from this source."}
+    }
+    setDateTimeFormats(state.datetimeFormat)
+    isFahrenheit = (state.tempFormat == "Fahrenheit (°F)") ? true : false
+    isDistanceMetric = (state.distanceFormat == "Kilometers (kph)") ? true : false
+    isRainMetric = (state.rainFormat == "Millimetres") ? true : false
+    isPressureMetric = (state.pressureFormat == "Millibar") ? true : false
+
+    tZ = TimeZone.getDefault()
+    tz_id = TimeZone.getDefault().getID()
+    stationTime = new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", new Date().format("yyyy-MM-dd'T'HH:mm:ssXXX", location.timeZone), tZ)
+    stime = stationTime
+    forecastTime = Date.parse("yyyy-MM-dd hh:mm:ss", "2000-01-01 0:00:01")
+    ftime = forecastTime
+    stationDate = stationTime.format("yyyy-MM-dd", tZ)
+    stationTimeOnly = stationTime.format("HH:mm", tZ)
+
+    if(!weatherIcon){weatherIcon = null}
+    if(!cloud){
+        if(wd.everything.weather.solar.percentage){
+            if(wd.everything.weather.solar.percentage.toInteger() == 100){    
+                    cloud = 99
+            } else {
+                cloud = 100 - wd.everything.weather.solar.percentage.toInteger()
+            }
+        } else {
+            cloud = 0
+        }
+    }
+    condition_code = 'unknown'
+    if(wd.everything.forecast.icon.code.toInteger() == 0){condition_code = 'sunny'}    
+    if(wd.everything.forecast.icon.code.toInteger() == 1){condition_code = 'clear'}        
+    if(wd.everything.forecast.icon.code.toInteger() == 2){condition_code = 'cloudy'}
+    if(wd.everything.forecast.icon.code.toInteger() == 3){condition_code = 'clear'}    
+    if(wd.everything.forecast.icon.code.toInteger() == 4){condition_code = 'cloudy'}    
+    if(wd.everything.forecast.icon.code.toInteger() == 6){condition_code = 'fog'}
+    if(wd.everything.forecast.icon.code.toInteger() == 7){condition_code = 'hazy'}
+    if(wd.everything.forecast.icon.code.toInteger() == 8){condition_code = 'rain'}        
+    if(wd.everything.forecast.icon.code.toInteger() == 9){condition_code = 'clear'}    
+    if(wd.everything.forecast.icon.code.toInteger() == 10){condition_code = 'hazy'}
+    if(wd.everything.forecast.icon.code.toInteger() == 11){condition_code = 'fog'}    
+    if(wd.everything.forecast.icon.code.toInteger() == 12){condition_code = 'rain'}        
+    if(wd.everything.forecast.icon.code.toInteger() == 13){condition_code = 'mostlycloudy'}    
+    if(wd.everything.forecast.icon.code.toInteger() == 14){condition_code = 'rain'}        
+    if(wd.everything.forecast.icon.code.toInteger() == 15){condition_code = 'rain'}        
+    if(wd.everything.forecast.icon.code.toInteger() == 16){condition_code = 'snow'}        
+    if(wd.everything.forecast.icon.code.toInteger() == 17){condition_code = 'tstorms'}            
+    if(wd.everything.forecast.icon.code.toInteger() == 18){condition_code = 'mostlycloudy'}
+    if(wd.everything.forecast.icon.code.toInteger() == 19){condition_code = 'mostlycloudy'}
+    if(wd.everything.forecast.icon.code.toInteger() == 20){condition_code = 'rain'}
+    if(wd.everything.forecast.icon.code.toInteger() == 21){condition_code = 'rain'}    
+    if(wd.everything.forecast.icon.code.toInteger() == 22){condition_code = 'rain'}
+    if(wd.everything.forecast.icon.code.toInteger() == 23){condition_code = 'sleet'}
+    if(wd.everything.forecast.icon.code.toInteger() == 24){condition_code = 'sleet'}
+    if(wd.everything.forecast.icon.code.toInteger() == 25){condition_code = 'snow'}
+    if(wd.everything.forecast.icon.code.toInteger() == 26){condition_code = 'snow'}
+    if(wd.everything.forecast.icon.code.toInteger() == 27){condition_code = 'snow'}
+    if(wd.everything.forecast.icon.code.toInteger() == 28){condition_code = 'sunny'}
+    if(wd.everything.forecast.icon.code.toInteger() == 29){condition_code = 'tstorms'}
+    if(wd.everything.forecast.icon.code.toInteger() == 30){condition_code = 'tstorms'}
+    if(wd.everything.forecast.icon.code.toInteger() == 31){condition_code = 'tstorms'}
+    if(wd.everything.forecast.icon.code.toInteger() == 32){condition_code = 'tstorms'}
+    if(wd.everything.forecast.icon.code.toInteger() == 35){condition_code = 'rain'}
+    sunriseAndSunset = getSunriseAndSunset(wd.station.latitude, 0 - wd.station.longitude.toDouble(), stationDate)       
+    twilight_begin = new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", sunriseAndSunset.results.civil_twilight_begin, tZ)
+    sunriseTime = new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", sunriseAndSunset.results.sunrise, tZ)
+    noonTime = new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", sunriseAndSunset.results.solar_noon, tZ)    
+    sunsetTime = new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", sunriseAndSunset.results.sunset, tZ)
+    twilight_end = new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", sunriseAndSunset.results.civil_twilight_end, tZ)
+    if (!stationTime || !sunriseTime || !sunsetTime || !noonTime ||
+        !twilight_begin || !twilight_end || !condition_code || !cloud || !tz_id) {
+        log.debug "Weather-Display Driver - DEBUG: stationTime: $stationTime"
+        log.debug "Weather-Display Driver - DEBUG: twilight_begin: $twilight_begin"
+        log.debug "Weather-Display Driver - DEBUG: sunriseTime: $sunriseTime"
+        log.debug "Weather-Display Driver - DEBUG: noonTime: $noonTime"
+        log.debug "Weather-Display Driver - DEBUG: sunsetTime: $sunsetTime"
+        log.debug "Weather-Display Driver - DEBUG: twilight_end: $twilight_end"
+        log.debug "Weather-Display Driver - DEBUG: condition_code: $condition_code"
+        log.debug "Weather-Display Driver - DEBUG: cloud: $cloud"
+        log.debug "Weather-Display Driver - DEBUG: tz_id: $tz_id"
+        lux = null
+    } else {
+        is_day = null
+        lux = estimateLux(stationTime, sunriseTime, sunsetTime, noonTime, twilight_begin, twilight_end, condition_code, cloud, tz_id)
+        illuminance = lux
+    }            
+    if(state.sourceastronomy == 1) {
+        localSunset = sunsetTime.format("${timeFormat}")
+        localSunrise = sunriseTime.format("${timeFormat}")
+    }
+    if(state.sourceastronomy == 2) {
+        localSunset = Date.parse("HH:mm", wd.everything.astronomy.sun.sunset_time.time).format("${timeFormat}")
+        localSunrise = Date.parse("HH:mm", wd.everything.astronomy.sun.sunrise_time.time).format("${timeFormat}")
+    }
+    TwB = twilight_begin
+    TwE = twilight_end
+    sR = sunriseTime
+    sS = sunsetTime
+    switch((wd.everything.weather.wind.avg_speed.bft).toInteger()){
+		case 0:
+        	wind_string_bft = "Calm"
+        	break;
+		case 1:
+        	wind_string_bft = "Light air"
+        	break;
+		case 2:
+        	wind_string_bft = "Light breeze"
+        	break;
+		case 3:
+        	wind_string_bft = "Gentle breeze"
+        	break;
+		case 4:
+        	wind_string_bft = "Moderate breeze"
+        	break;
+		case 5:
+        	wind_string_bft = "Fresh breeze"
+        	break;
+		case 6:
+        	wind_string_bft = "Strong breeze"
+        	break;
+		case 7:
+        	wind_string_bft = "High wind, moderate gale, near gale"
+        	break;
+		case 8:
+        	wind_string_bft = "Gale, fresh gale"
+        	break;
+		case 9:
+        	wind_string_bft = "Strong/severe gale"
+        	break;
+		case 10:
+        	wind_string_bft = "Storm, whole gale"
+        	break;
+		case 11:
+        	wind_string_bft = "Violent storm"
+        	break;
+		case 12:
+        	wind_string_bft = "Hurricane force"
+        	break;
+	}
+    city = wd.station.name.split(/ /)[0]
+    lstate = wd.station.name.split(/ /)[1]
+    country = wd.station.name.split(/ /)[2]
+    location = wd.station.name.split(/ /)[0] + ", " + wd.station.name.split(/ /)[1]
+    latitude = wd.station.latitude
+    longitude =  0 - wd.station.longitude.toDouble()
+    tz_id = TimeZone.getDefault().getID()
+    local_time = Date.parse("HH:mm", wd.time.time).format("${timeFormat}")
+    local_date = Date.parse("d/M/yyyy", wd.time.date).format("${dateFormat}")
+    last_updated_Station = Date.parse("d/M/yyyy", wd.time.date).format("${dateFormat}") + ", " + Date.parse("HH:mm", wd.time.time).format("${timeFormat}")
+    moonAge = wd.everything.astronomy.moon.moon_age.toDouble()
+    if (moonAge >= 0 && moonAge < 4) {moonPhase = "New Moon"}
+    if (moonAge >= 4 && moonAge < 7) {moonPhase = "Waxing Crescent"}
+    if (moonAge >= 7 && moonAge < 10) {moonPhase = "First Quarter"}
+    if (moonAge >= 10 && moonAge < 14) {moonPhase = "Waxing Gibbous"}
+    if (moonAge >= 14 && moonAge < 18) {moonPhase = "Full Moon"}
+    if (moonAge >= 18 && moonAge < 22) {moonPhase = "Waning Gibbous"}
+    if (moonAge >= 22 && moonAge < 26) {moonPhase = "Last Quarter"}
+    if (moonAge >= 26) {moonPhase = "Waxing Gibbous"}
+    moonIllumination = wd.everything.astronomy.moon.moon_phase
+    if(!wd.everything.weather.solar.irradiance.wm2){
+        solarradiation = "This station does not send Solar Radiation data."
+    } else {
+        solarradiation = wd.everything.weather.solar.irradiance.wm2
+    }
+    sfeelsLike = (isFahrenheit ? wd.everything.weather.apparent_temperature.current.f : wd.everything.weather.apparent_temperature.current.c)
+    sforecastCondition_text = wd.everything.forecast.davis_forecast
+    if(state.extSource==1){
+        condition_icon = '<img src=https://icons.wxug.com/i/c/a/' + condition_code + '.gif>'
+        condition_text = wd.everything.forecast.davis_forecast.capitalize()
+        condition_iconWithText = '<img src=https://icons.wxug.com/i/c/a/' + condition_code + '.gif><br>' + condition_text
+        condition_icon_url = 'https://icons.wxug.com/i/c/a/' + condition_code +'.gif'
+        condition_icon_only = condition_code +'.gif'
+    }
+    if(state.extSource==1){
+        if(state.sourceIllumination) {
+            if (!wd.everything.weather.solar.irradiance.wm2){
+                lux = lux
+                illuminance = illuminance
+            } else {
+                lux = wd.everything.weather.solar.irradiance.wm2
+                illuminance = wd.everything.weather.solar.irradiance.wm2
+            } 
+        }
+        if(!percentPrecip){percentPrecip = 'Not available from this source'}
+        if(!chanceOfRain){chanceOfRain = 'Not available from this source'}
+    }        
+	dewpoint = (isFahrenheit ? wd.everything.weather.dew_point.current.f : wd.everything.weather.dew_point.current.c)
+    humidity = wd.everything.weather.humidity.current
+	precip_today = (isRainMetric ? wd.everything.weather.rainfall.daily.mm : wd.everything.weather.rainfall.daily.in)
+	pressure = (isPressureMetric ? wd.everything.weather.pressure.current.mb : wd.everything.weather.pressure.current.inhg)
+	temperature = (isFahrenheit ? wd.everything.weather.temperature.current.f : wd.everything.weather.temperature.current.c)
+    UV = wd.everything.weather.uv.uvi
+	wind = (isDistanceMetric ? wd.everything.weather.wind.avg_speed.kmh : wd.everything.weather.wind.avg_speed.mph)
+	wind_gust = (isDistanceMetric ? wd.everything.weather.wind.max_gust_speed.kmh : wd.everything.weather.wind.max_gust_speed.mph)
+	wind_degree = wd.everything.weather.wind.direction.degrees
+	wind_dir = wd.everything.weather.wind.direction.cardinal
+    wind_bft = wd.everything.weather.wind.avg_speed.bft
+    wind_string = "Wind: ${wind_string_bft} from the " + wd.everything.weather.wind.direction.cardinal + " at " + (isDistanceMetric ? wd.everything.weather.wind.avg_speed.kmh + " KPH" : wd.everything.weather.wind.avg_speed.mph + " MPH")
+//  ***** present Weather-Display variables  *****
+    if(state.extSource==1){
+        sendEvent(name: "alert", value: alert, isStateChange: true, displayed: true)  
+    }
+    sendEvent(name: "last_updated_Station", value: last_updated_Station, displayed: true)    
+	sendEvent(name: "city", value: city, isStateChange: true, displayed: true)
+	sendEvent(name: "state", value: lstate, isStateChange: true, displayed: true)
+	sendEvent(name: "country", value: country, isStateChange: true, displayed: true)
+	sendEvent(name: "location", value: location, isStateChange: true, displayed: true)
+    sendEvent(name: "latitude", value: latitude, isStateChange: true, displayed: true)
+    sendEvent(name: "longitude", value:  longitude, isStateChange: true, displayed: true)
+    sendEvent(name: "tz_id", value: tz_id, isStateChange: true, displayed: true)
+    sendEvent(name: "local_time", value: local_time, isStateChange: true, displayed: true)
+    sendEvent(name: "local_date", value: local_date, isStateChange: true, displayed: true)
+    sendEvent(name: "cloud", value: cloud, unit: '%', isStateChange: true, displayed: true)
+    sendEvent(name: "humidity", value: humidity, unit: '%', isStateChange: true, displayed: true)
+	sendEvent(name: "precip_today", value: precip_today, unit: (isRainMetric ? 'MM' : 'IN'), displayed: true)
+	sendEvent(name: "pressure", value: pressure, unit: (isDistanceMetric ? 'MB' : 'IN'), displayed: true)
+	sendEvent(name: "temperature", value: temperature, unit: (isFahrenheit ? '°F' : '°C'), displayed: false)
+    sendEvent(name: "UV", value: UV, isStateChange: true, displayed: true)
+	sendEvent(name: "solarradiation", value: solarradiation, isStateChange: true, displayed: true)
+	sendEvent(name: "wind", value: wind, unit: (isDistanceMetric ? 'KPH' : 'MPH'), displayed: false)
+	sendEvent(name: "wind_gust", value: wind_gust, unit: (isDistanceMetric ? 'KPH' : 'MPH'), displayed: false)
+	sendEvent(name: "wind_degree", value: wind_degree, isStateChange: true, displayed: false)
+	sendEvent(name: "wind_dir", value: wind_dir, isStateChange: true, displayed: false)
+    sendEvent(name: "wind_string", value: wind_string, displayed: true)
+    sendEvent(name: "moonAge", value: moonAge, isStateChange: true, displayed: true)
+    sendEvent(name: "moonPhase", value: moonPhase, isStateChange: true, displayed: true)
+    sendEvent(name: "moonIllumination", value: moonIllumination, unit: '%', isStateChange: true, displayed: true)
+	sendEvent(name: "dewpoint", value: dewpoint, unit: (isFahrenheit ? '°F' : '°C'), isStateChange: true, displayed: true)
+    if(state.extSource==1){
+    	sendEvent(name: "condition_code", value: condition_code, isStateChange: true, displayed: true)    
+    	sendEvent(name: "condition_text", value: condition_text, isStateChange: true, displayed: true)            
+    	sendEvent(name: "icon", value: condition_icon, isStateChange: true, displayed: true)
+    	sendEvent(name: "iconWithText", value: condition_iconWithText, isStateChange: true, displayed: true)    
+    	sendEvent(name: "icon_url", value: condition_icon_url, isStateChange: true, displayed: false)    
+		sendEvent(name: "feelsLike", value: sfeelslike, unit: (isFahrenheit ? '°F' : '°C'), isStateChange: true, displayed: true) // only needed for SmartTiles dashboard
+    }
+    sendEvent(name: "twilightBegin", value: TwB.format("${timeFormat}"), isStateChange: true, displayed: true)
+    sendEvent(name: "twilightEnd", value: TwE.format("${timeFormat}"), isStateChange: true, displayed: true)
+    sendEvent(name: "sunriseTime", value: sR.format("${timeFormat}"), isStateChange: true, displayed: true)
+    sendEvent(name: "sunsetTime", value: sS.format("${timeFormat}"), isStateChange: true, displayed: true)
+    sendEvent(name: "localSunset", value: sS.format("${timeFormat}"), descriptionText: "Sunset today at is $localSunset", isStateChange: true, displayed: false) // only needed for SmartTiles dashboard
+    sendEvent(name: "localSunrise", value: sR.format("${timeFormat}"), descriptionText: "Sunrise today is at $localSunrise", isStateChange: true, displayed: false) // only needed for SmartTiles dashboard
+	sendEvent(name: "illuminance", value: illuminance, unit: 'lux', isStateChange: true, displayed: true)
+	sendEvent(name: "lux", value: lux, unit: 'lux', isStateChange: true, displayed: true)
+// ***** Build Summary Display variables  *****    
+    if(state.extSource==1){
+        Summary_last_updated_time = (stime > ftime ? "${stime.format("${timeFormat}")}" : "${ftime.format("${timeFormat}")}")
+        Summary_last_updated_date = (stime > ftime ? "${stime.format("${dateFormat}")}" : "${ftime.format("${dateFormat}")}")
+        if(state.sourcefeelsLike){
+            Summary_feelsLike = sfeelsLike + (isFahrenheit ? '°F.' : '°C.')
+        } else {
+            if(!ffeelslike){
+                Summary_feelsLike = sfeelsLike + (isFahrenheit ? '°F.' : '°C.')
+            } else {
+                Summary_feelsLike = ""
+            }
+        }
+    	SummaryMessage(state.summaryType, city, lstate, Summary_last_updated_date, Summary_last_updated_time, condition_text, humidity+'%', temperature+(isFahrenheit ? '°F.' : '°C.'), "", Summary_feelsLike, wind_string, wind_gust+(isDistanceMetric ? " KPH" : " MPH"), wind_dir, "", "", alert)
+    }
+    return 
+}
+
+def PollExternal(){
+    if(state.extSource >=2){PollStationNow()}
+    if(state.extSource == 2){
+// ***** refresh WeatherUnderground data  *****
+        log.info "Weather-Display Driver - INFO: WeatherUnderground: Executing 'poll', location: ${location.name}"
+        wu = [:]
+        paramsWU = [ uri: "http://api.wunderground.com/api/${apiKey}/alerts/astronomy/conditions_v11/forecast/hourly/q/${pollLocationForecast}.json" ]
+        try {
+            httpGet(paramsWU)		{ resp -> wu << resp.data }
+        } catch (e) { log.error "Weather-Display Driver - ERROR: http call failed for WeatherUnderground weather api: $e" }
+
+        if(state.logSet == true){
+            LOGINFO("paramsWU: ${paramsWU}")
+            LOGINFO("response data: ${wu}")
+        } 
+        if(state.logSet == false){ 
+            LOGINFO("Further WeatherUnderground data logging disabled")
+        }
+//  *****  stage WeatherUnderground Variables  *****
+    	setDateTimeFormats(state.datetimeFormat)        
+        isFahrenheit = (state.tempFormat == "Fahrenheit (°F)") ? true : false
+        isDistanceMetric = (state.distanceFormat == "Kilometers (kph)") ? true : false
+        isRainMetric = (state.rainFormat == "Millimetres") ? true : false
+        isPressureMetric = (state.pressureFormat == "Millibar") ? true : false
+        tZ = TimeZone.getTimeZone(wu.current_observation.local_tz_long)
+        tz_id = wu.current_observation.local_tz_long
+        forecastTime = new Date().parse("EEE, dd MMM yyyy HH:mm:ss", wu.current_observation.observation_time_rfc822, tZ)    
+        forecastDate = forecastTime.format("yyyy-MM-dd", tZ)
+        forecastTimeOnly = forecastTime.format("HH:mm", tZ)
+        ftime = forecastTime
+        last_updated_Forecast = ftime.format("${dateFormat}") + ", " + ftime.format("${timeFormat}")
+        if (!wu.hourly_forecast.sky[0]) {
+            cloud = 0 
+        } else {
+            if (wu.hourly_forecast.sky[0]) {cloud = wu.hourly_forecast.sky[0].toInteger()}
+        }
+        possAlert = wu.alerts.description
+        if (possAlert){
+            alert = " " + wu.alerts.description
+        } else {
+            alert = " No current weather alerts for this area."
+        }
+        if(state.sourceastronomy == 3) {
+            localSunset = Date.parse("HH:mm", wu.sun_phase.sunset.hour + ":" + wu.sun_phase.sunset.minute).format("$timeFormat}")
+            localSunrise = Date.parse("HH:mm", wu.sun_phase.sunrise.hour + ":" + wu.sun_phase.sunrise.minute).format("$timeFormat}")
+        }
+        if(!state.sourcefeelsLike){
+            ffeelsLike = (isFahrenheit ? wu.current_observation.feelslike_f : wu.current_observation.feelslike_c)
+            fforecast_text = wu.forecast.simpleforecast.forecastday[0].conditions
+        }    
+        forecast_text = wu.forecast.simpleforecast.forecastday[0].conditions.capitalize()
+        forecast_code = wu.forecast.simpleforecast.forecastday[0].icon
+        vis = (isDistanceMetric ? wu.current_observation.visibility_km : wu.current_observation.visibility_mi)
+        percentPrecip = wu.forecast.simpleforecast.forecastday[0].pop
+        chanceOfRain = wu.forecast.simpleforecast.forecastday[0].pop + '%'
+        condition_text = (iconType ? wu.current_observation.weather : wu.forecast.simpleforecast.forecastday[0].conditions)
+        condition_code = (iconType ? wu.current_observation.icon : wu.forecast.simpleforecast.forecastday[0].icon)
+        weather = condition_text
+        weatherIcon = condition_code
+        forecastHigh =(isFahrenheit ? wu.forecast.simpleforecast.forecastday[0].high.fahrenheit : wu.forecast.simpleforecast.forecastday[0].high.celsius)
+        forecastLow = (isFahrenheit ? wu.forecast.simpleforecast.forecastday[0].low.fahrenheit : wu.forecast.simpleforecast.forecastday[0].low.celsius)
+        rainTomorrow = (isRainMetric ? wu.forecast.simpleforecast.forecastday[1].qpf_allday.mm : wu.forecast.simpleforecast.forecastday[1].qpf_allday.in)
+        rainDayAfterTomorrow = (isRainMetric ? wu.forecast.simpleforecast.forecastday[2].qpf_allday.mm : wu.forecast.simpleforecast.forecastday[2].qpf_allday.in)
+        sunriseAndSunset = getSunriseAndSunset(wu.current_observation.display_location.latitude.toDouble(), wu.current_observation.display_location.longitude.toDouble(), forecastDate)       
+        sunriseTime = new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", sunriseAndSunset.results.sunrise, tZ)
+        sunsetTime = new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", sunriseAndSunset.results.sunset, tZ)
+        noonTime = new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", sunriseAndSunset.results.solar_noon, tZ)    
+        twilight_begin = new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", sunriseAndSunset.results.civil_twilight_begin, tZ)
+        twilight_end = new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", sunriseAndSunset.results.civil_twilight_end, tZ)
+        TwB = twilight_begin
+        TwE = twilight_end
+        sR = sunriseTime
+        sS = sunsetTime
+        if (!forecastTime || !sunriseTime || !sunsetTime || !noonTime ||
+            !twilight_begin || !twilight_end || !condition_code || !cloud || !tz_id) {
+            log.debug "Weather-Display Driver - DEBUG: forecastTime: $forecastTime"
+            log.debug "Weather-Display Driver - DEBUG: twilight_begin: $twilight_begin"
+            log.debug "Weather-Display Driver - DEBUG: sunriseTime: $sunriseTime"
+            log.debug "Weather-Display Driver - DEBUG: noonTime: $noonTime"
+            log.debug "Weather-Display Driver - DEBUG: sunsetTime: $sunsetTime"
+            log.debug "Weather-Display Driver - DEBUG: twilight_end: $twilight_end"
+            log.debug "Weather-Display Driver - DEBUG: condition_code: $condition_code"
+            log.debug "Weather-Display Driver - DEBUG: cloud: $cloud"
+            log.debug "Weather-Display Driver - DEBUG: tz_id: $tz_id"
+            lux = null
+        } else {
+            is_day = null
+            lux = estimateLux(forecastTime, sunriseTime, sunsetTime, noonTime, twilight_begin, twilight_end, condition_code, cloud, tz_id)
+           if(!state.sourceImg){
+                imgName = getImgName(condition_text, is_day)
+                condition_icon = '<img src=' + imgName + '>'
+                condition_iconWithText = "<img src=" + imgName + "><br>" + condition_text
+                condition_icon_url = imgName
+                condition_icon_only = imgName.split("/")[-1].replaceFirst("\\?raw=true","")
+                fimgName = getImgName(forecast_text, is_day)
+                forecast_icon = '<img src=' + fimgName + '>'
+                forecast_iconWithText = "<img src=" + fimgName + "><br>" + forecast_text
+                forecast_icon_url = fimgName
+                forecast_icon_only = fimgName.split("/")[-1].replaceFirst("\\?raw=true","")
+            } else {
+                condition_icon = '<img src=https://icons.wxug.com/i/c/a/' + condition_code + '.gif>'
+                condition_iconWithText = '<img src=https://icons.wxug.com/i/c/a/' + condition_code + '.gif><br>' + condition_text
+                condition_icon_url = 'https://icons.wxug.com/i/c/a/' + condition_code +'.gif'
+                condition_icon_only = condition_code +'.gif'
+                forecast_icon = '<img src=https://icons.wxug.com/i/c/a/' + wu.forecast.simpleforecast.forecastday[0].icon_url.split("/")[-1] + '>'
+                forecast_iconWithText = '<img src=https://icons.wxug.com/i/c/a/' + wu.forecast.simpleforecast.forecastday[0].icon_url.split("/")[-1] + '><br>' + forecast_text
+                forecast_icon_only = wu.forecast.simpleforecast.forecastday[0].icon_url.split("/")[-1]
+                forecast_icon_url = 'https://icons.wxug.com/i/c/a/' + wu.forecast.simpleforecast.forecastday[0].icon_url.split("/")[-1]
+            }
+        }
+        if(!state.sourceIllumination) {
+            illuminance = lux
+            lux = lux
+            sendEvent(name: "lux", value: lux, unit: 'lux', isStateChange: true, displayed: true)
+            sendEvent(name: "illuminance", value: illuminance, unit: 'lux', isStateChange: true, displayed: true)
+        }
+    }
+    if(state.extSource == 3){
+//  *****  refresh APIXU.com data  *****
+        log.info "Weather-Display Driver - INFO: APIXU.com: Executing 'poll', location: ${location.name}"
+        xu = [:]
+        paramsXU = [ uri: "https://api.apixu.com/v1/forecast.json?key=$apiKey&q=$pollLocationForecast&days=3" ]
+        try {
+            httpGet(paramsXU)		{ resp -> xu << resp.data }
+        } catch (e) { log.error "Weather-Display Driver - ERROR: http call failed for APIXU weather api: $e" }
+
+        if(state.logSet == true){  
+            LOGINFO("paramsXU: ${paramsXU}")   
+            LOGINFO("response data: ${xu}")
+        } 
+        if(state.logSet == false){ 
+            LOGINFO("Further APIXU data logging disabled")
+        }    
+//  *****  stage APIXU.COM Variables  *****        
+        tZ = TimeZone.getTimeZone(xu.location.tz_id)
+        forecastTime = new Date().parse("yyyy-MM-dd HH:mm", xu.location.localtime, tZ)    
+        ftime = forecastTime
+        forecastDate = forecastTime.format("yyyy-MM-dd", tZ)
+        forecastTimeOnly = forecastTime.format("HH:mm", tZ)
+        tz_id = xu.location.tz_id
+        alert = " Weather alerts are not available from this source."
+        if(!state.sourcefeelsLike){	
+            ffeelsLike = (isFahrenheit ? xu.current.feelslike_f : xu.current.feelslike_c)
+            fforecast_text = xu.forecast.forecastday[0].day.condition.text.capitalize()
+        }
+        last_updated_Forecast = ftime.format("${dateFormat}") + ", " + ftime.format("${timeFormat}")
+        condition_code = (iconType ? xu.current.condition.code : xu.forecast.forecastday[0].day.condition.code)
+        condition_text = (iconType ? xu.current.condition.text.split()*.capitalize().join(" ") : xu.forecast.forecastday[0].day.condition.text.split()*.capitalize().join(" "))
+        weather = condition_text
+        weatherIcon = condition_code
+        cloud = xu.current.cloud
+        vis = (isDistanceMetric ? xu.current.vis_km : xu.current.vis_miles)
+        percentPrecip = "Not Available"
+        chanceOfRain = "Not Available"
+		forecastHigh = (isFahrenheit ? xu.forecast.forecastday[0].day.maxtemp_f : xu.forecast.forecastday[0].day.maxtemp_c)
+        forecastLow = (isFahrenheit ? xu.forecast.forecastday[0].day.mintemp_f : xu.forecast.forecastday[0].day.mintemp_c)
+        rainTomorrow = (isRainMetric ? xu.forecast.forecastday[1].day.totalprecip_mm : xu.forecast.forecastday[1].day.totalprecip_in)
+        rainDayAfterTomorrow = (isRainMetric ? xu.forecast.forecastday[2].day.totalprecip_mm : xu.forecast.forecastday[2].day.totalprecip_in)
+        if(state.sourceastronomy == 4) {
+            localSunset = Date.parse("hh:mm a", xu.forecast.forecastday[0].astro.sunset).format("$timeFormat}")
+            localSunrise = Date.parse("hh:mm a", xu.forecast.forecastday[0].astro.sunrise).format("$timeFormat}")      
+        }
+        sunriseAndSunset = getSunriseAndSunset(xu.location.lat.toDouble(), xu.location.lon.toDouble(), forecastDate)
+        sunriseTime = new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", sunriseAndSunset.results.sunrise, tZ)
+        sunsetTime = new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", sunriseAndSunset.results.sunset, tZ)
+        noonTime = new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", sunriseAndSunset.results.solar_noon, tZ)    
+        twilight_begin = new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", sunriseAndSunset.results.civil_twilight_begin, tZ)
+        twilight_end = new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", sunriseAndSunset.results.civil_twilight_end, tZ)
+        TwB = twilight_begin
+        TwE = twilight_end
+        sR = sunriseTime
+        sS = sunsetTime
+        if (!forecastTime || !sunriseTime || !sunsetTime || !noonTime ||
+            !twilight_begin || !twilight_end || !condition_code || !cloud || !tz_id) {
+            log.debug "Weather-Display Driver - DEBUG: forecastTime: $forecastTime"
+            log.debug "Weather-Display Driver - DEBUG: twilight_begin: $twilight_begin"
+            log.debug "Weather-Display Driver - DEBUG: sunriseTime: $sunriseTime"
+            log.debug "Weather-Display Driver - DEBUG: noonTime: $noonTime"
+            log.debug "Weather-Display Driver - DEBUG: sunsetTime: $sunsetTime"
+            log.debug "Weather-Display Driver - DEBUG: twilight_end: $twilight_end"
+            log.debug "Weather-Display Driver - DEBUG: condition_code: $condition_code"
+            log.debug "Weather-Display Driver - DEBUG: cloud: $cloud"
+            log.debug "Weather-Display Driver - DEBUG: tz_id: $tz_id"
+            lux = null
+        } else {
+            is_day = xu.current.is_day
+            lux = estimateLux(forecastTime, sunriseTime, sunsetTime, noonTime, twilight_begin, twilight_end, condition_code, cloud, tz_id)
+            if(!state.sourceImg){
+                imgName = getImgName(condition_code, is_day)
+                condition_icon = '<img src=' + imgName + '>'
+                condition_iconWithText = "<img src=" + imgName + "><br>" + condition_text
+                condition_icon_url = imgName
+                condition_icon_only = imgName.split("/")[-1].replaceFirst("\\?raw=true","")
+                fimgName = getImgName(forecast_text, is_day)
+                forecast_icon = '<img src=' + fimgName + '>'
+                forecast_iconWithText = "<img src=" + fimgName + "><br>" + forecast_text
+                forecast_icon_url = fimgName
+                forecast_icon_only = fimgName.split("/")[-1].replaceFirst("\\?raw=true","")
+            } else {
+                condition_icon = (iconType ? '<img src=http:' + xu.current.condition.icon + '>' : '<img src=http:' + xu.forecast.forecastday[0].day.condition.icon + '>')
+                condition_iconWithText = (iconType ? '<img src=http:' + xu.current.condition.icon + '>' : '<img src=http:' + xu.forecast.forecastday[0].day.condition.icon + '>') + '<br>' + condition_text
+                condition_icon_url = (iconType ? 'https:' + xu.current.condition.icon : 'https:' + xu.forecast.forecastday[0].day.condition.icon)
+                condition_icon_only = (iconType ? xu.current.condition.icon.split("/")[-1] : xu.forecast.forecastday[0].day.condition.icon.split("/")[-1])
+                forecast_icon = '<img src=http:' + xu.forecast.forecastday[0].day.condition.icon + '>'
+                forecast_icon_only = xu.forecast.forecastday[0].day.condition.icon.split("/")[-1]
+                forecast_icon_url = 'https:' + xu.forecast.forecastday[0].day.condition.icon
+                forecast_code = xu.forecast.forecastday[0].day.condition.code
+            }
+            if(!state.sourceIllumination) {
+                illuminance = lux
+                lux = lux
+                sendEvent(name: "lux", value: lux, unit: 'lux', isStateChange: true, displayed: true)
+                sendEvent(name: "illuminance", value: illuminance, unit: 'lux', isStateChange: true, displayed: true)
+            }
+        }
+    }
+// *****   present Forecast Variables
+    sendEvent(name: "alert", value: alert, isStateChange: true, displayed: true)  
+    sendEvent(name: "twilightBegin", value: TwB.format("${timeFormat}"), isStateChange: true, displayed: true)
+    sendEvent(name: "twilightEnd", value: TwE.format("${timeFormat}"), isStateChange: true, displayed: true)
+    sendEvent(name: "sunriseTime", value: sR.format("${timeFormat}"), isStateChange: true, displayed: true)
+    sendEvent(name: "sunsetTime", value: sS.format("${timeFormat}"), isStateChange: true, displayed: true)
+    sendEvent(name: "localSunset", value: sS.format("${timeFormat}"), descriptionText: "Sunset today at is $localSunset", isStateChange: true, displayed: false) // only needed for SmartTiles dashboard
+    sendEvent(name: "localSunrise", value: sR.format("${timeFormat}"), descriptionText: "Sunrise today is at $localSunrise", isStateChange: true, displayed: false) // only needed for SmartTiles dashboard
+    sendEvent(name: "illuminance", value: illuminance, unit: 'lux', isStateChange: true, displayed: true)
+    sendEvent(name: "lux", value: lux, unit: 'lux', isStateChange: true, displayed: true)    
+    sendEvent(name: "last_updated_Forecast", value: ftime.format("${dateFormat}") + ", " + ftime.format("${timeFormat}"), isStateChange: true, displayed: true)
+    sendEvent(name: "condition_text", value: condition_text, isStateChange: true, displayed: true)
+    sendEvent(name: "icon", value: condition_icon, isStateChange: true, displayed: true)
+    sendEvent(name: "iconWithText", value: condition_iconWithText, isStateChange: true, displayed: true)    
+    sendEvent(name: "icon_url", value: condition_icon_url, isStateChange: true, displayed: false)
+    sendEvent(name: "weather", value: weather, isStateChange: true, displayed: true)
+    sendEvent(name: "weatherIcon", value: weatherIcon, isStateChange: true, displayed: false) // only needed for SmartTiles dashboard
+    sendEvent(name: "cloud", value: cloud, unit: "%", isStateChange: true, displayed: true)
+    sendEvent(name: "vis", value: vis, unit: (isDistanceMetric ? 'KM' : 'MILES'), isStateChange: true, displayed: true)
+    sendEvent(name: "percentPrecip", value: percentPrecip, isStateChange: true, displayed: true) // only needed for SmartTiles dashboard
+    sendEvent(name: "chanceOfRain", value: chanceOfRain, isStateChange: true, displayed: false)
+    sendEvent(name: "forecastHigh", value: forecastHigh, unit: (isFahrenheit ? '°F' : '°C'), displayed: true)
+    sendEvent(name: "forecastLow", value: forecastLow, unit: (isFahrenheit ? '°F' : '°C'), displayed: true)
+    sendEvent(name: "rainTomorrow", value: rainTomorrow, unit: (isRainMetric ? 'mm' : 'in'), displayed: true)
+    sendEvent(name: "rainDayAfterTomorrow", value: rainDayAfterTomorrow, unit: (isRainMetric ? 'mm' : 'in'), displayed: true)
+    sendEvent(name: "feelsLike", value: ffeelsLike, unit: (isFahrenheit ? '°F' : '°C'), isStateChange: true, displayed: true) // only needed for SmartTiles dashboard
+// ***** Build Summry Display variables  *****    
+    Summary_last_updated_time = (stime > ftime ? "${stime.format("${timeFormat}")}" : "${ftime.format("${timeFormat}")}")
+    Summary_last_updated_date = (stime > ftime ? "${stime.format("${dateFormat}")}" : "${ftime.format("${dateFormat}")}")
+    if(!state.sourcefeelsLike){
+        Summary_feelsLike =  ffeelsLike + (isFahrenheit ? '°F.' : '°C.')
+    } else {
+        Summary_feelsLike = sfeelsLike + (isFahrenheit ? '°F.' : '°C.')
+    }                
+    Summary_forecastTemp = " with a high of ${forecastHigh}" + (isFahrenheit ? '°F' : '°C') + " and a low of ${forecastLow}" + (isFahrenheit ? '°F. ' : '°C. ')
+    if(state.extSource == 2){Summary_precip = "There is a ${percentPrecip}% chance of precipitation. "} 
+    if(state.extSource == 3){Summary_precip = ""}
+    Summary_vis = "Visibility is around ${vis}" + (isDistanceMetric ? " kilometers." : " miles. ")
+    SummaryMessage(state.summaryType, city, lstate, Summary_last_updated_date, Summary_last_updated_time, condition_text, "${humidity}"+'%', "${temperature}"+(isFahrenheit ? '°F. ' : '°C. '), Summary_forecastTemp, Summary_feelsLike, "${wind_string}", "${wind_gust}"+(isDistanceMetric ? " KPH" : " MPH"), "${wind_dir}", Summary_precip, Summary_vis, alert)
+    return 
+}
+
+private SummaryMessage(SType, Scity, Sstate, Slast_updated_date, Slast_updated_time, Scondition_text, SHumidity, Stemp, SforecastTemp, SfeelsLike, Swind, Swind_gust, Swind_dir, Sprecip, Svis, Salert){   
+	if(SType == true){
+        sendEvent(name: "weatherSummary", value: "Weather summary for ${Scity}, ${Sstate} updated at ${Slast_updated_time} on ${Slast_updated_date}. "
+		+ ((!Scondition_text) ? "" : "${Scondition_text}") + ((!SforecastTemp) ? "" : "${SforecastTemp}") + "Humidity is currently around ${SHumidity} and temperature is ${Stemp} " 
+		+ "The temperature feels like it's ${SfeelsLike} ${Swind}"
+		+ ", with gusts up to ${Swind_gust}. " + ((!Sprecip) ? "" : "${Sprecip}") + ((!Svis) ? "" : "${Svis}") + ((!Salert) ? "" : "${Salert}"), isStateChange: true, displayed: true
+		)
+    } else {
+		sendEvent(name: "weatherSummary", value: ((!Scondition_text) ? "" : "${Scondition_text}")((!SforecastTemp) ? "" : "${SforecastTemp}")
+		+ " Humidity: ${SHumidity}. Temperature: ${Stemp}. Wind: ${Swind}; Gust: ${Swind_gust}.", isStateChange: true, displayed: true
+		)  
+	}
+	return
+}
+public PollStationAndForecast(){
+    PollStationNow()
+    if(state.extSource >= 2){PollExternal()}                 
+}
+
+private getSunriseAndSunset(latitude, longitude, forDate)	{
+    LOGINFO("SunriseAndSunset: lat: $latitude, lon: $longitude, forDate: $forDate")
+    log.info "Weather-Display Driver - INFO: Sunrise-Sunset.org: Executing 'poll', location: ${location.name}"
+    params = [ uri: "https://api.sunrise-sunset.org/json?lat=$latitude&lng=$longitude&date=$forDate&formatted=0" ]
+    sunRiseAndSet = [:]
+    try {
+        httpGet(params)		{ resp -> sunRiseAndSet = resp.data }
+    } catch (e) { log.error "Weather-Display Driver - ERROR: http call failed for sunrise and sunset api: $e" }
+    return sunRiseAndSet
+}
+
+private estimateLux(localTime, sunriseTime, sunsetTime, noonTime, twilight_begin, twilight_end, condition_code, cloud, tz_id)     {
+    LOGINFO("estimateLux: localTime: $localTime, sunriseTime: $sunriseTime, sunsetTime: $sunsetTime, noonTime: $noonTime, twilight_begin: $twilight_begin, twilight_end: $twilight_end")
+    LOGINFO("estimateLux (cont): condition_code: $condition_code, cloud: $cloud, tz_id: $tz_id")
+    tZ = TimeZone.getDefault()
+
+    lux = 0l
+    aFCC = true
+    l
+
+    if (timeOfDayIsBetween(sunriseTime, noonTime, localTime, tZ))      {
+    LOGINFO("between sunrise and noon")
+        l = (((localTime.getTime() - sunriseTime.getTime()) * 10000f) / (noonTime.getTime() - sunriseTime.getTime()))
+        lux = (l < 50f ? 50l : l.trunc(0) as long)
+        if(state.extSource != 3){is_day = 1}
+    }
+    else if (timeOfDayIsBetween(noonTime, sunsetTime, localTime, tZ))      {
+        LOGINFO("between noon and sunset")
+        l = (((sunsetTime.getTime() - localTime.getTime()) * 10000f) / (sunsetTime.getTime() - noonTime.getTime()))
+        lux = (l < 50f ? 50l : l.trunc(0) as long)
+        if(state.extSource != 3){is_day = 1}
+    }
+    else if (timeOfDayIsBetween(twilight_begin, sunriseTime, localTime, tZ))      {
+        LOGINFO("between sunrise and twilight")
+        l = (((localTime.getTime() - twilight_begin.getTime()) * 50f) / (sunriseTime.getTime() - twilight_begin.getTime()))
+        lux = (l < 10f ? 10l : l.trunc(0) as long)
+        if(state.extSource != 3){is_day = 0}
+    }
+    else if (timeOfDayIsBetween(sunsetTime, twilight_end, localTime, tZ))      {
+        LOGINFO("between sunset and twilight")
+        l = (((twilight_end.getTime() - localTime.getTime()) * 50f) / (twilight_end.getTime() - sunsetTime.getTime()))
+        lux = (l < 10f ? 10l : l.trunc(0) as long)
+        if(state.extSource != 3){is_day = 0}
+    }
+    else if (!timeOfDayIsBetween(twilight_begin, twilight_end, localTime, tZ))      {
+        LOGINFO("between non-twilight")
+        lux = 5l
+        aFCC = false
+        if(state.extSource != 3){is_day = 0}
+    }
+
+    cC = condition_code
+    cCT = ''
+    cCF
+    if(aFCC){
+		if(state.extSource == 1){
+            cCF = ((100 - (cloud.toInteger() / 3d)) / 100).round(1)
+            cCT = 'using cloud cover'
+		}
+    	if(state.extSource == 2){
+			if (conditionFactorWU[cC] && (condition_code != "unknown"))    {
+				cCF = conditionFactorWU[cC][1]
+				cCT = conditionFactorWU[cC][0]
+			}
+			else    {
+				cCF = ((100 - (cloud.toInteger() / 3d)) / 100).round(1)
+				cCT = 'using cloud cover'
+			}
+		}
+		if(state.extSource == 3){
+			if (conditionFactorXU[cC])    {
+				cCF = conditionFactorXU[cC][1]
+				cCT = conditionFactorXU[cC][0]
+			}
+			else    {
+				cCF = ((100 - (cloud.toInteger() / 3d)) / 100).round(1)
+				cCT = 'using cloud cover'
+			}
+		}
+    } else {
+		cCF = 1.0
+		cCT = 'night time now'
+    }
+    lux = (lux * cCF) as long
+    LOGINFO("condition: $cC | condition text: $cCT | condition factor: $cCF | lux: $lux")
+//    sendEvent(name: "cCF", value: cCF)
+    return lux
+}
+
+private timeOfDayIsBetween(fromDate, toDate, checkDate, timeZone)     {
+    return (!checkDate.before(fromDate) && !checkDate.after(toDate))
+}
+
+// define debug action ***********************************
+def logCheck(){
+//    state.checkLog = logSet
+    if(state.logSet == true){
+        log.info "Weather-Display Driver - INFO:  All Logging Enabled"
+    }
+    else if(state.logSet == false){
+        log.info "Weather-Display Driver - INFO:  Further Logging Disabled"
+    }
+}
+def LOGDEBUG(txt){
+    try {
+    	if(state.logSet == true){ log.debug("Weather-Display Driver - DEBUG:  ${txt}") }
+    } catch(ex) {
+    	log.error("LOGDEBUG unable to output requested data!")
+    }
+}
+
+def LOGINFO(txt){
+    try {
+    	if(state.logSet == true){log.info("Weather-Display Driver - INFO:  ${txt}") }
+    } catch(ex) {
+    	log.error("LOGINFO unable to output requested data!")
+    }
+}
+
+public setDateTimeFormats(formatselector){
+    switch(formatselector) {
+        case 1:
+        	DTFormat = "M/d/yyyy h:mm a"
+        	dateFormat = "M/d/yyyy"
+        	timeFormat = "h:mm a"
+        	break
+        case 2:
+	        DTFormat = "M/d/yyyy HH:mm"
+	        dateFormat = "M/d/yyyy"
+	        timeFormat = "HH:mm"
+        	break        
+    	case 3:
+        	DTFormat = "MM/dd/yyyy h:mm a"
+        	dateFormat = "MM/dd/yyyy"
+        	timeFormat = "h:mm a"
+        	break        
+    	case 4:
+	        DTFormat = "MM/dd/yyyy HH:mm"
+	        dateFormat = "MM/dd/yyyy"
+    	    timeFormat = "HH:mm"
+        	break        
+		case 5:
+        	DTFormat = "d/M/yyyy h:mm a"
+        	dateFormat = "d/M/yyyy"
+        	timeFormat = "h:mm a"
+        	break        
+    	case 6:
+        	DTFormat = "d/M/yyyy HH:mm"
+        	dateFormat = "d/M/yyyy"
+        	timeFormat = "HH:mm"
+        	break        
+    	case 7:
+        	DTFormat = "dd/MM/yyyy h:mm a"
+        	dateFormat = "dd/MM/yyyy"
+        	timeFormat = "h:mm a"
+        	break        
+        case 8:
+        	DTFormat = "dd/MM/yyyy HH:mm"
+        	dateFormat = "dd/MM/yyyy"
+        	timeFormat = "HH:mm"
+        	break        
+    	case 9:
+        	DTFormat = "yyyy/MM/dd HH:mm"
+        	dateFormat = "yyyy/MM/dd"
+        	timeFormat = "HH:mm"
+        	break        
+    	default:
+            DTFormat = "M/d/yyyy h:mm a"
+        	dateFormat = "M/d/yyyy"
+        	timeFormat = "h:mm a"
+            break
+	}
+}
+
+@Field final Map    conditionFactorWU = [
+	"chanceflurries":['Chance of Flurries',0.8],
+	"chancerain":['Chance Rain',0.6],
+	"chancesleet":['Chance of Sleet',0.6],
+	"chancesnow":['Chance of Snow',0.5],
+	"chancetstorms":['Chance of a Thunderstorm',0.5],
+	"clear":['Clear',1],
+	"cloudy":['Cloudy',0.5],
+	"flurries":['Flurries',0.7],
+	"fog":['Fog',0.2],
+	"hazy":['Haze',0.2],
+	"mostlycloudy":['Mostly Cloudy',0.5],
+	"mostlysunny":['Mostly Sunny',0.8],
+	"partlycloudy":['Partly Cloudy',0.7],
+	"partlysunny":['Partly Sunny',0.6],
+	"sleet":['Sleet',0.4],
+	"rain":['Rain',0.4],
+	"snow":['Snow',0.4],
+	"sunny":['Sunny',1],
+	"tstorms":['Thunderstorm',0.3],
+	"unknown":['Unknown',0.5]]
+	
+@Field final Map    conditionFactorXU = [
+        1000: ['Sunny', 1],                                     1003: ['Partly cloudy', 0.8],
+        1006: ['Cloudy', 0.6],                                  1009: ['Overcast', 0.5],
+        1030: ['Mist', 0.5],                                    1063: ['Patchy rain possible', 0.8],
+        1066: ['Patchy snow possible', 0.6],                    1069: ['Patchy sleet possible', 0.6],
+        1072: ['Patchy freezing drizzle possible', 0.4],        1087: ['Thundery outbreaks possible', 0.2],
+        1114: ['Blowing snow', 0.3],                            1117: ['Blizzard', 0.1],
+        1135: ['Fog', 0.2],                                     1147: ['Freezing fog', 0.1],
+        1150: ['Patchy light drizzle', 0.8],                    1153: ['Light drizzle', 0.7],
+        1168: ['Freezing drizzle', 0.5],                        1171: ['Heavy freezing drizzle', 0.2],
+        1180: ['Patchy light rain', 0.8],                       1183: ['Light rain', 0.7],
+        1186: ['Moderate rain at times', 0.5],                  1189: ['Moderate rain', 0.4],
+        1192: ['Heavy rain at times', 0.3],                     1195: ['Heavy rain', 0.2],
+        1198: ['Light freezing rain', 0.7],                     1201: ['Moderate or heavy freezing rain', 0.3],
+        1204: ['Light sleet', 0.5],                             1207: ['Moderate or heavy sleet', 0.3],
+        1210: ['Patchy light snow', 0.8],                       1213: ['Light snow', 0.7],
+        1216: ['Patchy moderate snow', 0.6],                    1219: ['Moderate snow', 0.5],
+        1222: ['Patchy heavy snow', 0.4],                       1225: ['Heavy snow', 0.3],
+        1237: ['Ice pellets', 0.5],                             1240: ['Light rain shower', 0.8],
+        1243: ['Moderate or heavy rain shower', 0.3],           1246: ['Torrential rain shower', 0.1],
+        1249: ['Light sleet showers', 0.7],                     1252: ['Moderate or heavy sleet showers', 0.5],
+        1255: ['Light snow showers', 0.7],                      1258: ['Moderate or heavy snow showers', 0.5],
+        1261: ['Light showers of ice pellets', 0.7],            1264: ['Moderate or heavy showers of ice pellets',0.3],
+        1273: ['Patchy light rain with thunder', 0.5],          1276: ['Moderate or heavy rain with thunder', 0.3],
+        1279: ['Patchy light snow with thunder', 0.5],          1282: ['Moderate or heavy snow with thunder', 0.3]]
+	
+
+private getImgName(wCode, is_day){
+    url = state.iconStore
+    LOGINFO("wCode: " + wCode + "  is_day: " + is_day + " iconStore: " + state.iconState)
+    imgItem = imgNames.find{ (state.extSource<=2 ? it.wuphrase : it.xucode) == wCode && it.day == is_day }    
+    LOGINFO("image url: " + url + (imgItem ? imgItem.img : 'na.png') + "?raw=true")
+    return (url + (imgItem ? imgItem.img : 'na.png') + "?raw=true")    
+}
+
+@Field final List    imgNames =     [
+     [xucode: 1153, wuphrase: "Drizzle", day: 1, img: '9.png'],  // DAY - Light drizzle
+     [xucode: 1189, wuphrase: "Rain", day: 1, img: '5.png'],  // DAY - Moderate rain
+     [xucode: 1219, wuphrase: "Snow", day: 1, img: '7.png'],  // DAY - Moderate snow
+     [xucode: 1237, wuphrase: "Snow Grains", day: 1, img: '17.png'],  // DAY - Ice pellets
+     [xucode: 1237, wuphrase: "Ice Crystals", day: 1, img: '17.png'],  // DAY - Ice pellets
+     [xucode: 1237, wuphrase: "Ice Pellets", day: 1, img: '17.png'],  // DAY - Ice pellets
+     [xucode: 1204, wuphrase: "Hail", day: 1, img: '35.png'],  // DAY - Light sleet
+     [xucode: 1135, wuphrase: "Mist", day: 1, img: '20.png'],  // DAY - Fog
+     [xucode: 1135, wuphrase: "Fog", day: 1, img: '20.png'],  // DAY - Fog
+     [xucode: 1135, wuphrase: "Fog Patches", day: 1, img: '20.png'],  // DAY - Fog
+     [xucode: 1114, wuphrase: "Low Drifting Snow", day: 1, img: '15.png'],  // DAY - Blowing snow
+     [xucode: 1114, wuphrase: "Blowing Snow", day: 1, img: '15.png'],  // DAY - Blowing snow
+     [xucode: 1153, wuphrase: "Rain Mist", day: 1, img: '9.png'],  // DAY - Light drizzle
+     [xucode: 1243, wuphrase: "Rain Showers", day: 1, img: '12.png'],  // DAY - Moderate or heavy rain shower
+     [xucode: 1258, wuphrase: "Snow Showers", day: 1, img: '41.png'],  // DAY - Moderate or heavy snow showers
+     [xucode: 1258, wuphrase: "Snow Blowing Snow Mist", day: 1, img: '41.png'],  // DAY - Moderate or heavy snow showers
+     [xucode: 1252, wuphrase: "Ice Pellet Showers", day: 1, img: '18.png'],  // DAY - Moderate or heavy sleet showers
+     [xucode: 1264, wuphrase: "Hail Showers", day: 1, img: '4.png'],  // DAY - Moderate or heavy showers of ice pellets
+     [xucode: 1252, wuphrase: "Small Hail Showers", day: 1, img: '18.png'],  // DAY - Moderate or heavy sleet showers
+     [xucode: 1276, wuphrase: "Thunderstorm", day: 1, img: '3.png'],  // DAY - Moderate or heavy rain with thunder
+     [xucode: 1276, wuphrase: "Thunderstorms and Rain", day: 1, img: '3.png'],  // DAY - Moderate or heavy rain with thunder
+     [xucode: 1258, wuphrase: "Thunderstorms and Snow", day: 1, img: '41.png'],  // DAY - Moderate or heavy snow showers
+     [xucode: 1258, wuphrase: "Thunderstorms and Ice Pellets", day: 1, img: '41.png'],  // DAY - Moderate or heavy snow showers
+     [xucode: 1276, wuphrase: "Thunderstorms with Hail", day: 1, img: '3.png'],  // DAY - Moderate or heavy rain with thunder
+     [xucode: 1264, wuphrase: "Thunderstorms with Small Hail", day: 1, img: '4.png'],  // DAY - Moderate or heavy showers of ice pellets
+     [xucode: 1168, wuphrase: "Freezing Drizzle", day: 1, img: '8.png'],  // DAY - Freezing drizzle
+     [xucode: 1252, wuphrase: "Freezing Rain", day: 1, img: '18.png'],  // DAY - Moderate or heavy sleet showers
+     [xucode: 1147, wuphrase: "Freezing Fog", day: 1, img: '21.png'],  // DAY - Freezing fog
+     [xucode: 1147, wuphrase: "Patches of Fog", day: 1, img: '21.png'],  // DAY - Freezing fog
+     [xucode: 1135, wuphrase: "Shallow Fog", day: 1, img: '20.png'],  // DAY - Fog
+     [xucode: 1135, wuphrase: "Partial Fog", day: 1, img: '20.png'],  // DAY - Fog
+     [xucode: 1009, wuphrase: "Overcast", day: 1, img: '28.png'],  // DAY - Overcast
+     [xucode: 1000, wuphrase: "Clear", day: 1, img: '32.png'],  // DAY - Sunny
+     [xucode: 1003, wuphrase: "Partly Cloudy", day: 1, img: '30.png'],  // DAY - Partly cloudy
+     [xucode: 1006, wuphrase: "Mostly Cloudy", day: 1, img: '26.png'],  // DAY - Cloudy
+     [xucode: 1003, wuphrase: "Scattered Clouds", day: 1, img: '30.png'],  // DAY - Partly cloudy
+     [xucode: 1204, wuphrase: "Small Hail", day: 1, img: '35.png'],  // DAY - Light sleet
+     [xucode: 1153, wuphrase: "Light Drizzle", day: 1, img: '9.png'],  // DAY - Light drizzle
+     [xucode: 1183, wuphrase: "Light Rain", day: 1, img: '11.png'],  // DAY - Light rain
+     [xucode: 1213, wuphrase: "Light Snow", day: 1, img: '14.png'],  // DAY - Light snow
+     [xucode: 1204, wuphrase: "Light Snow Grains", day: 1, img: '35.png'],  // DAY - Light sleet
+     [xucode: 1204, wuphrase: "Light Ice Crystals", day: 1, img: '35.png'],  // DAY - Light sleet
+     [xucode: 1204, wuphrase: "Light Ice Pellets", day: 1, img: '35.png'],  // DAY - Light sleet
+     [xucode: 1204, wuphrase: "Light Hail", day: 1, img: '35.png'],  // DAY - Light sleet
+     [xucode: 1153, wuphrase: "Light Mist", day: 1, img: '9.png'],  // DAY - Light drizzle
+     [xucode: 1135, wuphrase: "Light Fog", day: 1, img: '20.png'],  // DAY - Fog
+     [xucode: 1135, wuphrase: "Light Fog Patches", day: 1, img: '20.png'],  // DAY - Fog
+     [xucode: 1114, wuphrase: "Light Low Drifting Snow", day: 1, img: '15.png'],  // DAY - Blowing snow
+     [xucode: 1114, wuphrase: "Light Blowing Snow", day: 1, img: '15.png'],  // DAY - Blowing snow
+     [xucode: 1153, wuphrase: "Light Rain Mist", day: 1, img: '9.png'],  // DAY - Light drizzle
+     [xucode: 1240, wuphrase: "Light Rain Showers", day: 1, img: '10.png'],  // DAY - Light rain shower
+     [xucode: 1255, wuphrase: "Light Snow Showers", day: 1, img: '16.png'],  // DAY - Light snow showers
+     [xucode: 1114, wuphrase: "Light Snow Blowing Snow Mist", day: 1, img: '15.png'],  // DAY - Blowing snow
+     [xucode: 1261, wuphrase: "Light Ice Pellet Showers", day: 1, img: '8.png'],  // DAY - Light showers of ice pellets
+     [xucode: 1261, wuphrase: "Light Hail Showers", day: 1, img: '8.png'],  // DAY - Light showers of ice pellets
+     [xucode: 1261, wuphrase: "Light Small Hail Showers", day: 1, img: '8.png'],  // DAY - Light showers of ice pellets
+     [xucode: 1273, wuphrase: "Light Thunderstorm", day: 1, img: '47.png'],  // DAY - Patchy light rain with thunder
+     [xucode: 1273, wuphrase: "Light Thunderstorms and Rain", day: 1, img: '47.png'],  // DAY - Patchy light rain with thunder
+     [xucode: 1279, wuphrase: "Light Thunderstorms and Snow", day: 1, img: '41.png'],  // DAY - Patchy light snow with thunder
+     [xucode: 1279, wuphrase: "Light Thunderstorms and Ice Pellets", day: 1, img: '41.png'],  // DAY - Patchy light snow with thunder
+     [xucode: 1249, wuphrase: "Light Thunderstorms with Hail", day: 1, img: '5.png'],  // DAY - Light sleet showers
+     [xucode: 1261, wuphrase: "Light Thunderstorms with Small Hail", day: 1, img: '8.png'],  // DAY - Light showers of ice pellets
+     [xucode: 1168, wuphrase: "Light Freezing Drizzle", day: 1, img: '8.png'],  // DAY - Freezing drizzle
+     [xucode: 1198, wuphrase: "Light Freezing Rain", day: 1, img: '8.png'],  // DAY - Light freezing rain
+     [xucode: 1147, wuphrase: "Light Freezing Fog", day: 1, img: '21.png'],  // DAY - Freezing fog
+     [xucode: 1189, wuphrase: "Heavy Drizzle", day: 1, img: '5.png'],  // DAY - Moderate rain
+     [xucode: 1195, wuphrase: "Heavy Rain", day: 1, img: '40.png'],  // DAY - Heavy rain
+     [xucode: 1258, wuphrase: "Heavy Snow", day: 1, img: '41.png'],  // DAY - Moderate or heavy snow showers
+     [xucode: 1252, wuphrase: "Heavy Snow Grains", day: 1, img: '18.png'],  // DAY - Moderate or heavy sleet showers
+     [xucode: 1264, wuphrase: "Heavy Ice Crystals", day: 1, img: '4.png'],  // DAY - Moderate or heavy showers of ice pellets
+     [xucode: 1264, wuphrase: "Heavy Ice Pellets", day: 1, img: '4.png'],  // DAY - Moderate or heavy showers of ice pellets
+     [xucode: 1264, wuphrase: "Heavy Hail", day: 1, img: '4.png'],  // DAY - Moderate or heavy showers of ice pellets
+     [xucode: 1183, wuphrase: "Heavy Mist", day: 1, img: '11.png'],  // DAY - Light rain
+     [xucode: 1135, wuphrase: "Heavy Fog", day: 1, img: '20.png'],  // DAY - Fog
+     [xucode: 1135, wuphrase: "Heavy Fog Patches", day: 1, img: '20.png'],  // DAY - Fog
+     [xucode: 1114, wuphrase: "Heavy Low Drifting Snow", day: 1, img: '15.png'],  // DAY - Blowing snow
+     [xucode: 1114, wuphrase: "Heavy Blowing Snow", day: 1, img: '15.png'],  // DAY - Blowing snow
+     [xucode: 1183, wuphrase: "Heavy Rain Mist", day: 1, img: '11.png'],  // DAY - Light rain
+     [xucode: 1243, wuphrase: "Heavy Rain Showers", day: 1, img: '12.png'],  // DAY - Moderate or heavy rain shower
+     [xucode: 1258, wuphrase: "Heavy Snow Showers", day: 1, img: '41.png'],  // DAY - Moderate or heavy snow showers
+     [xucode: 1114, wuphrase: "Heavy Snow Blowing Snow Mist", day: 1, img: '15.png'],  // DAY - Blowing snow
+     [xucode: 1264, wuphrase: "Heavy Ice Pellet Showers", day: 1, img: '4.png'],  // DAY - Moderate or heavy showers of ice pellets
+     [xucode: 1264, wuphrase: "Heavy Hail Showers", day: 1, img: '4.png'],  // DAY - Moderate or heavy showers of ice pellets
+     [xucode: 1252, wuphrase: "Heavy Small Hail Showers", day: 1, img: '18.png'],  // DAY - Moderate or heavy sleet showers
+     [xucode: 1276, wuphrase: "Heavy Thunderstorm", day: 1, img: '3.png'],  // DAY - Moderate or heavy rain with thunder
+     [xucode: 1276, wuphrase: "Heavy Thunderstorms and Rain", day: 1, img: '3.png'],  // DAY - Moderate or heavy rain with thunder
+     [xucode: 1258, wuphrase: "Heavy Thunderstorms and Snow", day: 1, img: '41.png'],  // DAY - Moderate or heavy snow showers
+     [xucode: 1264, wuphrase: "Heavy Thunderstorms and Ice Pellets", day: 1, img: '4.png'],  // DAY - Moderate or heavy showers of ice pellets
+     [xucode: 1264, wuphrase: "Heavy Thunderstorms with Hail", day: 1, img: '4.png'],  // DAY - Moderate or heavy showers of ice pellets
+     [xucode: 1264, wuphrase: "Heavy Thunderstorms with Small Hail", day: 1, img: '4.png'],  // DAY - Moderate or heavy showers of ice pellets
+     [xucode: 1168, wuphrase: "Heavy Freezing Drizzle", day: 1, img: '8.png'],  // DAY - Freezing drizzle
+     [xucode: 1201, wuphrase: "Heavy Freezing Rain", day: 1, img: '10.png'],  // DAY - Moderate or heavy freezing rain
+     [xucode: 1147, wuphrase: "Heavy Freezing Fog", day: 1, img: '21.png'],  // DAY - Freezing fog
+     [xucode: 1153, wuphrase: "Drizzle", day: 0, img: '9.png'],  // NIGHT - Light drizzle
+     [xucode: 1189, wuphrase: "Rain", day: 0, img: '5.png'],  // NIGHT - Moderate rain
+     [xucode: 1219, wuphrase: "Snow", day: 0, img: '7.png'],  // NIGHT - Moderate snow
+     [xucode: 1237, wuphrase: "Snow Grains", day: 0, img: '16.png'],  // NIGHT - Ice pellets
+     [xucode: 1237, wuphrase: "Ice Crystals", day: 0, img: '16.png'],  // NIGHT - Ice pellets
+     [xucode: 1237, wuphrase: "Ice Pellets", day: 0, img: '16.png'],  // NIGHT - Ice pellets
+     [xucode: 1204, wuphrase: "Hail", day: 0, img: '5.png'],  // NIGHT - Light sleet
+     [xucode: 1135, wuphrase: "Mist", day: 0, img: '20.png'],  // NIGHT - Fog
+     [xucode: 1135, wuphrase: "Fog", day: 0, img: '20.png'],  // NIGHT - Fog
+     [xucode: 1135, wuphrase: "Fog Patches", day: 0, img: '20.png'],  // NIGHT - Fog
+     [xucode: 1114, wuphrase: "Low Drifting Snow", day: 0, img: '14.png'],  // NIGHT - Blowing snow
+     [xucode: 1114, wuphrase: "Blowing Snow", day: 0, img: '14.png'],  // NIGHT - Blowing snow
+     [xucode: 1153, wuphrase: "Rain Mist", day: 0, img: '9.png'],  // NIGHT - Light drizzle
+     [xucode: 1243, wuphrase: "Rain Showers", day: 0, img: '40.png'],  // NIGHT - Moderate or heavy rain shower
+     [xucode: 1258, wuphrase: "Snow Showers", day: 0, img: '41.png'],  // NIGHT - Moderate or heavy snow showers
+     [xucode: 1258, wuphrase: "Snow Blowing Snow Mist", day: 0, img: '41.png'],  // NIGHT - Moderate or heavy snow showers
+     [xucode: 1252, wuphrase: "Ice Pellet Showers", day: 0, img: '18.png'],  // NIGHT - Moderate or heavy sleet showers
+     [xucode: 1264, wuphrase: "Hail Showers", day: 0, img: '3.png'],  // NIGHT - Moderate or heavy showers of ice pellets
+     [xucode: 1252, wuphrase: "Small Hail Showers", day: 0, img: '18.png'],  // NIGHT - Moderate or heavy sleet showers
+     [xucode: 1276, wuphrase: "Thunderstorm", day: 0, img: '38.png'],  // NIGHT - Moderate or heavy rain with thunder
+     [xucode: 1276, wuphrase: "Thunderstorms and Rain", day: 0, img: '38.png'],  // NIGHT - Moderate or heavy rain with thunder
+     [xucode: 1282, wuphrase: "Thunderstorms and Snow", day: 0, img: '18.png'],  // NIGHT - Moderate or heavy snow with thunder
+     [xucode: 1282, wuphrase: "Thunderstorms and Ice Pellets", day: 0, img: '18.png'],  // NIGHT - Moderate or heavy snow with thunder
+     [xucode: 1276, wuphrase: "Thunderstorms with Hail", day: 0, img: '38.png'],  // NIGHT - Moderate or heavy rain with thunder
+     [xucode: 1264, wuphrase: "Thunderstorms with Small Hail", day: 0, img: '3.png'],  // NIGHT - Moderate or heavy showers of ice pellets
+     [xucode: 1168, wuphrase: "Freezing Drizzle", day: 0, img: '8.png'],  // NIGHT - Freezing drizzle
+     [xucode: 1252, wuphrase: "Freezing Rain", day: 0, img: '18.png'],  // NIGHT - Moderate or heavy sleet showers
+     [xucode: 1147, wuphrase: "Freezing Fog", day: 0, img: '21.png'],  // NIGHT - Freezing fog
+     [xucode: 1147, wuphrase: "Patches of Fog", day: 0, img: '21.png'],  // NIGHT - Freezing fog
+     [xucode: 1135, wuphrase: "Shallow Fog", day: 0, img: '20.png'],  // NIGHT - Fog
+     [xucode: 1135, wuphrase: "Partial Fog", day: 0, img: '20.png'],  // NIGHT - Fog
+     [xucode: 1009, wuphrase: "Overcast", day: 0, img: '27.png'],  // NIGHT - Overcast
+     [xucode: 1000, wuphrase: "Clear", day: 0, img: '31.png'],  // NIGHT - Clear
+     [xucode: 1003, wuphrase: "Partly Cloudy", day: 0, img: '29.png'],  // NIGHT - Partly cloudy
+     [xucode: 1006, wuphrase: "Mostly Cloudy", day: 0, img: '26.png'],  // NIGHT - Cloudy
+     [xucode: 1003, wuphrase: "Scattered Clouds", day: 0, img: '29.png'],  // NIGHT - Partly cloudy
+     [xucode: 1204, wuphrase: "Small Hail", day: 0, img: '5.png'],  // NIGHT - Light sleet
+     [xucode: 1153, wuphrase: "Light Drizzle", day: 0, img: '9.png'],  // NIGHT - Light drizzle
+     [xucode: 1183, wuphrase: "Light Rain", day: 0, img: '11.png'],  // NIGHT - Light rain
+     [xucode: 1213, wuphrase: "Light Snow", day: 0, img: '13.png'],  // NIGHT - Light snow
+     [xucode: 1204, wuphrase: "Light Snow Grains", day: 0, img: '5.png'],  // NIGHT - Light sleet
+     [xucode: 1204, wuphrase: "Light Ice Crystals", day: 0, img: '5.png'],  // NIGHT - Light sleet
+     [xucode: 1204, wuphrase: "Light Ice Pellets", day: 0, img: '5.png'],  // NIGHT - Light sleet
+     [xucode: 1204, wuphrase: "Light Hail", day: 0, img: '5.png'],  // NIGHT - Light sleet
+     [xucode: 1153, wuphrase: "Light Mist", day: 0, img: '9.png'],  // NIGHT - Light drizzle
+     [xucode: 1135, wuphrase: "Light Fog", day: 0, img: '20.png'],  // NIGHT - Fog
+     [xucode: 1135, wuphrase: "Light Fog Patches", day: 0, img: '20.png'],  // NIGHT - Fog
+     [xucode: 1114, wuphrase: "Light Low Drifting Snow", day: 0, img: '14.png'],  // NIGHT - Blowing snow
+     [xucode: 1114, wuphrase: "Light Blowing Snow", day: 0, img: '14.png'],  // NIGHT - Blowing snow
+     [xucode: 1153, wuphrase: "Light Rain Mist", day: 0, img: '9.png'],  // NIGHT - Light drizzle
+     [xucode: 1240, wuphrase: "Light Rain Showers", day: 0, img: '11.png'],  // NIGHT - Light rain shower
+     [xucode: 1255, wuphrase: "Light Snow Showers", day: 0, img: '16.png'],  // NIGHT - Light snow showers
+     [xucode: 1114, wuphrase: "Light Snow Blowing Snow Mist", day: 0, img: '14.png'],  // NIGHT - Blowing snow
+     [xucode: 1261, wuphrase: "Light Ice Pellet Showers", day: 0, img: '8.png'],  // NIGHT - Light showers of ice pellets
+     [xucode: 1261, wuphrase: "Light Hail Showers", day: 0, img: '8.png'],  // NIGHT - Light showers of ice pellets
+     [xucode: 1261, wuphrase: "Light Small Hail Showers", day: 0, img: '8.png'],  // NIGHT - Light showers of ice pellets
+     [xucode: 1273, wuphrase: "Light Thunderstorm", day: 0, img: '47.png'],  // NIGHT - Patchy light rain with thunder
+     [xucode: 1273, wuphrase: "Light Thunderstorms and Rain", day: 0, img: '47.png'],  // NIGHT - Patchy light rain with thunder
+     [xucode: 1279, wuphrase: "Light Thunderstorms and Snow", day: 0, img: '41.png'],  // NIGHT - Patchy light snow with thunder
+     [xucode: 1279, wuphrase: "Light Thunderstorms and Ice Pellets", day: 0, img: '41.png'],  // NIGHT - Patchy light snow with thunder
+     [xucode: 1249, wuphrase: "Light Thunderstorms with Hail", day: 0, img: '5.png'],  // NIGHT - Light sleet showers
+     [xucode: 1261, wuphrase: "Light Thunderstorms with Small Hail", day: 0, img: '8.png'],  // NIGHT - Light showers of ice pellets
+     [xucode: 1168, wuphrase: "Light Freezing Drizzle", day: 0, img: '8.png'],  // NIGHT - Freezing drizzle
+     [xucode: 1198, wuphrase: "Light Freezing Rain", day: 0, img: '10.png'],  // NIGHT - Light freezing rain
+     [xucode: 1147, wuphrase: "Light Freezing Fog", day: 0, img: '21.png'],  // NIGHT - Freezing fog
+     [xucode: 1189, wuphrase: "Heavy Drizzle", day: 0, img: '5.png'],  // NIGHT - Moderate rain
+     [xucode: 1195, wuphrase: "Heavy Rain", day: 0, img: '12.png'],  // NIGHT - Heavy rain
+     [xucode: 1258, wuphrase: "Heavy Snow", day: 0, img: '16.png'],  // NIGHT - Moderate or heavy snow showers
+     [xucode: 1252, wuphrase: "Heavy Snow Grains", day: 0, img: '18.png'],  // NIGHT - Moderate or heavy sleet showers
+     [xucode: 1264, wuphrase: "Heavy Ice Crystals", day: 0, img: '3.png'],  // NIGHT - Moderate or heavy showers of ice pellets
+     [xucode: 1264, wuphrase: "Heavy Ice Pellets", day: 0, img: '3.png'],  // NIGHT - Moderate or heavy showers of ice pellets
+     [xucode: 1264, wuphrase: "Heavy Hail", day: 0, img: '3.png'],  // NIGHT - Moderate or heavy showers of ice pellets
+     [xucode: 1183, wuphrase: "Heavy Mist", day: 0, img: '11.png'],  // NIGHT - Light rain
+     [xucode: 1135, wuphrase: "Heavy Fog", day: 0, img: '20.png'],  // NIGHT - Fog
+     [xucode: 1135, wuphrase: "Heavy Fog Patches", day: 0, img: '20.png'],  // NIGHT - Fog
+     [xucode: 1114, wuphrase: "Heavy Low Drifting Snow", day: 0, img: '14.png'],  // NIGHT - Blowing snow
+     [xucode: 1114, wuphrase: "Heavy Blowing Snow", day: 0, img: '14.png'],  // NIGHT - Blowing snow
+     [xucode: 1183, wuphrase: "Heavy Rain Mist", day: 0, img: '11.png'],  // NIGHT - Light rain
+     [xucode: 1243, wuphrase: "Heavy Rain Showers", day: 0, img: '40.png'],  // NIGHT - Moderate or heavy rain shower
+     [xucode: 1258, wuphrase: "Heavy Snow Showers", day: 0, img: '16.png'],  // NIGHT - Moderate or heavy snow showers
+     [xucode: 1114, wuphrase: "Heavy Snow Blowing Snow Mist", day: 0, img: '14.png'],  // NIGHT - Blowing snow
+     [xucode: 1264, wuphrase: "Heavy Ice Pellet Showers", day: 0, img: '3.png'],  // NIGHT - Moderate or heavy showers of ice pellets
+     [xucode: 1264, wuphrase: "Heavy Hail Showers", day: 0, img: '3.png'],  // NIGHT - Moderate or heavy showers of ice pellets
+     [xucode: 1252, wuphrase: "Heavy Small Hail Showers", day: 0, img: '18.png'],  // NIGHT - Moderate or heavy sleet showers
+     [xucode: 1276, wuphrase: "Heavy Thunderstorm", day: 0, img: '38.png'],  // NIGHT - Moderate or heavy rain with thunder
+     [xucode: 1276, wuphrase: "Heavy Thunderstorms and Rain", day: 0, img: '38.png'],  // NIGHT - Moderate or heavy rain with thunder
+     [xucode: 1282, wuphrase: "Heavy Thunderstorms and Snow", day: 0, img: '18.png'],  // NIGHT - Moderate or heavy snow with thunder
+     [xucode: 1264, wuphrase: "Heavy Thunderstorms and Ice Pellets", day: 0, img: '3.png'],  // NIGHT - Moderate or heavy showers of ice pellets
+     [xucode: 1264, wuphrase: "Heavy Thunderstorms with Hail", day: 0, img: '3.png'],  // NIGHT - Moderate or heavy showers of ice pellets
+     [xucode: 1264, wuphrase: "Heavy Thunderstorms with Small Hail", day: 0, img: '3.png'],  // NIGHT - Moderate or heavy showers of ice pellets
+     [xucode: 1171, wuphrase: "Heavy Freezing Drizzle", day: 0, img: '10.png'],  // NIGHT - Heavy freezing drizzle
+     [xucode: 1201, wuphrase: "Heavy Freezing Rain", day: 0, img: '12.png'],  // NIGHT - Moderate or heavy freezing rain
+     [xucode: 1147, wuphrase: "Heavy Freezing Fog", day: 0, img: '21.png'],  // NIGHT - Freezing fog
+]    
+//******************************************************************************************
