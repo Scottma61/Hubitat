@@ -19,7 +19,7 @@ The vast majority of this was not my work.  I just started with someone else's g
  as your forecast source, or from APIXU.com if you choose APIXU as your forecast source.  You may choose the
  fancier 'Alternative' icon set if you have a forecast source other than 'None'.
 
- To use either driver: Install a virtual device and assign the driver to it  
+ To use the driver: Install a virtual device and assign the driver to it.
  
  Many people contributed to the creation of this driver.  Significant contributors include
  @Cobra who adapted it from @mattw01's work and I thank them for that!  A large 'Thank you' 
