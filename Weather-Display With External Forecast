@@ -160,7 +160,7 @@ metadata {
                 input "iconStore", "text", required: true, defaultValue: "https://github.com/Scottma61/WeatherIcons/blob/master/", title: "Alternative Icon Location:"
             }
             input "iconType", "bool", title: "Icon: On = Current - Off = Forecast", required: true, defaultValue: false
-	    	input "tempFormat", "enum", required: true, defaultValue: "Fahrenheit", title: "Display Unit - Temperature: Fahrenheit (°F) or Celsius (°C)",  options: ["Fahrenheit (°F)", "Celsius (°C)"]
+	    	input "tempFormat", "enum", required: true, defaultValue: "Fahrenheit (°F)", title: "Display Unit - Temperature: Fahrenheit (°F) or Celsius (°C)",  options: ["Fahrenheit (°F)", "Celsius (°C)"]
             input "datetimeFormat", "enum", required: true, defaultValue: "m/d/yyyy 12 hour (am|pm)", title: "Display Unit - Date-Time Format",  options: [1:"m/d/yyyy 12 hour (am|pm)", 2:"m/d/yyyy 24 hour", 3:"mm/dd/yyyy 12 hour (am|pm)", 4:"mm/dd/yyyy 24 hour", 5:"d/m/yyyy 12 hour (am|pm)", 6:"d/m/yyyy 24 hour", 7:"dd/mm/yyyy 12 hour (am|pm)", 8:"dd/mm/yyyy 24 hour", 9:"yyyy/mm/dd 24 hour"]
             input "distanceFormat", "enum", required: true, defaultValue: "Miles (mph)", title: "Display Unit - Distance/Speed: Miles or Kilometres",  options: ["Miles (mph)", "Kilometers (kph)"]
             input "pressureFormat", "enum", required: true, defaultValue: "Inches", title: "Display Unit - Pressure: Inches or Millibar",  options: ["Inches", "Millibar"]
@@ -182,35 +182,30 @@ def updated() {
     logCheck()
     state.driverVersion = "2.0.1"    // ************************* Update as required *************************************
 	state.driverNameSpace = "Matthew"
-    state.extSource = extSource.toInteger()
-    state.pollIntervalStation = pollIntervalStation
-    state.pollLocationStation = pollLocationStation
-    state.pollIntervalForecast = pollIntervalForecast
-    state.pollLocationForecast = pollLocationForecast
-    state.datetimeFormat = datetimeFormat.toInteger()
-    state.distanceFormat = distanceFormat
-    state.pressureFormat = pressureFormat
-    state.rainFormat = rainFormat
-    state.tempFormat = tempFormat
-	state.iconType = iconType
-    state.logSet = logSet
-    state.sourcefeelsLike = sourcefeelsLike
-    state.sourceIllumination = sourceIllumination
-    state.sourceImg = sourceImg
-    state.sourceUV = sourceUV
-    state.sourceastronomy = sourceastronomy.toInteger()
-    state.summaryType = summaryType
-    state.iconStore = iconStore
+    
+    state.extSource = (settings?.extSource ?: 1).toInteger()
+    state.pollIntervalStation = (settings?.pollIntervalStation ?: "3 Hours")
+    state.pollLocationStation = (settings?.pollLocationStation ?: "http://")
+    state.pollIntervalForecast = (settings?.pollIntervalForecast ?: "ZIP Code or Location")
+    state.pollLocationForecast = (settings?.pollLocationForecast ?: "http://")
+    state.datetimeFormat = (settings?.datetimeFormat ?: 1).toInteger()
+    state.distanceFormat = (settings?.distanceFormat ?: "Miles (mph)")
+    state.pressureFormat = (settings?.pressureFormat ?: "Inches")
+    state.rainFormat = (settings?.rainFormat ?: "Inches")
+    state.tempFormat = (settings?.tempFormat ?: "Fahrenheit (°F)")
+	state.iconType = (settings?.iconType ?: false)
+    state.logSet = (settings?.logSet ?: false)
+    state.sourcefeelsLike = (settings?.sourcefeelsLike ?: true)
+    state.sourceIllumination = (settings?.sourceIllumination ?: true)
+    state.sourceImg = (settings?.sourceImg ?: true)
+    state.sourceUV = (settings?.sourceUV ?: true)
+    state.sourceastronomy = (settings?.sourceastronomy ?: 1).toInteger()
+    state.summaryType = (settings?.summaryType ?: false)
+    state.iconStore = (settings?.iconStore ?: "https://github.com/Scottma61/WeatherIcons/blob/master/")
 
     PollStationNow()
 	PollExternal()
-    pollIntervalStation = (settings?.pollIntervalStation ?: "3 Hours").replace(" ", "")
-    if(pollIntervalStation == "Manual Poll Only"){
-        LOGINFO("MANUAL POLLING ONLY")
-    } else {
-        "runEvery${pollIntervalStation}"(pollScheduleStation)
-        LOGINFO("pollIntervalStation: $pollIntervalStation")
-    }
+    
     if(state.extSource > 1){
         pollIntervalForecast = (settings?.pollIntervalForecast ?: "3 Hours").replace(" ", "")
         if(pollIntervalForecast == "Manual Poll Only"){
@@ -220,6 +215,16 @@ def updated() {
         }
     }
     LOGINFO("pollIntervalForecast: $pollIntervalForecast")
+
+    pollIntervalStation = (settings?.pollIntervalStation ?: "3 Hours").replace(" ", "")
+    if(pollIntervalStation != pollIntervalForecast){
+        if(pollIntervalStation == "Manual Poll Only"){
+            LOGINFO("MANUAL POLLING ONLY")
+        } else {
+            "runEvery${pollIntervalStation}"(pollScheduleStation)
+            LOGINFO("pollIntervalStation: $pollIntervalStation")
+        }
+    }
 }
 
 
