@@ -156,7 +156,7 @@ metadata {
                 input "pollIntervalForecast", "enum", title: "External Source Poll Interval", required: true, defaultValue: "3 Hours", options: ["Manual Poll Only", "5 Minutes", "10 Minutes", "15 Minutes", "30 Minutes", "1 Hour", "3 Hours"]
                 input "pollLocationForecast", "text", required: true, title: "ZIP Code or Location"
 				LOGINFO("pollLocationForecast: ${pollLocationForecast}")                
-                input "sourceImg", "bool", required: true, defaultValue: true, title: "Icons from: On = Standard - Off = Alternative"
+                input "sourceImg", "bool", required: true, defaultValue: false, title: "Icons from: On = Standard - Off = Alternative"
                 input "iconStore", "text", required: true, defaultValue: "https://github.com/Scottma61/WeatherIcons/blob/master/", title: "Alternative Icon Location:"
             }
             input "iconType", "bool", title: "Icon: On = Current - Off = Forecast", required: true, defaultValue: false
@@ -197,7 +197,7 @@ def updated() {
     state.logSet = (settings?.logSet ?: false)
     state.sourcefeelsLike = (settings?.sourcefeelsLike ?: true)
     state.sourceIllumination = (settings?.sourceIllumination ?: true)
-    state.sourceImg = (settings?.sourceImg ?: true)
+    state.sourceImg = (settings?.sourceImg ?: false)
     state.sourceUV = (settings?.sourceUV ?: true)
     state.sourceastronomy = (settings?.sourceastronomy ?: 1).toInteger()
     state.summaryType = (settings?.summaryType ?: false)
@@ -227,12 +227,8 @@ def updated() {
     }
 }
 
-
 def pollScheduleForecast(){
     PollExternal()
-}
-def PollStation(){
-    PollStationNow()
 }
 
 def pollScheduleStation(){
@@ -682,16 +678,20 @@ def PollExternal(){
         try {
             httpGet(paramsXU)		{ resp -> xu << resp.data }
         } catch (e) { log.error "Weather-Display Driver - ERROR: http call failed for APIXU weather api: $e" }
-        tZ = TimeZone.getTimeZone(xu.location.tz_id)
-        stationUpTime = new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", new Date().format("yyyy-MM-dd'T'HH:mm:ssXXX", location.timeZone), tZ)
+        if (!xu){
+            log.warn "Weather-Display Driver - WARNING: No response from APIXU.com API"
+        } else {
+            tZ = TimeZone.getTimeZone(xu.location.tz_id)
+            stationUpTime = new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", new Date().format("yyyy-MM-dd'T'HH:mm:ssXXX", location.timeZone), tZ)
 
-        if(state.logSet == true){  
-            LOGINFO("paramsXU: ${paramsXU}")   
-            LOGINFO("response data: ${xu}")
-        } 
-        if(state.logSet == false){ 
-            LOGINFO("Further APIXU data logging disabled")
-        }    
+            if(state.logSet == true){  
+                LOGINFO("paramsXU: ${paramsXU}")   
+                LOGINFO("response data: ${xu}")
+            } 
+            if(state.logSet == false){ 
+                LOGINFO("Further APIXU data logging disabled")
+            }   
+        }
 //  *****  stage APIXU.COM Variables  *****        
         sutime = stationUpTime
         forecastObsTime =  new Date().parse("yyyy-MM-dd HH:mm", xu.current.last_updated, tZ)
@@ -847,7 +847,7 @@ private SummaryMessage(SType, Scity, Sstate, Slast_poll_date, Slast_poll_time, S
 	return
 }
 public PollStationAndForecast(){
-    PollStationNow()
+    if(state.extSource == 1){PollStationNow()}
     if(state.extSource >= 2){PollExternal()}                 
 }
 
