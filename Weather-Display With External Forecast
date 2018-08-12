@@ -44,7 +44,7 @@
  *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
  *  for the specific language governing permissions and limitations under the License.
  *
- *  Last Update 08/11/2018
+ *  Last Update 08/12/2018
  * { Left room below to document version changes...}
  *
  *  
@@ -62,7 +62,8 @@
  *  
  *  
  *  
- *  
+ *  V2.0.2 - Added hemisphere selectors for correct Lon/Lat on station.  Removed '?raw=true'   - 8/12/2018
+ *           suffix from alternative icon file location if not on 'github.com'.
  *  V2.0.1 - Code cleanup; Added 'Observation' times; Changed 'Update' time to 'Poll' time     - 8/11/2018
  *           corrected display of some options variables (Illuminance/UV/FeelsLike) when no forecast source selected.
  *  V2.0.0 - New version completely rebuilt 08/10/2018
@@ -149,6 +150,8 @@ metadata {
         section("Query Inputs"){
             input "extSource", "enum", title: "Select External Source", required:true, defaultValue: "None", options: [1:"None", 2:"WeatherUnderground", 3:"Apixu"]
             input "pollIntervalStation", "enum", title: "Station Poll Interval", required: true, defaultValue: "3 Hours", options: ["Manual Poll Only", "5 Minutes", "10 Minutes", "15 Minutes", "30 Minutes", "1 Hour", "3 Hours"]
+            input "stationLatHemi", "enum", title: "Station Northern or Southern hemisphere?", required: true, defaultValue: "North", options: ["North", "South"]
+            input "stationLongHemi", "enum", title: "Station East or West of GMT (London, UK)?", required: true, defaultValue: "West", options: ["West", "East"]
             input "pollLocationStation", "text", required: true, title: "Station Data File Location:", defaultValue: "http://"
             LOGINFO("extSource: ${extSource}")
             if(extSource.toInteger() != 1){
@@ -185,6 +188,8 @@ def updated() {
     
     state.extSource = (settings?.extSource ?: 1).toInteger()
     state.pollIntervalStation = (settings?.pollIntervalStation ?: "3 Hours")
+    state.stationLatHemi =  (settings?.stationLatHemi ?: "North")
+    state.stationLongHemi =  (settings?.stationLongHemi ?: "West")
     state.pollLocationStation = (settings?.pollLocationStation ?: "http://")
     state.pollIntervalForecast = (settings?.pollIntervalForecast ?: "ZIP Code or Location")
     state.pollLocationForecast = (settings?.pollLocationForecast ?: "http://")
@@ -328,9 +333,19 @@ def PollStationNow() {
     if(wd.everything.forecast.icon.code.toInteger() == 31){condition_code = 'tstorms'}
     if(wd.everything.forecast.icon.code.toInteger() == 32){condition_code = 'tstorms'}
     if(wd.everything.forecast.icon.code.toInteger() == 35){condition_code = 'rain'}
+    if(state.stationLatHemi == "North"){
+    	latitude = wd.station.latitude
+    } else {
+        latitude =  0 - wd.station.latitude.toDouble()
+    }
+    if(state.stationLongHemi == "East"){
+        longitude = wd.station.longitude
+    } else {
+    	longitude =  0 - wd.station.longitude.toDouble()
+    }
     if(state.extSource==1){
     	if(!weatherIcon){weatherIcon = condition_code}
-        sunriseAndSunset = getSunriseAndSunset(wd.station.latitude, 0 - wd.station.longitude.toDouble(), sutime.format("yyyy-MM-dd", tZ))       
+        sunriseAndSunset = getSunriseAndSunset(latitude, longitude, sutime.format("yyyy-MM-dd", tZ))       
 		twilight_begin = new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", sunriseAndSunset.results.civil_twilight_begin, tZ)
 		sunriseTime = new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", sunriseAndSunset.results.sunrise, tZ)
 		noonTime = new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", sunriseAndSunset.results.solar_noon, tZ)    
@@ -413,8 +428,6 @@ def PollStationNow() {
     lstate = wd.station.name.split(/ /)[1]
     country = wd.station.name.split(/ /)[2]
     location = wd.station.name.split(/ /)[0] + ", " + wd.station.name.split(/ /)[1]
-    latitude = wd.station.latitude
-    longitude =  0 - wd.station.longitude.toDouble()
     local_time = Date.parse("HH:mm", wd.time.time).format("${timeFormat}")
     local_date = Date.parse("d/M/yyyy", wd.time.date).format("${dateFormat}")
     moonAge = wd.everything.astronomy.moon.moon_age.toDouble()
@@ -1077,7 +1090,7 @@ private getImgName(wCode, is_day){
     LOGINFO("wCode: " + wCode + "  is_day: " + is_day + " iconStore: " + state.iconState)
     imgItem = imgNames.find{ (state.extSource<=2 ? it.wuphrase : it.xucode) == wCode && it.day == is_day }    
     LOGINFO("image url: " + url + (imgItem ? imgItem.img : 'na.png') + "?raw=true")
-    return (url + (imgItem ? imgItem.img : 'na.png') + "?raw=true")    
+    return (url + (imgItem ? imgItem.img : 'na.png') + (((iconStore.toLowerCase().contains('://github.com/')) && (iconStore.toLowerCase().contains('/blob/master/'))) ? "?raw=true" : ""))    
 }
 
 @Field final List    imgNames =     [
