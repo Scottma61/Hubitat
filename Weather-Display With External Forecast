@@ -71,7 +71,7 @@
 import groovy.transform.Field
 
 metadata {
-    definition (name: "~TEST~ Weather-Display With External Forecast Driver", namespace: "Matthew", author: "Scottma61") {
+    definition (name: "Weather-Display With External Forecast Driver", namespace: "Matthew", author: "Scottma61") {
         capability "Actuator"
         capability "Sensor"
         capability "Temperature Measurement"
@@ -473,11 +473,11 @@ def PollStationNow() {
 //  ***** present Weather-Display variables  *****
     if(state.extSource==1){
         sendEvent(name: "alert", value: alert, isStateChange: true, displayed: true)  
+	    sendEvent(name: "last_poll_Forecast", value: last_poll_Forecast, displayed: true)    
+	    sendEvent(name: "last_observation_Forecast", value: last_observation_Forecast, displayed: true)    
     }
     sendEvent(name: "last_poll_Station", value: last_poll_Station, displayed: true)    
-	sendEvent(name: "last_poll_Forecast", value: last_poll_Forecast, displayed: true)    
 	sendEvent(name: "last_observation_Station", value: last_observation_Station, displayed: true)    
-	sendEvent(name: "last_observation_Forecast", value: last_observation_Forecast, displayed: true)    
 	sendEvent(name: "city", value: city, isStateChange: true, displayed: true)
 	sendEvent(name: "state", value: lstate, isStateChange: true, displayed: true)
 	sendEvent(name: "country", value: country, isStateChange: true, displayed: true)
