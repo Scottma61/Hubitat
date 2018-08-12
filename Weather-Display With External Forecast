@@ -44,7 +44,7 @@
  *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
  *  for the specific language governing permissions and limitations under the License.
  *
- *  Last Update 08/10/2018
+ *  Last Update 08/11/2018
  * { Left room below to document version changes...}
  *
  *  
@@ -63,14 +63,15 @@
  *  
  *  
  *  
- *  
+ *  V2.0.1 - Code cleanup; Added 'Observation' times; Changed 'Update' time to 'Poll' time     - 8/11/2018
+ *           corrected display of some options variables (Illuminance/UV/FeelsLike) when no forecast source selected.
  *  V2.0.0 - New version completely rebuilt 08/10/2018
  *
  */
 import groovy.transform.Field
 
 metadata {
-    definition (name: "Weather-Display With External Forecast Driver", namespace: "Matthew", author: "Scottma61") {
+    definition (name: "~TEST~ Weather-Display With External Forecast Driver", namespace: "Matthew", author: "Scottma61") {
         capability "Actuator"
         capability "Sensor"
         capability "Temperature Measurement"
@@ -88,10 +89,10 @@ metadata {
         attribute "latitude", "string"
         attribute "longitude", "string"
         attribute "tz_id", "string"
-        attribute "local_time", "string"
-        attribute "local_date", "string"
-        attribute "last_updated_Station", "string"
-        attribute "last_updated_Forecast", "string"
+        attribute "last_poll_Station", "string"
+        attribute "last_poll_Forecast", "string"
+        attribute "last_observation_Station", "string"
+        attribute "last_observation_Forecast", "string"
         
 // - Astronomy        
         attribute "localSunset", "string"  //  - required for SmartTiles dashboard
@@ -103,22 +104,18 @@ metadata {
 // - Current Conditions
         attribute "cloud", "number"
         attribute "condition_text", "string"
-//        attribute "condition_code", "string"
         attribute "icon", "string"
         attribute "iconWithText", "string"
         attribute "icon_url", "string"
-//        attribute "icon_only", "string"
 		attribute "weather", "string"  //  - required for SmartTiles dashboard
         attribute "weatherIcon", "string"  // same as 'condition_code' - required for SmartTiles dashboard
         attribute "dewpoint", "number"
-//        attribute "is_day", "string"
 		attribute "feelsLike", "string"  //  - required for SmartTiles dashboard
         attribute "lux", "string" 
         attribute "precip_today", "number"
         attribute "percentPrecip", "string"  // same as 'chanceOfRain' - required for SmartTiles dashboard
         attribute "chanceOfRain", "string"
         attribute "pressure", "string"
-//        attribute "temp", "string"
 		attribute "temperature", "string"  // same as 'temp' - required for SmartTiles dashboard
         attribute "solarradiation", "string"
         attribute "UV", "number"
@@ -127,8 +124,6 @@ metadata {
         attribute "wind_gust", "string"
         attribute "wind_degree", "string"
         attribute "wind_dir", "string"
-//        attribute "wind_bft", "number"
-//        attribute "wind_bft_string", "string"
         attribute "wind_string", "string"
 
 // Forecast
@@ -185,7 +180,7 @@ metadata {
 def updated() {
     unschedule()
     logCheck()
-    state.driverVersion = "2.0.0"    // ************************* Update as required *************************************
+    state.driverVersion = "2.0.1"    // ************************* Update as required *************************************
 	state.driverNameSpace = "Matthew"
     state.extSource = extSource.toInteger()
     state.pollIntervalStation = pollIntervalStation
@@ -259,6 +254,9 @@ def PollStationNow() {
     }        
     if (!wd){
         log.warn "Weather-Display Driver - WARNING: No response from Weather-Display API"
+	} else {
+		tZ = TimeZone.getDefault()	
+		stationUpTime = new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", new Date().format("yyyy-MM-dd'T'HH:mm:ssXXX", location.timeZone), tZ)
 	}
     //  *****  stage Weather-Display variables  *****
     if(state.extSource==1){
@@ -270,17 +268,20 @@ def PollStationNow() {
     isDistanceMetric = (state.distanceFormat == "Kilometers (kph)") ? true : false
     isRainMetric = (state.rainFormat == "Millimetres") ? true : false
     isPressureMetric = (state.pressureFormat == "Millibar") ? true : false
-
-    tZ = TimeZone.getDefault()
     tz_id = TimeZone.getDefault().getID()
-    stationTime = new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", new Date().format("yyyy-MM-dd'T'HH:mm:ssXXX", location.timeZone), tZ)
-    stime = stationTime
-    forecastTime = Date.parse("yyyy-MM-dd hh:mm:ss", "2000-01-01 0:00:01")
-    ftime = forecastTime
-    stationDate = stationTime.format("yyyy-MM-dd", tZ)
-    stationTimeOnly = stationTime.format("HH:mm", tZ)
+	stationObsTime = new Date().parse("HH:mm d/M/yyyy", wd.time.time_date, tZ)
+	sotime = stationObsTime
+	sutime = stationUpTime
+	forecastObsTime = Date.parse("yyyy-MM-dd hh:mm:ss", "2000-01-01 0:00:01")
+    fotime = forecastObsTime
+	futime = stationUpTime
+	last_poll_Station = sutime.format("${dateFormat}") + ", " + sutime.format("${timeFormat}")
+	last_observation_Station = sotime.format("${dateFormat}") + ", " + sotime.format("${timeFormat}")
+	last_poll_Forecast = futime.format("${dateFormat}") + ", " + futime.format("${timeFormat}")
+	last_observation_Forecast = fotime.format("${dateFormat}") + ", " + fotime.format("${timeFormat}")
+    sDate = sutime.format("yyyy-MM-dd", tZ)
+    sTimeOnly = sutime.format("HH:mm", tZ)
 
-    if(!weatherIcon){weatherIcon = null}
     if(!cloud){
         if(wd.everything.weather.solar.percentage){
             if(wd.everything.weather.solar.percentage.toInteger() == 100){    
@@ -326,41 +327,46 @@ def PollStationNow() {
     if(wd.everything.forecast.icon.code.toInteger() == 31){condition_code = 'tstorms'}
     if(wd.everything.forecast.icon.code.toInteger() == 32){condition_code = 'tstorms'}
     if(wd.everything.forecast.icon.code.toInteger() == 35){condition_code = 'rain'}
-    sunriseAndSunset = getSunriseAndSunset(wd.station.latitude, 0 - wd.station.longitude.toDouble(), stationDate)       
-    twilight_begin = new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", sunriseAndSunset.results.civil_twilight_begin, tZ)
-    sunriseTime = new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", sunriseAndSunset.results.sunrise, tZ)
-    noonTime = new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", sunriseAndSunset.results.solar_noon, tZ)    
-    sunsetTime = new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", sunriseAndSunset.results.sunset, tZ)
-    twilight_end = new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", sunriseAndSunset.results.civil_twilight_end, tZ)
-    if (!stationTime || !sunriseTime || !sunsetTime || !noonTime ||
-        !twilight_begin || !twilight_end || !condition_code || !cloud || !tz_id) {
-        log.debug "Weather-Display Driver - DEBUG: stationTime: $stationTime"
-        log.debug "Weather-Display Driver - DEBUG: twilight_begin: $twilight_begin"
-        log.debug "Weather-Display Driver - DEBUG: sunriseTime: $sunriseTime"
-        log.debug "Weather-Display Driver - DEBUG: noonTime: $noonTime"
-        log.debug "Weather-Display Driver - DEBUG: sunsetTime: $sunsetTime"
-        log.debug "Weather-Display Driver - DEBUG: twilight_end: $twilight_end"
-        log.debug "Weather-Display Driver - DEBUG: condition_code: $condition_code"
-        log.debug "Weather-Display Driver - DEBUG: cloud: $cloud"
-        log.debug "Weather-Display Driver - DEBUG: tz_id: $tz_id"
-        lux = null
-    } else {
-        is_day = null
-        lux = estimateLux(stationTime, sunriseTime, sunsetTime, noonTime, twilight_begin, twilight_end, condition_code, cloud, tz_id)
-        illuminance = lux
-    }            
-    if(state.sourceastronomy == 1) {
-        localSunset = sunsetTime.format("${timeFormat}")
-        localSunrise = sunriseTime.format("${timeFormat}")
-    }
+    if(state.extSource==1){
+    	if(!weatherIcon){weatherIcon = condition_code}
+        sunriseAndSunset = getSunriseAndSunset(wd.station.latitude, 0 - wd.station.longitude.toDouble(), sutime.format("yyyy-MM-dd", tZ))       
+		twilight_begin = new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", sunriseAndSunset.results.civil_twilight_begin, tZ)
+		sunriseTime = new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", sunriseAndSunset.results.sunrise, tZ)
+		noonTime = new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", sunriseAndSunset.results.solar_noon, tZ)    
+		sunsetTime = new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", sunriseAndSunset.results.sunset, tZ)
+		twilight_end = new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", sunriseAndSunset.results.civil_twilight_end, tZ)
+		TwB = twilight_begin
+		TwE = twilight_end
+		sR = sunriseTime
+		sS = sunsetTime
+		if (!sutime || !sunriseTime || !sunsetTime || !noonTime ||
+			!twilight_begin || !twilight_end || !condition_code || !cloud || !tz_id) {
+			log.debug "Weather-Display Driver - DEBUG: sutime: $sutime"
+			log.debug "Weather-Display Driver - DEBUG: twilight_begin: $twilight_begin"
+			log.debug "Weather-Display Driver - DEBUG: sunriseTime: $sunriseTime"
+			log.debug "Weather-Display Driver - DEBUG: noonTime: $noonTime"
+			log.debug "Weather-Display Driver - DEBUG: sunsetTime: $sunsetTime"
+			log.debug "Weather-Display Driver - DEBUG: twilight_end: $twilight_end"
+			log.debug "Weather-Display Driver - DEBUG: condition_code: $condition_code"
+			log.debug "Weather-Display Driver - DEBUG: cloud: $cloud"
+			log.debug "Weather-Display Driver - DEBUG: tz_id: $tz_id"
+			lux = null
+		} else {
+			is_day = null
+			lux = estimateLux(sotime, sunriseTime, sunsetTime, noonTime, twilight_begin, twilight_end, condition_code, cloud, tz_id)
+			illuminance = lux
+			if(state.sourceastronomy == 1) {
+				localSunset = sunsetTime.format("${timeFormat}")
+				localSunrise = sunriseTime.format("${timeFormat}")
+			}
+		}
+	}
     if(state.sourceastronomy == 2) {
         localSunset = Date.parse("HH:mm", wd.everything.astronomy.sun.sunset_time.time).format("${timeFormat}")
         localSunrise = Date.parse("HH:mm", wd.everything.astronomy.sun.sunrise_time.time).format("${timeFormat}")
-    }
-    TwB = twilight_begin
-    TwE = twilight_end
-    sR = sunriseTime
-    sS = sunsetTime
+		sunsetTime = localSunset
+		sunriseTime = localSunrise
+	}
     switch((wd.everything.weather.wind.avg_speed.bft).toInteger()){
 		case 0:
         	wind_string_bft = "Calm"
@@ -408,10 +414,8 @@ def PollStationNow() {
     location = wd.station.name.split(/ /)[0] + ", " + wd.station.name.split(/ /)[1]
     latitude = wd.station.latitude
     longitude =  0 - wd.station.longitude.toDouble()
-    tz_id = TimeZone.getDefault().getID()
     local_time = Date.parse("HH:mm", wd.time.time).format("${timeFormat}")
     local_date = Date.parse("d/M/yyyy", wd.time.date).format("${dateFormat}")
-    last_updated_Station = Date.parse("d/M/yyyy", wd.time.date).format("${dateFormat}") + ", " + Date.parse("HH:mm", wd.time.time).format("${timeFormat}")
     moonAge = wd.everything.astronomy.moon.moon_age.toDouble()
     if (moonAge >= 0 && moonAge < 4) {moonPhase = "New Moon"}
     if (moonAge >= 4 && moonAge < 7) {moonPhase = "Waxing Crescent"}
@@ -428,15 +432,20 @@ def PollStationNow() {
         solarradiation = wd.everything.weather.solar.irradiance.wm2
     }
     sfeelsLike = (isFahrenheit ? wd.everything.weather.apparent_temperature.current.f : wd.everything.weather.apparent_temperature.current.c)
-    sforecastCondition_text = wd.everything.forecast.davis_forecast
+    if(state.sourceIllumination) {
+        if (!wd.everything.weather.solar.irradiance.wm2){
+            lux =  "This station does not send lux data."
+            illuminance = "This station does not send illuminance data."
+        } else {
+            lux = wd.everything.weather.solar.irradiance.wm2
+            illuminance = wd.everything.weather.solar.irradiance.wm2
+        } 
+    }
     if(state.extSource==1){
         condition_icon = '<img src=https://icons.wxug.com/i/c/a/' + condition_code + '.gif>'
         condition_text = wd.everything.forecast.davis_forecast.capitalize()
         condition_iconWithText = '<img src=https://icons.wxug.com/i/c/a/' + condition_code + '.gif><br>' + condition_text
         condition_icon_url = 'https://icons.wxug.com/i/c/a/' + condition_code +'.gif'
-        condition_icon_only = condition_code +'.gif'
-    }
-    if(state.extSource==1){
         if(state.sourceIllumination) {
             if (!wd.everything.weather.solar.irradiance.wm2){
                 lux = lux
@@ -448,7 +457,7 @@ def PollStationNow() {
         }
         if(!percentPrecip){percentPrecip = 'Not available from this source'}
         if(!chanceOfRain){chanceOfRain = 'Not available from this source'}
-    }        
+	} 
 	dewpoint = (isFahrenheit ? wd.everything.weather.dew_point.current.f : wd.everything.weather.dew_point.current.c)
     humidity = wd.everything.weather.humidity.current
 	precip_today = (isRainMetric ? wd.everything.weather.rainfall.daily.mm : wd.everything.weather.rainfall.daily.in)
@@ -465,7 +474,10 @@ def PollStationNow() {
     if(state.extSource==1){
         sendEvent(name: "alert", value: alert, isStateChange: true, displayed: true)  
     }
-    sendEvent(name: "last_updated_Station", value: last_updated_Station, displayed: true)    
+    sendEvent(name: "last_poll_Station", value: last_poll_Station, displayed: true)    
+	sendEvent(name: "last_poll_Forecast", value: last_poll_Forecast, displayed: true)    
+	sendEvent(name: "last_observation_Station", value: last_observation_Station, displayed: true)    
+	sendEvent(name: "last_observation_Forecast", value: last_observation_Forecast, displayed: true)    
 	sendEvent(name: "city", value: city, isStateChange: true, displayed: true)
 	sendEvent(name: "state", value: lstate, isStateChange: true, displayed: true)
 	sendEvent(name: "country", value: country, isStateChange: true, displayed: true)
@@ -473,14 +485,14 @@ def PollStationNow() {
     sendEvent(name: "latitude", value: latitude, isStateChange: true, displayed: true)
     sendEvent(name: "longitude", value:  longitude, isStateChange: true, displayed: true)
     sendEvent(name: "tz_id", value: tz_id, isStateChange: true, displayed: true)
-    sendEvent(name: "local_time", value: local_time, isStateChange: true, displayed: true)
-    sendEvent(name: "local_date", value: local_date, isStateChange: true, displayed: true)
     sendEvent(name: "cloud", value: cloud, unit: '%', isStateChange: true, displayed: true)
     sendEvent(name: "humidity", value: humidity, unit: '%', isStateChange: true, displayed: true)
 	sendEvent(name: "precip_today", value: precip_today, unit: (isRainMetric ? 'MM' : 'IN'), displayed: true)
 	sendEvent(name: "pressure", value: pressure, unit: (isDistanceMetric ? 'MB' : 'IN'), displayed: true)
 	sendEvent(name: "temperature", value: temperature, unit: (isFahrenheit ? '°F' : '°C'), displayed: false)
-    sendEvent(name: "UV", value: UV, isStateChange: true, displayed: true)
+    if(state.sourceUV){
+    	sendEvent(name: "UV", value: UV, isStateChange: true, displayed: true)
+    }
 	sendEvent(name: "solarradiation", value: solarradiation, isStateChange: true, displayed: true)
 	sendEvent(name: "wind", value: wind, unit: (isDistanceMetric ? 'KPH' : 'MPH'), displayed: false)
 	sendEvent(name: "wind_gust", value: wind_gust, unit: (isDistanceMetric ? 'KPH' : 'MPH'), displayed: false)
@@ -491,6 +503,9 @@ def PollStationNow() {
     sendEvent(name: "moonPhase", value: moonPhase, isStateChange: true, displayed: true)
     sendEvent(name: "moonIllumination", value: moonIllumination, unit: '%', isStateChange: true, displayed: true)
 	sendEvent(name: "dewpoint", value: dewpoint, unit: (isFahrenheit ? '°F' : '°C'), isStateChange: true, displayed: true)
+    if(state.sourcefeelsLike){
+	    sendEvent(name: "feelsLike", value: sfeelsLike, unit: (isFahrenheit ? '°F' : '°C'), isStateChange: true, displayed: true) // only needed for SmartTiles dashboard
+    }
     if(state.extSource==1){
     	sendEvent(name: "condition_code", value: condition_code, isStateChange: true, displayed: true)    
     	sendEvent(name: "condition_text", value: condition_text, isStateChange: true, displayed: true)            
@@ -498,19 +513,19 @@ def PollStationNow() {
     	sendEvent(name: "iconWithText", value: condition_iconWithText, isStateChange: true, displayed: true)    
     	sendEvent(name: "icon_url", value: condition_icon_url, isStateChange: true, displayed: false)    
 		sendEvent(name: "feelsLike", value: sfeelslike, unit: (isFahrenheit ? '°F' : '°C'), isStateChange: true, displayed: true) // only needed for SmartTiles dashboard
-    }
-    sendEvent(name: "twilightBegin", value: TwB.format("${timeFormat}"), isStateChange: true, displayed: true)
-    sendEvent(name: "twilightEnd", value: TwE.format("${timeFormat}"), isStateChange: true, displayed: true)
-    sendEvent(name: "sunriseTime", value: sR.format("${timeFormat}"), isStateChange: true, displayed: true)
-    sendEvent(name: "sunsetTime", value: sS.format("${timeFormat}"), isStateChange: true, displayed: true)
-    sendEvent(name: "localSunset", value: sS.format("${timeFormat}"), descriptionText: "Sunset today at is $localSunset", isStateChange: true, displayed: false) // only needed for SmartTiles dashboard
-    sendEvent(name: "localSunrise", value: sR.format("${timeFormat}"), descriptionText: "Sunrise today is at $localSunrise", isStateChange: true, displayed: false) // only needed for SmartTiles dashboard
-	sendEvent(name: "illuminance", value: illuminance, unit: 'lux', isStateChange: true, displayed: true)
-	sendEvent(name: "lux", value: lux, unit: 'lux', isStateChange: true, displayed: true)
+		sendEvent(name: "twilightBegin", value: TwB.format("${timeFormat}"), isStateChange: true, displayed: true)
+		sendEvent(name: "twilightEnd", value: TwE.format("${timeFormat}"), isStateChange: true, displayed: true)
+		sendEvent(name: "sunriseTime", value: sunriseTime.format("${timeFormat}"), isStateChange: true, displayed: true)
+		sendEvent(name: "sunsetTime", value: sunsetTime.format("${timeFormat}"), isStateChange: true, displayed: true)
+		sendEvent(name: "localSunset", value: localSunset.format("${timeFormat}"), isStateChange: true, displayed: false) // only needed for SmartTiles dashboard
+		sendEvent(name: "localSunrise", value: localSunrise.format("${timeFormat}"), isStateChange: true, displayed: false) // only needed for SmartTiles dashboard
+		sendEvent(name: "illuminance", value: illuminance, unit: 'lux', isStateChange: true, displayed: true)
+		sendEvent(name: "lux", value: lux, unit: 'lux', isStateChange: true, displayed: true)
+		}
 // ***** Build Summary Display variables  *****    
     if(state.extSource==1){
-        Summary_last_updated_time = (stime > ftime ? "${stime.format("${timeFormat}")}" : "${ftime.format("${timeFormat}")}")
-        Summary_last_updated_date = (stime > ftime ? "${stime.format("${dateFormat}")}" : "${ftime.format("${dateFormat}")}")
+        Summary_last_observation_time = (sotime > fotime ? "${sotime.format("${timeFormat}")}" : "${fotime.format("${timeFormat}")}")
+        Summary_last_observation_date = (sotime > fotime ? "${sotime.format("${dateFormat}")}" : "${fotime.format("${dateFormat}")}")
         if(state.sourcefeelsLike){
             Summary_feelsLike = sfeelsLike + (isFahrenheit ? '°F.' : '°C.')
         } else {
@@ -520,7 +535,7 @@ def PollStationNow() {
                 Summary_feelsLike = ""
             }
         }
-    	SummaryMessage(state.summaryType, city, lstate, Summary_last_updated_date, Summary_last_updated_time, condition_text, humidity+'%', temperature+(isFahrenheit ? '°F.' : '°C.'), "", Summary_feelsLike, wind_string, wind_gust+(isDistanceMetric ? " KPH" : " MPH"), wind_dir, "", "", alert)
+    	SummaryMessage(state.summaryType, city, lstate, Summary_last_observation_date, Summary_last_observation_time, condition_text, humidity+'%', temperature+(isFahrenheit ? '°F.' : '°C.'), "", Summary_feelsLike, wind_string, wind_gust+(isDistanceMetric ? " KPH" : " MPH"), wind_dir, "", "", alert)
     }
     return 
 }
@@ -535,14 +550,20 @@ def PollExternal(){
         try {
             httpGet(paramsWU)		{ resp -> wu << resp.data }
         } catch (e) { log.error "Weather-Display Driver - ERROR: http call failed for WeatherUnderground weather api: $e" }
-
-        if(state.logSet == true){
-            LOGINFO("paramsWU: ${paramsWU}")
-            LOGINFO("response data: ${wu}")
-        } 
-        if(state.logSet == false){ 
-            LOGINFO("Further WeatherUnderground data logging disabled")
+        if (!wu){
+            log.warn "Weather-Display Driver - WARNING: No response from WeatherUnderground API"
+        } else {
+            tZ = TimeZone.getDefault()	
+            stationUpTime = new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", new Date().format("yyyy-MM-dd'T'HH:mm:ssXXX", location.timeZone), tZ)
+            if(state.logSet == true){
+                LOGINFO("paramsWU: ${paramsWU}")
+                LOGINFO("response data: ${wu}")
+            } 
+            if(state.logSet == false){ 
+                LOGINFO("Further WeatherUnderground data logging disabled")
+            }
         }
+
 //  *****  stage WeatherUnderground Variables  *****
     	setDateTimeFormats(state.datetimeFormat)        
         isFahrenheit = (state.tempFormat == "Fahrenheit (°F)") ? true : false
@@ -551,11 +572,16 @@ def PollExternal(){
         isPressureMetric = (state.pressureFormat == "Millibar") ? true : false
         tZ = TimeZone.getTimeZone(wu.current_observation.local_tz_long)
         tz_id = wu.current_observation.local_tz_long
-        forecastTime = new Date().parse("EEE, dd MMM yyyy HH:mm:ss", wu.current_observation.observation_time_rfc822, tZ)    
-        forecastDate = forecastTime.format("yyyy-MM-dd", tZ)
-        forecastTimeOnly = forecastTime.format("HH:mm", tZ)
-        ftime = forecastTime
-        last_updated_Forecast = ftime.format("${dateFormat}") + ", " + ftime.format("${timeFormat}")
+        sutime = stationUpTime
+        forecastObsTime =  new Date().parse("EEE, dd MMM yyyy HH:mm:ss", wu.current_observation.observation_time_rfc822, tZ)    
+        fotime = forecastObsTime
+        futime = stationUpTime
+        last_poll_Station = sutime.format("${dateFormat}") + ", " + sutime.format("${timeFormat}")
+        last_observation_Station = sotime.format("${dateFormat}") + ", " + sotime.format("${timeFormat}")
+        last_poll_Forecast = futime.format("${dateFormat}") + ", " + futime.format("${timeFormat}")
+        last_observation_Forecast = fotime.format("${dateFormat}") + ", " + fotime.format("${timeFormat}")
+        fDate = futime.format("yyyy-MM-dd", tZ)
+        fTimeOnly = futime.format("HH:mm", tZ)
         if (!wu.hourly_forecast.sky[0]) {
             cloud = 0 
         } else {
@@ -578,6 +604,7 @@ def PollExternal(){
         forecast_text = wu.forecast.simpleforecast.forecastday[0].conditions.capitalize()
         forecast_code = wu.forecast.simpleforecast.forecastday[0].icon
         vis = (isDistanceMetric ? wu.current_observation.visibility_km : wu.current_observation.visibility_mi)
+        uv = wu.current_observation.UV
         percentPrecip = wu.forecast.simpleforecast.forecastday[0].pop
         chanceOfRain = wu.forecast.simpleforecast.forecastday[0].pop + '%'
         condition_text = (iconType ? wu.current_observation.weather : wu.forecast.simpleforecast.forecastday[0].conditions)
@@ -588,7 +615,7 @@ def PollExternal(){
         forecastLow = (isFahrenheit ? wu.forecast.simpleforecast.forecastday[0].low.fahrenheit : wu.forecast.simpleforecast.forecastday[0].low.celsius)
         rainTomorrow = (isRainMetric ? wu.forecast.simpleforecast.forecastday[1].qpf_allday.mm : wu.forecast.simpleforecast.forecastday[1].qpf_allday.in)
         rainDayAfterTomorrow = (isRainMetric ? wu.forecast.simpleforecast.forecastday[2].qpf_allday.mm : wu.forecast.simpleforecast.forecastday[2].qpf_allday.in)
-        sunriseAndSunset = getSunriseAndSunset(wu.current_observation.display_location.latitude.toDouble(), wu.current_observation.display_location.longitude.toDouble(), forecastDate)       
+        sunriseAndSunset = getSunriseAndSunset(wu.current_observation.display_location.latitude.toDouble(), wu.current_observation.display_location.longitude.toDouble(), futime.format("yyyy-MM-dd", tZ))       
         sunriseTime = new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", sunriseAndSunset.results.sunrise, tZ)
         sunsetTime = new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", sunriseAndSunset.results.sunset, tZ)
         noonTime = new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", sunriseAndSunset.results.solar_noon, tZ)    
@@ -598,9 +625,9 @@ def PollExternal(){
         TwE = twilight_end
         sR = sunriseTime
         sS = sunsetTime
-        if (!forecastTime || !sunriseTime || !sunsetTime || !noonTime ||
+        if (!futime || !sunriseTime || !sunsetTime || !noonTime ||
             !twilight_begin || !twilight_end || !condition_code || !cloud || !tz_id) {
-            log.debug "Weather-Display Driver - DEBUG: forecastTime: $forecastTime"
+            log.debug "Weather-Display Driver - DEBUG: futime: $futime"
             log.debug "Weather-Display Driver - DEBUG: twilight_begin: $twilight_begin"
             log.debug "Weather-Display Driver - DEBUG: sunriseTime: $sunriseTime"
             log.debug "Weather-Display Driver - DEBUG: noonTime: $noonTime"
@@ -612,7 +639,7 @@ def PollExternal(){
             lux = null
         } else {
             is_day = null
-            lux = estimateLux(forecastTime, sunriseTime, sunsetTime, noonTime, twilight_begin, twilight_end, condition_code, cloud, tz_id)
+            lux = estimateLux(futime, sunriseTime, sunsetTime, noonTime, twilight_begin, twilight_end, condition_code, cloud, tz_id)
            if(!state.sourceImg){
                 imgName = getImgName(condition_text, is_day)
                 condition_icon = '<img src=' + imgName + '>'
@@ -650,6 +677,8 @@ def PollExternal(){
         try {
             httpGet(paramsXU)		{ resp -> xu << resp.data }
         } catch (e) { log.error "Weather-Display Driver - ERROR: http call failed for APIXU weather api: $e" }
+        tZ = TimeZone.getTimeZone(xu.location.tz_id)
+        stationUpTime = new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", new Date().format("yyyy-MM-dd'T'HH:mm:ssXXX", location.timeZone), tZ)
 
         if(state.logSet == true){  
             LOGINFO("paramsXU: ${paramsXU}")   
@@ -659,24 +688,33 @@ def PollExternal(){
             LOGINFO("Further APIXU data logging disabled")
         }    
 //  *****  stage APIXU.COM Variables  *****        
-        tZ = TimeZone.getTimeZone(xu.location.tz_id)
-        forecastTime = new Date().parse("yyyy-MM-dd HH:mm", xu.location.localtime, tZ)    
-        ftime = forecastTime
-        forecastDate = forecastTime.format("yyyy-MM-dd", tZ)
-        forecastTimeOnly = forecastTime.format("HH:mm", tZ)
+        sutime = stationUpTime
+        forecastObsTime =  new Date().parse("yyyy-MM-dd HH:mm", xu.current.last_updated, tZ)
+        fotime = forecastObsTime
+        futime = new Date().parse("yyyy-MM-dd HH:mm", xu.location.localtime, tZ)
+        last_poll_Station = sutime.format("${dateFormat}") + ", " + sutime.format("${timeFormat}")
+        last_observation_Station = sotime.format("${dateFormat}") + ", " + sotime.format("${timeFormat}")
+        last_poll_Forecast = futime.format("${dateFormat}") + ", " + futime.format("${timeFormat}")
+        last_observation_Forecast = fotime.format("${dateFormat}") + ", " + fotime.format("${timeFormat}")
+        fDate = futime.format("yyyy-MM-dd", tZ)
+        fTimeOnly = futime.format("HH:mm", tZ)
         tz_id = xu.location.tz_id
         alert = " Weather alerts are not available from this source."
         if(!state.sourcefeelsLike){	
             ffeelsLike = (isFahrenheit ? xu.current.feelslike_f : xu.current.feelslike_c)
             fforecast_text = xu.forecast.forecastday[0].day.condition.text.capitalize()
         }
-        last_updated_Forecast = ftime.format("${dateFormat}") + ", " + ftime.format("${timeFormat}")
+        last_poll_Station = sutime.format("${dateFormat}") + ", " + sutime.format("${timeFormat}")
+        last_observation_Station = sotime.format("${dateFormat}") + ", " + sotime.format("${timeFormat}")
+        last_poll_Forecast = futime.format("${dateFormat}") + ", " + futime.format("${timeFormat}")
+        last_observation_Forecast = fotime.format("${dateFormat}") + ", " + fotime.format("${timeFormat}")
         condition_code = (iconType ? xu.current.condition.code : xu.forecast.forecastday[0].day.condition.code)
         condition_text = (iconType ? xu.current.condition.text.split()*.capitalize().join(" ") : xu.forecast.forecastday[0].day.condition.text.split()*.capitalize().join(" "))
         weather = condition_text
         weatherIcon = condition_code
         cloud = xu.current.cloud
         vis = (isDistanceMetric ? xu.current.vis_km : xu.current.vis_miles)
+        uv = xu.forecast.forecastday[0].day.condition.uv
         percentPrecip = "Not Available"
         chanceOfRain = "Not Available"
 		forecastHigh = (isFahrenheit ? xu.forecast.forecastday[0].day.maxtemp_f : xu.forecast.forecastday[0].day.maxtemp_c)
@@ -687,7 +725,7 @@ def PollExternal(){
             localSunset = Date.parse("hh:mm a", xu.forecast.forecastday[0].astro.sunset).format("$timeFormat}")
             localSunrise = Date.parse("hh:mm a", xu.forecast.forecastday[0].astro.sunrise).format("$timeFormat}")      
         }
-        sunriseAndSunset = getSunriseAndSunset(xu.location.lat.toDouble(), xu.location.lon.toDouble(), forecastDate)
+        sunriseAndSunset = getSunriseAndSunset(xu.location.lat.toDouble(), xu.location.lon.toDouble(), fDate)
         sunriseTime = new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", sunriseAndSunset.results.sunrise, tZ)
         sunsetTime = new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", sunriseAndSunset.results.sunset, tZ)
         noonTime = new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", sunriseAndSunset.results.solar_noon, tZ)    
@@ -697,9 +735,9 @@ def PollExternal(){
         TwE = twilight_end
         sR = sunriseTime
         sS = sunsetTime
-        if (!forecastTime || !sunriseTime || !sunsetTime || !noonTime ||
+        if (!futime || !sunriseTime || !sunsetTime || !noonTime ||
             !twilight_begin || !twilight_end || !condition_code || !cloud || !tz_id) {
-            log.debug "Weather-Display Driver - DEBUG: forecastTime: $forecastTime"
+            log.debug "Weather-Display Driver - DEBUG: futime: $futime"
             log.debug "Weather-Display Driver - DEBUG: twilight_begin: $twilight_begin"
             log.debug "Weather-Display Driver - DEBUG: sunriseTime: $sunriseTime"
             log.debug "Weather-Display Driver - DEBUG: noonTime: $noonTime"
@@ -711,7 +749,7 @@ def PollExternal(){
             lux = null
         } else {
             is_day = xu.current.is_day
-            lux = estimateLux(forecastTime, sunriseTime, sunsetTime, noonTime, twilight_begin, twilight_end, condition_code, cloud, tz_id)
+            lux = estimateLux(futime, sunriseTime, sunsetTime, noonTime, twilight_begin, twilight_end, condition_code, cloud, tz_id)
             if(!state.sourceImg){
                 imgName = getImgName(condition_code, is_day)
                 condition_icon = '<img src=' + imgName + '>'
@@ -751,7 +789,8 @@ def PollExternal(){
     sendEvent(name: "localSunrise", value: sR.format("${timeFormat}"), descriptionText: "Sunrise today is at $localSunrise", isStateChange: true, displayed: false) // only needed for SmartTiles dashboard
     sendEvent(name: "illuminance", value: illuminance, unit: 'lux', isStateChange: true, displayed: true)
     sendEvent(name: "lux", value: lux, unit: 'lux', isStateChange: true, displayed: true)    
-    sendEvent(name: "last_updated_Forecast", value: ftime.format("${dateFormat}") + ", " + ftime.format("${timeFormat}"), isStateChange: true, displayed: true)
+    sendEvent(name: "last_poll_Forecast", value: futime.format("${dateFormat}") + ", " + futime.format("${timeFormat}"), isStateChange: true, displayed: true)
+    sendEvent(name: "last_observation_Forecast", value: fotime.format("${dateFormat}") + ", " + fotime.format("${timeFormat}"), isStateChange: true, displayed: true)    
     sendEvent(name: "condition_text", value: condition_text, isStateChange: true, displayed: true)
     sendEvent(name: "icon", value: condition_icon, isStateChange: true, displayed: true)
     sendEvent(name: "iconWithText", value: condition_iconWithText, isStateChange: true, displayed: true)    
@@ -760,16 +799,21 @@ def PollExternal(){
     sendEvent(name: "weatherIcon", value: weatherIcon, isStateChange: true, displayed: false) // only needed for SmartTiles dashboard
     sendEvent(name: "cloud", value: cloud, unit: "%", isStateChange: true, displayed: true)
     sendEvent(name: "vis", value: vis, unit: (isDistanceMetric ? 'KM' : 'MILES'), isStateChange: true, displayed: true)
+    if(!state.sourceUV){
+    	sendEvent(name: "UV", value: UV, isStateChange: true, displayed: true)
+    }
     sendEvent(name: "percentPrecip", value: percentPrecip, isStateChange: true, displayed: true) // only needed for SmartTiles dashboard
     sendEvent(name: "chanceOfRain", value: chanceOfRain, isStateChange: true, displayed: false)
     sendEvent(name: "forecastHigh", value: forecastHigh, unit: (isFahrenheit ? '°F' : '°C'), displayed: true)
     sendEvent(name: "forecastLow", value: forecastLow, unit: (isFahrenheit ? '°F' : '°C'), displayed: true)
     sendEvent(name: "rainTomorrow", value: rainTomorrow, unit: (isRainMetric ? 'mm' : 'in'), displayed: true)
     sendEvent(name: "rainDayAfterTomorrow", value: rainDayAfterTomorrow, unit: (isRainMetric ? 'mm' : 'in'), displayed: true)
-    sendEvent(name: "feelsLike", value: ffeelsLike, unit: (isFahrenheit ? '°F' : '°C'), isStateChange: true, displayed: true) // only needed for SmartTiles dashboard
+    if(!state.sourcefeelsLike){
+    	sendEvent(name: "feelsLike", value: ffeelsLike, unit: (isFahrenheit ? '°F' : '°C'), isStateChange: true, displayed: true) // only needed for SmartTiles dashboard
+    }
 // ***** Build Summry Display variables  *****    
-    Summary_last_updated_time = (stime > ftime ? "${stime.format("${timeFormat}")}" : "${ftime.format("${timeFormat}")}")
-    Summary_last_updated_date = (stime > ftime ? "${stime.format("${dateFormat}")}" : "${ftime.format("${dateFormat}")}")
+    Summary_last_poll_time = (sutime > futime ? "${sutime.format("${timeFormat}")}" : "${futime.format("${timeFormat}")}")
+    Summary_last_poll_date = (sutime > futime ? "${sutime.format("${dateFormat}")}" : "${futime.format("${dateFormat}")}")
     if(!state.sourcefeelsLike){
         Summary_feelsLike =  ffeelsLike + (isFahrenheit ? '°F.' : '°C.')
     } else {
@@ -779,13 +823,13 @@ def PollExternal(){
     if(state.extSource == 2){Summary_precip = "There is a ${percentPrecip}% chance of precipitation. "} 
     if(state.extSource == 3){Summary_precip = ""}
     Summary_vis = "Visibility is around ${vis}" + (isDistanceMetric ? " kilometers." : " miles. ")
-    SummaryMessage(state.summaryType, city, lstate, Summary_last_updated_date, Summary_last_updated_time, condition_text, "${humidity}"+'%', "${temperature}"+(isFahrenheit ? '°F. ' : '°C. '), Summary_forecastTemp, Summary_feelsLike, "${wind_string}", "${wind_gust}"+(isDistanceMetric ? " KPH" : " MPH"), "${wind_dir}", Summary_precip, Summary_vis, alert)
+    SummaryMessage(state.summaryType, city, lstate, Summary_last_poll_date, Summary_last_poll_time, condition_text, "${humidity}"+'%', "${temperature}"+(isFahrenheit ? '°F. ' : '°C. '), Summary_forecastTemp, Summary_feelsLike, "${wind_string}", "${wind_gust}"+(isDistanceMetric ? " KPH" : " MPH"), "${wind_dir}", Summary_precip, Summary_vis, alert)
     return 
 }
 
-private SummaryMessage(SType, Scity, Sstate, Slast_updated_date, Slast_updated_time, Scondition_text, SHumidity, Stemp, SforecastTemp, SfeelsLike, Swind, Swind_gust, Swind_dir, Sprecip, Svis, Salert){   
+private SummaryMessage(SType, Scity, Sstate, Slast_poll_date, Slast_poll_time, Scondition_text, SHumidity, Stemp, SforecastTemp, SfeelsLike, Swind, Swind_gust, Swind_dir, Sprecip, Svis, Salert){   
 	if(SType == true){
-        sendEvent(name: "weatherSummary", value: "Weather summary for ${Scity}, ${Sstate} updated at ${Slast_updated_time} on ${Slast_updated_date}. "
+        sendEvent(name: "weatherSummary", value: "Weather summary for ${Scity}, ${Sstate} updated at ${Slast_poll_time} on ${Slast_poll_date}. "
 		+ ((!Scondition_text) ? "" : "${Scondition_text}") + ((!SforecastTemp) ? "" : "${SforecastTemp}") + "Humidity is currently around ${SHumidity} and temperature is ${Stemp} " 
 		+ "The temperature feels like it's ${SfeelsLike} ${Swind}"
 		+ ", with gusts up to ${Swind_gust}. " + ((!Sprecip) ? "" : "${Sprecip}") + ((!Svis) ? "" : "${Svis}") + ((!Salert) ? "" : "${Salert}"), isStateChange: true, displayed: true
@@ -887,7 +931,6 @@ private estimateLux(localTime, sunriseTime, sunsetTime, noonTime, twilight_begin
     }
     lux = (lux * cCF) as long
     LOGINFO("condition: $cC | condition text: $cCT | condition factor: $cCF | lux: $lux")
-//    sendEvent(name: "cCF", value: cCF)
     return lux
 }
 
@@ -897,7 +940,6 @@ private timeOfDayIsBetween(fromDate, toDate, checkDate, timeZone)     {
 
 // define debug action ***********************************
 def logCheck(){
-//    state.checkLog = logSet
     if(state.logSet == true){
         log.info "Weather-Display Driver - INFO:  All Logging Enabled"
     }
