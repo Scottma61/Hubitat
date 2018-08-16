@@ -44,7 +44,7 @@
  *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
  *  for the specific language governing permissions and limitations under the License.
  *
- *  Last Update 08/12/2018
+ *  Last Update 08/16/2018
  * { Left room below to document version changes...}
  *
  *  
@@ -61,7 +61,7 @@
  *
  *  
  *  
- *  
+ *  V2.0.3 - Added forecastIcon attribute for SharpTools.io, various code cleanups.            - 8/16/2018
  *  V2.0.2 - Added hemisphere selectors for correct Lon/Lat on station.  Removed '?raw=true'   - 8/12/2018
  *           suffix from alternative icon file location if not on 'github.com'.
  *  V2.0.1 - Code cleanup; Added 'Observation' times; Changed 'Update' time to 'Poll' time     - 8/11/2018
@@ -110,6 +110,7 @@ metadata {
         attribute "icon_url", "string"
 		attribute "weather", "string"  //  - required for SmartTiles dashboard
         attribute "weatherIcon", "string"  // same as 'condition_code' - required for SmartTiles dashboard
+        attribute "forecastIcon", "string"  // same as condition_code - required for SharpTools.io
         attribute "dewpoint", "number"
 		attribute "feelsLike", "string"  //  - required for SmartTiles dashboard
         attribute "lux", "string" 
@@ -183,7 +184,7 @@ metadata {
 def updated() {
     unschedule()
     logCheck()
-    state.driverVersion = "2.0.2"    // ************************* Update as required *************************************
+    state.driverVersion = "2.0.3"    // ************************* Update as required *************************************
 	state.driverNameSpace = "Matthew"
     
     state.extSource = (settings?.extSource ?: 1).toInteger()
@@ -200,10 +201,10 @@ def updated() {
     state.tempFormat = (settings?.tempFormat ?: "Fahrenheit (°F)")
 	state.iconType = (settings?.iconType ?: false)
     state.logSet = (settings?.logSet ?: false)
-    state.sourcefeelsLike = (settings?.sourcefeelsLike ?: true)
-    state.sourceIllumination = (settings?.sourceIllumination ?: true)
+    state.sourcefeelsLike = (settings?.sourcefeelsLike ?: false)
+    state.sourceIllumination = (settings?.sourceIllumination ?: false)
     state.sourceImg = (settings?.sourceImg ?: false)
-    state.sourceUV = (settings?.sourceUV ?: true)
+    state.sourceUV = (settings?.sourceUV ?: false)
     state.sourceastronomy = (settings?.sourceastronomy ?: 1).toInteger()
     state.summaryType = (settings?.summaryType ?: false)
     state.iconStore = (settings?.iconStore ?: "https://github.com/Scottma61/WeatherIcons/blob/master/")
@@ -345,6 +346,7 @@ def PollStationNow() {
     }
     if(state.extSource==1){
     	if(!weatherIcon){weatherIcon = condition_code}
+    	if(!forecastIcon){forecastIcon = condition_code}        
         sunriseAndSunset = getSunriseAndSunset(latitude, longitude, sutime.format("yyyy-MM-dd", tZ))       
 		twilight_begin = new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", sunriseAndSunset.results.civil_twilight_begin, tZ)
 		sunriseTime = new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", sunriseAndSunset.results.sunrise, tZ)
@@ -625,6 +627,7 @@ def PollExternal(){
         condition_code = (iconType ? wu.current_observation.icon : wu.forecast.simpleforecast.forecastday[0].icon)
         weather = condition_text
         weatherIcon = condition_code
+        forecastIcon = condition_code
         forecastHigh =(isFahrenheit ? wu.forecast.simpleforecast.forecastday[0].high.fahrenheit : wu.forecast.simpleforecast.forecastday[0].high.celsius)
         forecastLow = (isFahrenheit ? wu.forecast.simpleforecast.forecastday[0].low.fahrenheit : wu.forecast.simpleforecast.forecastday[0].low.celsius)
         rainTomorrow = (isRainMetric ? wu.forecast.simpleforecast.forecastday[1].qpf_allday.mm : wu.forecast.simpleforecast.forecastday[1].qpf_allday.in)
@@ -676,7 +679,7 @@ def PollExternal(){
                 forecast_icon_url = 'https://icons.wxug.com/i/c/a/' + wu.forecast.simpleforecast.forecastday[0].icon_url.split("/")[-1]
             }
         }
-        if(!state.sourceIllumination) {
+        if(!state.sourceIllumination || state.sourceIllumination==false) {
             illuminance = lux
             lux = lux
             sendEvent(name: "lux", value: lux, unit: 'lux', isStateChange: true, displayed: true)
@@ -730,6 +733,7 @@ def PollExternal(){
         condition_text = (iconType ? xu.current.condition.text.split()*.capitalize().join(" ") : xu.forecast.forecastday[0].day.condition.text.split()*.capitalize().join(" "))
         weather = condition_text
         weatherIcon = condition_code
+        forecastIcon = condition_code
         cloud = xu.current.cloud
         vis = (isDistanceMetric ? xu.current.vis_km : xu.current.vis_miles)
         uv = xu.forecast.forecastday[0].day.condition.uv
@@ -815,6 +819,7 @@ def PollExternal(){
     sendEvent(name: "icon_url", value: condition_icon_url, isStateChange: true, displayed: false)
     sendEvent(name: "weather", value: weather, isStateChange: true, displayed: true)
     sendEvent(name: "weatherIcon", value: weatherIcon, isStateChange: true, displayed: false) // only needed for SmartTiles dashboard
+    sendEvent(name: "forecastIcon", value: forecastIcon, isStateChange: true, displayed: false) // only needed for ShaptTools.io    
     sendEvent(name: "cloud", value: cloud, unit: "%", isStateChange: true, displayed: true)
     sendEvent(name: "vis", value: vis, unit: (isDistanceMetric ? 'KM' : 'MILES'), isStateChange: true, displayed: true)
     if(!state.sourceUV){
