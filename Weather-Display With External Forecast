@@ -60,7 +60,7 @@
  *  
  *
  *  
- *  
+ *  V2.0.4 - Translated forecastIcon for APIXU to WU equivalent                                - 8/16/2018
  *  V2.0.3 - Added forecastIcon attribute for SharpTools.io, various code cleanups.            - 8/16/2018
  *  V2.0.2 - Added hemisphere selectors for correct Lon/Lat on station.  Removed '?raw=true'   - 8/12/2018
  *           suffix from alternative icon file location if not on 'github.com'.
@@ -184,7 +184,7 @@ metadata {
 def updated() {
     unschedule()
     logCheck()
-    state.driverVersion = "2.0.3"    // ************************* Update as required *************************************
+    state.driverVersion = "2.0.4"    // ************************* Update as required *************************************
 	state.driverNameSpace = "Matthew"
     
     state.extSource = (settings?.extSource ?: 1).toInteger()
@@ -732,8 +732,8 @@ def PollExternal(){
         condition_code = (iconType ? xu.current.condition.code : xu.forecast.forecastday[0].day.condition.code)
         condition_text = (iconType ? xu.current.condition.text.split()*.capitalize().join(" ") : xu.forecast.forecastday[0].day.condition.text.split()*.capitalize().join(" "))
         weather = condition_text
-        weatherIcon = condition_code
-        forecastIcon = condition_code
+        weatherIcon = getWUCodeName((iconType ? xu.current.condition.code : xu.forecast.forecastday[0].day.condition.code), xu.current.is_day)
+        forecastIcon = weatherIcon
         cloud = xu.current.cloud
         vis = (isDistanceMetric ? xu.current.vis_km : xu.current.vis_miles)
         uv = xu.forecast.forecastday[0].day.condition.uv
@@ -1098,192 +1098,199 @@ private getImgName(wCode, is_day){
     return (url + (imgItem ? imgItem.img : 'na.png') + (((iconStore.toLowerCase().contains('://github.com/')) && (iconStore.toLowerCase().contains('/blob/master/'))) ? "?raw=true" : ""))    
 }
 
+private getWUCodeName(wCode, is_day){
+    LOGINFO("wCode: " + wCode + "  is_day: " + is_day)
+    imgItem = imgNames.find{ it.xucode == wCode && it.day == is_day }    
+    LOGINFO("APIXU Code: " + wCode + "WU Code: " + (imgItem ? imgItem.wucode : 'unknown'))
+    return (imgItem ? imgItem.wucode : 'unknown')   
+}
+
 @Field final List    imgNames =     [
-     [xucode: 1153, wuphrase: "Drizzle", day: 1, img: '9.png'],  // DAY - Light drizzle
-     [xucode: 1189, wuphrase: "Rain", day: 1, img: '5.png'],  // DAY - Moderate rain
-     [xucode: 1219, wuphrase: "Snow", day: 1, img: '7.png'],  // DAY - Moderate snow
-     [xucode: 1237, wuphrase: "Snow Grains", day: 1, img: '17.png'],  // DAY - Ice pellets
-     [xucode: 1237, wuphrase: "Ice Crystals", day: 1, img: '17.png'],  // DAY - Ice pellets
-     [xucode: 1237, wuphrase: "Ice Pellets", day: 1, img: '17.png'],  // DAY - Ice pellets
-     [xucode: 1204, wuphrase: "Hail", day: 1, img: '35.png'],  // DAY - Light sleet
-     [xucode: 1135, wuphrase: "Mist", day: 1, img: '20.png'],  // DAY - Fog
-     [xucode: 1135, wuphrase: "Fog", day: 1, img: '20.png'],  // DAY - Fog
-     [xucode: 1135, wuphrase: "Fog Patches", day: 1, img: '20.png'],  // DAY - Fog
-     [xucode: 1114, wuphrase: "Low Drifting Snow", day: 1, img: '15.png'],  // DAY - Blowing snow
-     [xucode: 1114, wuphrase: "Blowing Snow", day: 1, img: '15.png'],  // DAY - Blowing snow
-     [xucode: 1153, wuphrase: "Rain Mist", day: 1, img: '9.png'],  // DAY - Light drizzle
-     [xucode: 1243, wuphrase: "Rain Showers", day: 1, img: '12.png'],  // DAY - Moderate or heavy rain shower
-     [xucode: 1258, wuphrase: "Snow Showers", day: 1, img: '41.png'],  // DAY - Moderate or heavy snow showers
-     [xucode: 1258, wuphrase: "Snow Blowing Snow Mist", day: 1, img: '41.png'],  // DAY - Moderate or heavy snow showers
-     [xucode: 1252, wuphrase: "Ice Pellet Showers", day: 1, img: '18.png'],  // DAY - Moderate or heavy sleet showers
-     [xucode: 1264, wuphrase: "Hail Showers", day: 1, img: '4.png'],  // DAY - Moderate or heavy showers of ice pellets
-     [xucode: 1252, wuphrase: "Small Hail Showers", day: 1, img: '18.png'],  // DAY - Moderate or heavy sleet showers
-     [xucode: 1276, wuphrase: "Thunderstorm", day: 1, img: '3.png'],  // DAY - Moderate or heavy rain with thunder
-     [xucode: 1276, wuphrase: "Thunderstorms and Rain", day: 1, img: '3.png'],  // DAY - Moderate or heavy rain with thunder
-     [xucode: 1258, wuphrase: "Thunderstorms and Snow", day: 1, img: '41.png'],  // DAY - Moderate or heavy snow showers
-     [xucode: 1258, wuphrase: "Thunderstorms and Ice Pellets", day: 1, img: '41.png'],  // DAY - Moderate or heavy snow showers
-     [xucode: 1276, wuphrase: "Thunderstorms with Hail", day: 1, img: '3.png'],  // DAY - Moderate or heavy rain with thunder
-     [xucode: 1264, wuphrase: "Thunderstorms with Small Hail", day: 1, img: '4.png'],  // DAY - Moderate or heavy showers of ice pellets
-     [xucode: 1168, wuphrase: "Freezing Drizzle", day: 1, img: '8.png'],  // DAY - Freezing drizzle
-     [xucode: 1252, wuphrase: "Freezing Rain", day: 1, img: '18.png'],  // DAY - Moderate or heavy sleet showers
-     [xucode: 1147, wuphrase: "Freezing Fog", day: 1, img: '21.png'],  // DAY - Freezing fog
-     [xucode: 1147, wuphrase: "Patches of Fog", day: 1, img: '21.png'],  // DAY - Freezing fog
-     [xucode: 1135, wuphrase: "Shallow Fog", day: 1, img: '20.png'],  // DAY - Fog
-     [xucode: 1135, wuphrase: "Partial Fog", day: 1, img: '20.png'],  // DAY - Fog
-     [xucode: 1009, wuphrase: "Overcast", day: 1, img: '28.png'],  // DAY - Overcast
-     [xucode: 1000, wuphrase: "Clear", day: 1, img: '32.png'],  // DAY - Sunny
-     [xucode: 1003, wuphrase: "Partly Cloudy", day: 1, img: '30.png'],  // DAY - Partly cloudy
-     [xucode: 1006, wuphrase: "Mostly Cloudy", day: 1, img: '26.png'],  // DAY - Cloudy
-     [xucode: 1003, wuphrase: "Scattered Clouds", day: 1, img: '30.png'],  // DAY - Partly cloudy
-     [xucode: 1204, wuphrase: "Small Hail", day: 1, img: '35.png'],  // DAY - Light sleet
-     [xucode: 1153, wuphrase: "Light Drizzle", day: 1, img: '9.png'],  // DAY - Light drizzle
-     [xucode: 1183, wuphrase: "Light Rain", day: 1, img: '11.png'],  // DAY - Light rain
-     [xucode: 1213, wuphrase: "Light Snow", day: 1, img: '14.png'],  // DAY - Light snow
-     [xucode: 1204, wuphrase: "Light Snow Grains", day: 1, img: '35.png'],  // DAY - Light sleet
-     [xucode: 1204, wuphrase: "Light Ice Crystals", day: 1, img: '35.png'],  // DAY - Light sleet
-     [xucode: 1204, wuphrase: "Light Ice Pellets", day: 1, img: '35.png'],  // DAY - Light sleet
-     [xucode: 1204, wuphrase: "Light Hail", day: 1, img: '35.png'],  // DAY - Light sleet
-     [xucode: 1153, wuphrase: "Light Mist", day: 1, img: '9.png'],  // DAY - Light drizzle
-     [xucode: 1135, wuphrase: "Light Fog", day: 1, img: '20.png'],  // DAY - Fog
-     [xucode: 1135, wuphrase: "Light Fog Patches", day: 1, img: '20.png'],  // DAY - Fog
-     [xucode: 1114, wuphrase: "Light Low Drifting Snow", day: 1, img: '15.png'],  // DAY - Blowing snow
-     [xucode: 1114, wuphrase: "Light Blowing Snow", day: 1, img: '15.png'],  // DAY - Blowing snow
-     [xucode: 1153, wuphrase: "Light Rain Mist", day: 1, img: '9.png'],  // DAY - Light drizzle
-     [xucode: 1240, wuphrase: "Light Rain Showers", day: 1, img: '10.png'],  // DAY - Light rain shower
-     [xucode: 1255, wuphrase: "Light Snow Showers", day: 1, img: '16.png'],  // DAY - Light snow showers
-     [xucode: 1114, wuphrase: "Light Snow Blowing Snow Mist", day: 1, img: '15.png'],  // DAY - Blowing snow
-     [xucode: 1261, wuphrase: "Light Ice Pellet Showers", day: 1, img: '8.png'],  // DAY - Light showers of ice pellets
-     [xucode: 1261, wuphrase: "Light Hail Showers", day: 1, img: '8.png'],  // DAY - Light showers of ice pellets
-     [xucode: 1261, wuphrase: "Light Small Hail Showers", day: 1, img: '8.png'],  // DAY - Light showers of ice pellets
-     [xucode: 1273, wuphrase: "Light Thunderstorm", day: 1, img: '47.png'],  // DAY - Patchy light rain with thunder
-     [xucode: 1273, wuphrase: "Light Thunderstorms and Rain", day: 1, img: '47.png'],  // DAY - Patchy light rain with thunder
-     [xucode: 1279, wuphrase: "Light Thunderstorms and Snow", day: 1, img: '41.png'],  // DAY - Patchy light snow with thunder
-     [xucode: 1279, wuphrase: "Light Thunderstorms and Ice Pellets", day: 1, img: '41.png'],  // DAY - Patchy light snow with thunder
-     [xucode: 1249, wuphrase: "Light Thunderstorms with Hail", day: 1, img: '5.png'],  // DAY - Light sleet showers
-     [xucode: 1261, wuphrase: "Light Thunderstorms with Small Hail", day: 1, img: '8.png'],  // DAY - Light showers of ice pellets
-     [xucode: 1168, wuphrase: "Light Freezing Drizzle", day: 1, img: '8.png'],  // DAY - Freezing drizzle
-     [xucode: 1198, wuphrase: "Light Freezing Rain", day: 1, img: '8.png'],  // DAY - Light freezing rain
-     [xucode: 1147, wuphrase: "Light Freezing Fog", day: 1, img: '21.png'],  // DAY - Freezing fog
-     [xucode: 1189, wuphrase: "Heavy Drizzle", day: 1, img: '5.png'],  // DAY - Moderate rain
-     [xucode: 1195, wuphrase: "Heavy Rain", day: 1, img: '40.png'],  // DAY - Heavy rain
-     [xucode: 1258, wuphrase: "Heavy Snow", day: 1, img: '41.png'],  // DAY - Moderate or heavy snow showers
-     [xucode: 1252, wuphrase: "Heavy Snow Grains", day: 1, img: '18.png'],  // DAY - Moderate or heavy sleet showers
-     [xucode: 1264, wuphrase: "Heavy Ice Crystals", day: 1, img: '4.png'],  // DAY - Moderate or heavy showers of ice pellets
-     [xucode: 1264, wuphrase: "Heavy Ice Pellets", day: 1, img: '4.png'],  // DAY - Moderate or heavy showers of ice pellets
-     [xucode: 1264, wuphrase: "Heavy Hail", day: 1, img: '4.png'],  // DAY - Moderate or heavy showers of ice pellets
-     [xucode: 1183, wuphrase: "Heavy Mist", day: 1, img: '11.png'],  // DAY - Light rain
-     [xucode: 1135, wuphrase: "Heavy Fog", day: 1, img: '20.png'],  // DAY - Fog
-     [xucode: 1135, wuphrase: "Heavy Fog Patches", day: 1, img: '20.png'],  // DAY - Fog
-     [xucode: 1114, wuphrase: "Heavy Low Drifting Snow", day: 1, img: '15.png'],  // DAY - Blowing snow
-     [xucode: 1114, wuphrase: "Heavy Blowing Snow", day: 1, img: '15.png'],  // DAY - Blowing snow
-     [xucode: 1183, wuphrase: "Heavy Rain Mist", day: 1, img: '11.png'],  // DAY - Light rain
-     [xucode: 1243, wuphrase: "Heavy Rain Showers", day: 1, img: '12.png'],  // DAY - Moderate or heavy rain shower
-     [xucode: 1258, wuphrase: "Heavy Snow Showers", day: 1, img: '41.png'],  // DAY - Moderate or heavy snow showers
-     [xucode: 1114, wuphrase: "Heavy Snow Blowing Snow Mist", day: 1, img: '15.png'],  // DAY - Blowing snow
-     [xucode: 1264, wuphrase: "Heavy Ice Pellet Showers", day: 1, img: '4.png'],  // DAY - Moderate or heavy showers of ice pellets
-     [xucode: 1264, wuphrase: "Heavy Hail Showers", day: 1, img: '4.png'],  // DAY - Moderate or heavy showers of ice pellets
-     [xucode: 1252, wuphrase: "Heavy Small Hail Showers", day: 1, img: '18.png'],  // DAY - Moderate or heavy sleet showers
-     [xucode: 1276, wuphrase: "Heavy Thunderstorm", day: 1, img: '3.png'],  // DAY - Moderate or heavy rain with thunder
-     [xucode: 1276, wuphrase: "Heavy Thunderstorms and Rain", day: 1, img: '3.png'],  // DAY - Moderate or heavy rain with thunder
-     [xucode: 1258, wuphrase: "Heavy Thunderstorms and Snow", day: 1, img: '41.png'],  // DAY - Moderate or heavy snow showers
-     [xucode: 1264, wuphrase: "Heavy Thunderstorms and Ice Pellets", day: 1, img: '4.png'],  // DAY - Moderate or heavy showers of ice pellets
-     [xucode: 1264, wuphrase: "Heavy Thunderstorms with Hail", day: 1, img: '4.png'],  // DAY - Moderate or heavy showers of ice pellets
-     [xucode: 1264, wuphrase: "Heavy Thunderstorms with Small Hail", day: 1, img: '4.png'],  // DAY - Moderate or heavy showers of ice pellets
-     [xucode: 1168, wuphrase: "Heavy Freezing Drizzle", day: 1, img: '8.png'],  // DAY - Freezing drizzle
-     [xucode: 1201, wuphrase: "Heavy Freezing Rain", day: 1, img: '10.png'],  // DAY - Moderate or heavy freezing rain
-     [xucode: 1147, wuphrase: "Heavy Freezing Fog", day: 1, img: '21.png'],  // DAY - Freezing fog
-     [xucode: 1153, wuphrase: "Drizzle", day: 0, img: '9.png'],  // NIGHT - Light drizzle
-     [xucode: 1189, wuphrase: "Rain", day: 0, img: '5.png'],  // NIGHT - Moderate rain
-     [xucode: 1219, wuphrase: "Snow", day: 0, img: '7.png'],  // NIGHT - Moderate snow
-     [xucode: 1237, wuphrase: "Snow Grains", day: 0, img: '16.png'],  // NIGHT - Ice pellets
-     [xucode: 1237, wuphrase: "Ice Crystals", day: 0, img: '16.png'],  // NIGHT - Ice pellets
-     [xucode: 1237, wuphrase: "Ice Pellets", day: 0, img: '16.png'],  // NIGHT - Ice pellets
-     [xucode: 1204, wuphrase: "Hail", day: 0, img: '5.png'],  // NIGHT - Light sleet
-     [xucode: 1135, wuphrase: "Mist", day: 0, img: '20.png'],  // NIGHT - Fog
-     [xucode: 1135, wuphrase: "Fog", day: 0, img: '20.png'],  // NIGHT - Fog
-     [xucode: 1135, wuphrase: "Fog Patches", day: 0, img: '20.png'],  // NIGHT - Fog
-     [xucode: 1114, wuphrase: "Low Drifting Snow", day: 0, img: '14.png'],  // NIGHT - Blowing snow
-     [xucode: 1114, wuphrase: "Blowing Snow", day: 0, img: '14.png'],  // NIGHT - Blowing snow
-     [xucode: 1153, wuphrase: "Rain Mist", day: 0, img: '9.png'],  // NIGHT - Light drizzle
-     [xucode: 1243, wuphrase: "Rain Showers", day: 0, img: '40.png'],  // NIGHT - Moderate or heavy rain shower
-     [xucode: 1258, wuphrase: "Snow Showers", day: 0, img: '41.png'],  // NIGHT - Moderate or heavy snow showers
-     [xucode: 1258, wuphrase: "Snow Blowing Snow Mist", day: 0, img: '41.png'],  // NIGHT - Moderate or heavy snow showers
-     [xucode: 1252, wuphrase: "Ice Pellet Showers", day: 0, img: '18.png'],  // NIGHT - Moderate or heavy sleet showers
-     [xucode: 1264, wuphrase: "Hail Showers", day: 0, img: '3.png'],  // NIGHT - Moderate or heavy showers of ice pellets
-     [xucode: 1252, wuphrase: "Small Hail Showers", day: 0, img: '18.png'],  // NIGHT - Moderate or heavy sleet showers
-     [xucode: 1276, wuphrase: "Thunderstorm", day: 0, img: '38.png'],  // NIGHT - Moderate or heavy rain with thunder
-     [xucode: 1276, wuphrase: "Thunderstorms and Rain", day: 0, img: '38.png'],  // NIGHT - Moderate or heavy rain with thunder
-     [xucode: 1282, wuphrase: "Thunderstorms and Snow", day: 0, img: '18.png'],  // NIGHT - Moderate or heavy snow with thunder
-     [xucode: 1282, wuphrase: "Thunderstorms and Ice Pellets", day: 0, img: '18.png'],  // NIGHT - Moderate or heavy snow with thunder
-     [xucode: 1276, wuphrase: "Thunderstorms with Hail", day: 0, img: '38.png'],  // NIGHT - Moderate or heavy rain with thunder
-     [xucode: 1264, wuphrase: "Thunderstorms with Small Hail", day: 0, img: '3.png'],  // NIGHT - Moderate or heavy showers of ice pellets
-     [xucode: 1168, wuphrase: "Freezing Drizzle", day: 0, img: '8.png'],  // NIGHT - Freezing drizzle
-     [xucode: 1252, wuphrase: "Freezing Rain", day: 0, img: '18.png'],  // NIGHT - Moderate or heavy sleet showers
-     [xucode: 1147, wuphrase: "Freezing Fog", day: 0, img: '21.png'],  // NIGHT - Freezing fog
-     [xucode: 1147, wuphrase: "Patches of Fog", day: 0, img: '21.png'],  // NIGHT - Freezing fog
-     [xucode: 1135, wuphrase: "Shallow Fog", day: 0, img: '20.png'],  // NIGHT - Fog
-     [xucode: 1135, wuphrase: "Partial Fog", day: 0, img: '20.png'],  // NIGHT - Fog
-     [xucode: 1009, wuphrase: "Overcast", day: 0, img: '27.png'],  // NIGHT - Overcast
-     [xucode: 1000, wuphrase: "Clear", day: 0, img: '31.png'],  // NIGHT - Clear
-     [xucode: 1003, wuphrase: "Partly Cloudy", day: 0, img: '29.png'],  // NIGHT - Partly cloudy
-     [xucode: 1006, wuphrase: "Mostly Cloudy", day: 0, img: '26.png'],  // NIGHT - Cloudy
-     [xucode: 1003, wuphrase: "Scattered Clouds", day: 0, img: '29.png'],  // NIGHT - Partly cloudy
-     [xucode: 1204, wuphrase: "Small Hail", day: 0, img: '5.png'],  // NIGHT - Light sleet
-     [xucode: 1153, wuphrase: "Light Drizzle", day: 0, img: '9.png'],  // NIGHT - Light drizzle
-     [xucode: 1183, wuphrase: "Light Rain", day: 0, img: '11.png'],  // NIGHT - Light rain
-     [xucode: 1213, wuphrase: "Light Snow", day: 0, img: '13.png'],  // NIGHT - Light snow
-     [xucode: 1204, wuphrase: "Light Snow Grains", day: 0, img: '5.png'],  // NIGHT - Light sleet
-     [xucode: 1204, wuphrase: "Light Ice Crystals", day: 0, img: '5.png'],  // NIGHT - Light sleet
-     [xucode: 1204, wuphrase: "Light Ice Pellets", day: 0, img: '5.png'],  // NIGHT - Light sleet
-     [xucode: 1204, wuphrase: "Light Hail", day: 0, img: '5.png'],  // NIGHT - Light sleet
-     [xucode: 1153, wuphrase: "Light Mist", day: 0, img: '9.png'],  // NIGHT - Light drizzle
-     [xucode: 1135, wuphrase: "Light Fog", day: 0, img: '20.png'],  // NIGHT - Fog
-     [xucode: 1135, wuphrase: "Light Fog Patches", day: 0, img: '20.png'],  // NIGHT - Fog
-     [xucode: 1114, wuphrase: "Light Low Drifting Snow", day: 0, img: '14.png'],  // NIGHT - Blowing snow
-     [xucode: 1114, wuphrase: "Light Blowing Snow", day: 0, img: '14.png'],  // NIGHT - Blowing snow
-     [xucode: 1153, wuphrase: "Light Rain Mist", day: 0, img: '9.png'],  // NIGHT - Light drizzle
-     [xucode: 1240, wuphrase: "Light Rain Showers", day: 0, img: '11.png'],  // NIGHT - Light rain shower
-     [xucode: 1255, wuphrase: "Light Snow Showers", day: 0, img: '16.png'],  // NIGHT - Light snow showers
-     [xucode: 1114, wuphrase: "Light Snow Blowing Snow Mist", day: 0, img: '14.png'],  // NIGHT - Blowing snow
-     [xucode: 1261, wuphrase: "Light Ice Pellet Showers", day: 0, img: '8.png'],  // NIGHT - Light showers of ice pellets
-     [xucode: 1261, wuphrase: "Light Hail Showers", day: 0, img: '8.png'],  // NIGHT - Light showers of ice pellets
-     [xucode: 1261, wuphrase: "Light Small Hail Showers", day: 0, img: '8.png'],  // NIGHT - Light showers of ice pellets
-     [xucode: 1273, wuphrase: "Light Thunderstorm", day: 0, img: '47.png'],  // NIGHT - Patchy light rain with thunder
-     [xucode: 1273, wuphrase: "Light Thunderstorms and Rain", day: 0, img: '47.png'],  // NIGHT - Patchy light rain with thunder
-     [xucode: 1279, wuphrase: "Light Thunderstorms and Snow", day: 0, img: '41.png'],  // NIGHT - Patchy light snow with thunder
-     [xucode: 1279, wuphrase: "Light Thunderstorms and Ice Pellets", day: 0, img: '41.png'],  // NIGHT - Patchy light snow with thunder
-     [xucode: 1249, wuphrase: "Light Thunderstorms with Hail", day: 0, img: '5.png'],  // NIGHT - Light sleet showers
-     [xucode: 1261, wuphrase: "Light Thunderstorms with Small Hail", day: 0, img: '8.png'],  // NIGHT - Light showers of ice pellets
-     [xucode: 1168, wuphrase: "Light Freezing Drizzle", day: 0, img: '8.png'],  // NIGHT - Freezing drizzle
-     [xucode: 1198, wuphrase: "Light Freezing Rain", day: 0, img: '10.png'],  // NIGHT - Light freezing rain
-     [xucode: 1147, wuphrase: "Light Freezing Fog", day: 0, img: '21.png'],  // NIGHT - Freezing fog
-     [xucode: 1189, wuphrase: "Heavy Drizzle", day: 0, img: '5.png'],  // NIGHT - Moderate rain
-     [xucode: 1195, wuphrase: "Heavy Rain", day: 0, img: '12.png'],  // NIGHT - Heavy rain
-     [xucode: 1258, wuphrase: "Heavy Snow", day: 0, img: '16.png'],  // NIGHT - Moderate or heavy snow showers
-     [xucode: 1252, wuphrase: "Heavy Snow Grains", day: 0, img: '18.png'],  // NIGHT - Moderate or heavy sleet showers
-     [xucode: 1264, wuphrase: "Heavy Ice Crystals", day: 0, img: '3.png'],  // NIGHT - Moderate or heavy showers of ice pellets
-     [xucode: 1264, wuphrase: "Heavy Ice Pellets", day: 0, img: '3.png'],  // NIGHT - Moderate or heavy showers of ice pellets
-     [xucode: 1264, wuphrase: "Heavy Hail", day: 0, img: '3.png'],  // NIGHT - Moderate or heavy showers of ice pellets
-     [xucode: 1183, wuphrase: "Heavy Mist", day: 0, img: '11.png'],  // NIGHT - Light rain
-     [xucode: 1135, wuphrase: "Heavy Fog", day: 0, img: '20.png'],  // NIGHT - Fog
-     [xucode: 1135, wuphrase: "Heavy Fog Patches", day: 0, img: '20.png'],  // NIGHT - Fog
-     [xucode: 1114, wuphrase: "Heavy Low Drifting Snow", day: 0, img: '14.png'],  // NIGHT - Blowing snow
-     [xucode: 1114, wuphrase: "Heavy Blowing Snow", day: 0, img: '14.png'],  // NIGHT - Blowing snow
-     [xucode: 1183, wuphrase: "Heavy Rain Mist", day: 0, img: '11.png'],  // NIGHT - Light rain
-     [xucode: 1243, wuphrase: "Heavy Rain Showers", day: 0, img: '40.png'],  // NIGHT - Moderate or heavy rain shower
-     [xucode: 1258, wuphrase: "Heavy Snow Showers", day: 0, img: '16.png'],  // NIGHT - Moderate or heavy snow showers
-     [xucode: 1114, wuphrase: "Heavy Snow Blowing Snow Mist", day: 0, img: '14.png'],  // NIGHT - Blowing snow
-     [xucode: 1264, wuphrase: "Heavy Ice Pellet Showers", day: 0, img: '3.png'],  // NIGHT - Moderate or heavy showers of ice pellets
-     [xucode: 1264, wuphrase: "Heavy Hail Showers", day: 0, img: '3.png'],  // NIGHT - Moderate or heavy showers of ice pellets
-     [xucode: 1252, wuphrase: "Heavy Small Hail Showers", day: 0, img: '18.png'],  // NIGHT - Moderate or heavy sleet showers
-     [xucode: 1276, wuphrase: "Heavy Thunderstorm", day: 0, img: '38.png'],  // NIGHT - Moderate or heavy rain with thunder
-     [xucode: 1276, wuphrase: "Heavy Thunderstorms and Rain", day: 0, img: '38.png'],  // NIGHT - Moderate or heavy rain with thunder
-     [xucode: 1282, wuphrase: "Heavy Thunderstorms and Snow", day: 0, img: '18.png'],  // NIGHT - Moderate or heavy snow with thunder
-     [xucode: 1264, wuphrase: "Heavy Thunderstorms and Ice Pellets", day: 0, img: '3.png'],  // NIGHT - Moderate or heavy showers of ice pellets
-     [xucode: 1264, wuphrase: "Heavy Thunderstorms with Hail", day: 0, img: '3.png'],  // NIGHT - Moderate or heavy showers of ice pellets
-     [xucode: 1264, wuphrase: "Heavy Thunderstorms with Small Hail", day: 0, img: '3.png'],  // NIGHT - Moderate or heavy showers of ice pellets
-     [xucode: 1171, wuphrase: "Heavy Freezing Drizzle", day: 0, img: '10.png'],  // NIGHT - Heavy freezing drizzle
-     [xucode: 1201, wuphrase: "Heavy Freezing Rain", day: 0, img: '12.png'],  // NIGHT - Moderate or heavy freezing rain
-     [xucode: 1147, wuphrase: "Heavy Freezing Fog", day: 0, img: '21.png'],  // NIGHT - Freezing fog
+     [xucode: 1153, wuphrase: "Drizzle", wucode: "rain", day: 1, img: '9.png'],  // DAY - Light drizzle
+     [xucode: 1189, wuphrase: "Rain", wucode: "rain", day: 1, img: '5.png'],  // DAY - Moderate rain
+     [xucode: 1219, wuphrase: "Snow", wucode: "snow", day: 1, img: '7.png'],  // DAY - Moderate snow
+     [xucode: 1237, wuphrase: "Snow Grains", wucode: "sleet", day: 1, img: '17.png'],  // DAY - Ice pellets
+     [xucode: 1237, wuphrase: "Ice Crystals", wucode: "sleet", day: 1, img: '17.png'],  // DAY - Ice pellets
+     [xucode: 1237, wuphrase: "Ice Pellets", wucode: "sleet", day: 1, img: '17.png'],  // DAY - Ice pellets
+     [xucode: 1204, wuphrase: "Hail", wucode: "sleet", day: 1, img: '35.png'],  // DAY - Light sleet
+     [xucode: 1135, wuphrase: "Mist", wucode: "fog", day: 1, img: '20.png'],  // DAY - Fog
+     [xucode: 1135, wuphrase: "Fog", wucode: "fog", day: 1, img: '20.png'],  // DAY - Fog
+     [xucode: 1135, wuphrase: "Fog Patches", wucode: "fog", day: 1, img: '20.png'],  // DAY - Fog
+     [xucode: 1114, wuphrase: "Low Drifting Snow", wucode: "snow", day: 1, img: '15.png'],  // DAY - Blowing snow
+     [xucode: 1114, wuphrase: "Blowing Snow", wucode: "snow", day: 1, img: '15.png'],  // DAY - Blowing snow
+     [xucode: 1153, wuphrase: "Rain Mist", wucode: "rain", day: 1, img: '9.png'],  // DAY - Light drizzle
+     [xucode: 1243, wuphrase: "Rain Showers", wucode: "rain", day: 1, img: '12.png'],  // DAY - Moderate or heavy rain shower
+     [xucode: 1258, wuphrase: "Snow Showers", wucode: "snow", day: 1, img: '41.png'],  // DAY - Moderate or heavy snow showers
+     [xucode: 1258, wuphrase: "Snow Blowing Snow Mist", wucode: "snow", day: 1, img: '41.png'],  // DAY - Moderate or heavy snow showers
+     [xucode: 1252, wuphrase: "Ice Pellet Showers", wucode: "sleet", day: 1, img: '18.png'],  // DAY - Moderate or heavy sleet showers
+     [xucode: 1264, wuphrase: "Hail Showers", wucode: "sleet", day: 1, img: '4.png'],  // DAY - Moderate or heavy showers of ice pellets
+     [xucode: 1252, wuphrase: "Small Hail Showers", wucode: "sleet", day: 1, img: '18.png'],  // DAY - Moderate or heavy sleet showers
+     [xucode: 1276, wuphrase: "Thunderstorm", wucode: "tstorms", day: 1, img: '3.png'],  // DAY - Moderate or heavy rain with thunder
+     [xucode: 1276, wuphrase: "Thunderstorms and Rain", wucode: "tstorms", day: 1, img: '3.png'],  // DAY - Moderate or heavy rain with thunder
+     [xucode: 1258, wuphrase: "Thunderstorms and Snow", wucode: "snow", day: 1, img: '41.png'],  // DAY - Moderate or heavy snow showers
+     [xucode: 1258, wuphrase: "Thunderstorms and Ice Pellets", wucode: "snow", day: 1, img: '41.png'],  // DAY - Moderate or heavy snow showers
+     [xucode: 1276, wuphrase: "Thunderstorms with Hail", wucode: "tstorms", day: 1, img: '3.png'],  // DAY - Moderate or heavy rain with thunder
+     [xucode: 1264, wuphrase: "Thunderstorms with Small Hail", wucode: "sleet", day: 1, img: '4.png'],  // DAY - Moderate or heavy showers of ice pellets
+     [xucode: 1168, wuphrase: "Freezing Drizzle", wucode: "sleet", day: 1, img: '8.png'],  // DAY - Freezing drizzle
+     [xucode: 1252, wuphrase: "Freezing Rain", wucode: "sleet", day: 1, img: '18.png'],  // DAY - Moderate or heavy sleet showers
+     [xucode: 1147, wuphrase: "Freezing Fog", wucode: "fog", day: 1, img: '21.png'],  // DAY - Freezing fog
+     [xucode: 1147, wuphrase: "Patches of Fog", wucode: "fog", day: 1, img: '21.png'],  // DAY - Freezing fog
+     [xucode: 1135, wuphrase: "Shallow Fog", wucode: "fog", day: 1, img: '20.png'],  // DAY - Fog
+     [xucode: 1135, wuphrase: "Partial Fog", wucode: "fog", day: 1, img: '20.png'],  // DAY - Fog
+     [xucode: 1009, wuphrase: "Overcast", wucode: "cloudy", day: 1, img: '28.png'],  // DAY - Overcast
+     [xucode: 1000, wuphrase: "Clear", wucode: "sunny", day: 1, img: '32.png'],  // DAY - Sunny
+     [xucode: 1003, wuphrase: "Partly Cloudy", wucode: "partlycloudy", day: 1, img: '30.png'],  // DAY - Partly cloudy
+     [xucode: 1006, wuphrase: "Mostly Cloudy", wucode: "cloudy", day: 1, img: '26.png'],  // DAY - Cloudy
+     [xucode: 1003, wuphrase: "Scattered Clouds", wucode: "partlycloudy", day: 1, img: '30.png'],  // DAY - Partly cloudy
+     [xucode: 1204, wuphrase: "Small Hail", wucode: "sleet", day: 1, img: '35.png'],  // DAY - Light sleet
+     [xucode: 1153, wuphrase: "Light Drizzle", wucode: "rain", day: 1, img: '9.png'],  // DAY - Light drizzle
+     [xucode: 1183, wuphrase: "Light Rain", wucode: "rain", day: 1, img: '11.png'],  // DAY - Light rain
+     [xucode: 1213, wuphrase: "Light Snow", wucode: "snow", day: 1, img: '14.png'],  // DAY - Light snow
+     [xucode: 1204, wuphrase: "Light Snow Grains", wucode: "sleet", day: 1, img: '35.png'],  // DAY - Light sleet
+     [xucode: 1204, wuphrase: "Light Ice Crystals", wucode: "sleet", day: 1, img: '35.png'],  // DAY - Light sleet
+     [xucode: 1204, wuphrase: "Light Ice Pellets", wucode: "sleet", day: 1, img: '35.png'],  // DAY - Light sleet
+     [xucode: 1204, wuphrase: "Light Hail", wucode: "sleet", day: 1, img: '35.png'],  // DAY - Light sleet
+     [xucode: 1153, wuphrase: "Light Mist", wucode: "rain", day: 1, img: '9.png'],  // DAY - Light drizzle
+     [xucode: 1135, wuphrase: "Light Fog", wucode: "fog", day: 1, img: '20.png'],  // DAY - Fog
+     [xucode: 1135, wuphrase: "Light Fog Patches", wucode: "fog", day: 1, img: '20.png'],  // DAY - Fog
+     [xucode: 1114, wuphrase: "Light Low Drifting Snow", wucode: "snow", day: 1, img: '15.png'],  // DAY - Blowing snow
+     [xucode: 1114, wuphrase: "Light Blowing Snow", wucode: "snow", day: 1, img: '15.png'],  // DAY - Blowing snow
+     [xucode: 1153, wuphrase: "Light Rain Mist", wucode: "rain", day: 1, img: '9.png'],  // DAY - Light drizzle
+     [xucode: 1240, wuphrase: "Light Rain Showers", wucode: "rain", day: 1, img: '10.png'],  // DAY - Light rain shower
+     [xucode: 1255, wuphrase: "Light Snow Showers", wucode: "snow", day: 1, img: '16.png'],  // DAY - Light snow showers
+     [xucode: 1114, wuphrase: "Light Snow Blowing Snow Mist", wucode: "snow", day: 1, img: '15.png'],  // DAY - Blowing snow
+     [xucode: 1261, wuphrase: "Light Ice Pellet Showers", wucode: "snow", day: 1, img: '8.png'],  // DAY - Light showers of ice pellets
+     [xucode: 1261, wuphrase: "Light Hail Showers", wucode: "snow", day: 1, img: '8.png'],  // DAY - Light showers of ice pellets
+     [xucode: 1261, wuphrase: "Light Small Hail Showers", wucode: "snow", day: 1, img: '8.png'],  // DAY - Light showers of ice pellets
+     [xucode: 1273, wuphrase: "Light Thunderstorm", wucode: "chancetstorms", day: 1, img: '47.png'],  // DAY - Patchy light rain with thunder
+     [xucode: 1273, wuphrase: "Light Thunderstorms and Rain", wucode: "chancetstorms", day: 1, img: '47.png'],  // DAY - Patchy light rain with thunder
+     [xucode: 1279, wuphrase: "Light Thunderstorms and Snow", wucode: "snow", day: 1, img: '41.png'],  // DAY - Patchy light snow with thunder
+     [xucode: 1279, wuphrase: "Light Thunderstorms and Ice Pellets", wucode: "snow", day: 1, img: '41.png'],  // DAY - Patchy light snow with thunder
+     [xucode: 1249, wuphrase: "Light Thunderstorms with Hail", wucode: "sleet", day: 1, img: '5.png'],  // DAY - Light sleet showers
+     [xucode: 1261, wuphrase: "Light Thunderstorms with Small Hail", wucode: "snow", day: 1, img: '8.png'],  // DAY - Light showers of ice pellets
+     [xucode: 1168, wuphrase: "Light Freezing Drizzle", wucode: "sleet", day: 1, img: '8.png'],  // DAY - Freezing drizzle
+     [xucode: 1198, wuphrase: "Light Freezing Rain", wucode: "sleet", day: 1, img: '8.png'],  // DAY - Light freezing rain
+     [xucode: 1147, wuphrase: "Light Freezing Fog", wucode: "fog", day: 1, img: '21.png'],  // DAY - Freezing fog
+     [xucode: 1189, wuphrase: "Heavy Drizzle", wucode: "rain", day: 1, img: '5.png'],  // DAY - Moderate rain
+     [xucode: 1195, wuphrase: "Heavy Rain", wucode: "rain", day: 1, img: '40.png'],  // DAY - Heavy rain
+     [xucode: 1258, wuphrase: "Heavy Snow", wucode: "snow", day: 1, img: '41.png'],  // DAY - Moderate or heavy snow showers
+     [xucode: 1252, wuphrase: "Heavy Snow Grains", wucode: "sleet", day: 1, img: '18.png'],  // DAY - Moderate or heavy sleet showers
+     [xucode: 1264, wuphrase: "Heavy Ice Crystals", wucode: "sleet", day: 1, img: '4.png'],  // DAY - Moderate or heavy showers of ice pellets
+     [xucode: 1264, wuphrase: "Heavy Ice Pellets", wucode: "sleet", day: 1, img: '4.png'],  // DAY - Moderate or heavy showers of ice pellets
+     [xucode: 1264, wuphrase: "Heavy Hail", wucode: "sleet", day: 1, img: '4.png'],  // DAY - Moderate or heavy showers of ice pellets
+     [xucode: 1183, wuphrase: "Heavy Mist", wucode: "rain", day: 1, img: '11.png'],  // DAY - Light rain
+     [xucode: 1135, wuphrase: "Heavy Fog", wucode: "fog", day: 1, img: '20.png'],  // DAY - Fog
+     [xucode: 1135, wuphrase: "Heavy Fog Patches", wucode: "fog", day: 1, img: '20.png'],  // DAY - Fog
+     [xucode: 1114, wuphrase: "Heavy Low Drifting Snow", wucode: "snow", day: 1, img: '15.png'],  // DAY - Blowing snow
+     [xucode: 1114, wuphrase: "Heavy Blowing Snow", wucode: "snow", day: 1, img: '15.png'],  // DAY - Blowing snow
+     [xucode: 1183, wuphrase: "Heavy Rain Mist", wucode: "rain", day: 1, img: '11.png'],  // DAY - Light rain
+     [xucode: 1243, wuphrase: "Heavy Rain Showers", wucode: "rain", day: 1, img: '12.png'],  // DAY - Moderate or heavy rain shower
+     [xucode: 1258, wuphrase: "Heavy Snow Showers", wucode: "snow", day: 1, img: '41.png'],  // DAY - Moderate or heavy snow showers
+     [xucode: 1114, wuphrase: "Heavy Snow Blowing Snow Mist", wucode: "snow", day: 1, img: '15.png'],  // DAY - Blowing snow
+     [xucode: 1264, wuphrase: "Heavy Ice Pellet Showers", wucode: "sleet", day: 1, img: '4.png'],  // DAY - Moderate or heavy showers of ice pellets
+     [xucode: 1264, wuphrase: "Heavy Hail Showers", wucode: "sleet", day: 1, img: '4.png'],  // DAY - Moderate or heavy showers of ice pellets
+     [xucode: 1252, wuphrase: "Heavy Small Hail Showers", wucode: "sleet", day: 1, img: '18.png'],  // DAY - Moderate or heavy sleet showers
+     [xucode: 1276, wuphrase: "Heavy Thunderstorm", wucode: "tstorms", day: 1, img: '3.png'],  // DAY - Moderate or heavy rain with thunder
+     [xucode: 1276, wuphrase: "Heavy Thunderstorms and Rain", wucode: "tstorms", day: 1, img: '3.png'],  // DAY - Moderate or heavy rain with thunder
+     [xucode: 1258, wuphrase: "Heavy Thunderstorms and Snow", wucode: "snow", day: 1, img: '41.png'],  // DAY - Moderate or heavy snow showers
+     [xucode: 1264, wuphrase: "Heavy Thunderstorms and Ice Pellets", wucode: "sleet", day: 1, img: '4.png'],  // DAY - Moderate or heavy showers of ice pellets
+     [xucode: 1264, wuphrase: "Heavy Thunderstorms with Hail", wucode: "sleet", day: 1, img: '4.png'],  // DAY - Moderate or heavy showers of ice pellets
+     [xucode: 1264, wuphrase: "Heavy Thunderstorms with Small Hail", wucode: "sleet", day: 1, img: '4.png'],  // DAY - Moderate or heavy showers of ice pellets
+     [xucode: 1168, wuphrase: "Heavy Freezing Drizzle", wucode: "sleet", day: 1, img: '8.png'],  // DAY - Freezing drizzle
+     [xucode: 1201, wuphrase: "Heavy Freezing Rain", wucode: "rain", day: 1, img: '10.png'],  // DAY - Moderate or heavy freezing rain
+     [xucode: 1147, wuphrase: "Heavy Freezing Fog", wucode: "fog", day: 1, img: '21.png'],  // DAY - Freezing fog
+     [xucode: 1153, wuphrase: "Drizzle", wucode: "nt_rain", day: 0, img: '9.png'],  // NIGHT - Light drizzle
+     [xucode: 1189, wuphrase: "Rain", wucode: "nt_rain", day: 0, img: '5.png'],  // NIGHT - Moderate rain
+     [xucode: 1219, wuphrase: "Snow", wucode: "nt_snow", day: 0, img: '7.png'],  // NIGHT - Moderate snow
+     [xucode: 1237, wuphrase: "Snow Grains", wucode: "nt_sleet", day: 0, img: '16.png'],  // NIGHT - Ice pellets
+     [xucode: 1237, wuphrase: "Ice Crystals", wucode: "nt_sleet", day: 0, img: '16.png'],  // NIGHT - Ice pellets
+     [xucode: 1237, wuphrase: "Ice Pellets", wucode: "nt_sleet", day: 0, img: '16.png'],  // NIGHT - Ice pellets
+     [xucode: 1204, wuphrase: "Hail", wucode: "nt_sleet", day: 0, img: '5.png'],  // NIGHT - Light sleet
+     [xucode: 1135, wuphrase: "Mist", wucode: "nt_fog", day: 0, img: '20.png'],  // NIGHT - Fog
+     [xucode: 1135, wuphrase: "Fog", wucode: "nt_fog", day: 0, img: '20.png'],  // NIGHT - Fog
+     [xucode: 1135, wuphrase: "Fog Patches", wucode: "nt_fog", day: 0, img: '20.png'],  // NIGHT - Fog
+     [xucode: 1114, wuphrase: "Low Drifting Snow", wucode: "nt_snow", day: 0, img: '14.png'],  // NIGHT - Blowing snow
+     [xucode: 1114, wuphrase: "Blowing Snow", wucode: "nt_snow", day: 0, img: '14.png'],  // NIGHT - Blowing snow
+     [xucode: 1153, wuphrase: "Rain Mist", wucode: "nt_rain", day: 0, img: '9.png'],  // NIGHT - Light drizzle
+     [xucode: 1243, wuphrase: "Rain Showers", wucode: "nt_rain", day: 0, img: '40.png'],  // NIGHT - Moderate or heavy rain shower
+     [xucode: 1258, wuphrase: "Snow Showers", wucode: "nt_snow", day: 0, img: '41.png'],  // NIGHT - Moderate or heavy snow showers
+     [xucode: 1258, wuphrase: "Snow Blowing Snow Mist", wucode: "nt_snow", day: 0, img: '41.png'],  // NIGHT - Moderate or heavy snow showers
+     [xucode: 1252, wuphrase: "Ice Pellet Showers", wucode: "nt_sleet", day: 0, img: '18.png'],  // NIGHT - Moderate or heavy sleet showers
+     [xucode: 1264, wuphrase: "Hail Showers", wucode: "nt_sleet", day: 0, img: '3.png'],  // NIGHT - Moderate or heavy showers of ice pellets
+     [xucode: 1252, wuphrase: "Small Hail Showers", wucode: "nt_sleet", day: 0, img: '18.png'],  // NIGHT - Moderate or heavy sleet showers
+     [xucode: 1276, wuphrase: "Thunderstorm", wucode: "nt_tstorms", day: 0, img: '38.png'],  // NIGHT - Moderate or heavy rain with thunder
+     [xucode: 1276, wuphrase: "Thunderstorms and Rain", wucode: "nt_tstorms", day: 0, img: '38.png'],  // NIGHT - Moderate or heavy rain with thunder
+     [xucode: 1282, wuphrase: "Thunderstorms and Snow", wucode: "nt_snow", day: 0, img: '18.png'],  // NIGHT - Moderate or heavy snow with thunder
+     [xucode: 1282, wuphrase: "Thunderstorms and Ice Pellets", wucode: "nt_snow", day: 0, img: '18.png'],  // NIGHT - Moderate or heavy snow with thunder
+     [xucode: 1276, wuphrase: "Thunderstorms with Hail", wucode: "nt_tstorms", day: 0, img: '38.png'],  // NIGHT - Moderate or heavy rain with thunder
+     [xucode: 1264, wuphrase: "Thunderstorms with Small Hail", wucode: "nt_sleet", day: 0, img: '3.png'],  // NIGHT - Moderate or heavy showers of ice pellets
+     [xucode: 1168, wuphrase: "Freezing Drizzle", wucode: "nt_sleet", day: 0, img: '8.png'],  // NIGHT - Freezing drizzle
+     [xucode: 1252, wuphrase: "Freezing Rain", wucode: "nt_sleet", day: 0, img: '18.png'],  // NIGHT - Moderate or heavy sleet showers
+     [xucode: 1147, wuphrase: "Freezing Fog", wucode: "nt_fog", day: 0, img: '21.png'],  // NIGHT - Freezing fog
+     [xucode: 1147, wuphrase: "Patches of Fog", wucode: "nt_fog", day: 0, img: '21.png'],  // NIGHT - Freezing fog
+     [xucode: 1135, wuphrase: "Shallow Fog", wucode: "nt_fog", day: 0, img: '20.png'],  // NIGHT - Fog
+     [xucode: 1135, wuphrase: "Partial Fog", wucode: "nt_fog", day: 0, img: '20.png'],  // NIGHT - Fog
+     [xucode: 1009, wuphrase: "Overcast", wucode: "nt_cloudy", day: 0, img: '27.png'],  // NIGHT - Overcast
+     [xucode: 1000, wuphrase: "Clear", wucode: "nt_clear", day: 0, img: '31.png'],  // NIGHT - Clear
+     [xucode: 1003, wuphrase: "Partly Cloudy", wucode: "nt_partlycloudy", day: 0, img: '29.png'],  // NIGHT - Partly cloudy
+     [xucode: 1006, wuphrase: "Mostly Cloudy", wucode: "nt_cloudy", day: 0, img: '26.png'],  // NIGHT - Cloudy
+     [xucode: 1003, wuphrase: "Scattered Clouds", wucode: "nt_partlycloudy", day: 0, img: '29.png'],  // NIGHT - Partly cloudy
+     [xucode: 1204, wuphrase: "Small Hail", wucode: "nt_sleet", day: 0, img: '5.png'],  // NIGHT - Light sleet
+     [xucode: 1153, wuphrase: "Light Drizzle", wucode: "nt_rain", day: 0, img: '9.png'],  // NIGHT - Light drizzle
+     [xucode: 1183, wuphrase: "Light Rain", wucode: "nt_rain", day: 0, img: '11.png'],  // NIGHT - Light rain
+     [xucode: 1213, wuphrase: "Light Snow", wucode: "nt_snow", day: 0, img: '13.png'],  // NIGHT - Light snow
+     [xucode: 1204, wuphrase: "Light Snow Grains", wucode: "nt_sleet", day: 0, img: '5.png'],  // NIGHT - Light sleet
+     [xucode: 1204, wuphrase: "Light Ice Crystals", wucode: "nt_sleet", day: 0, img: '5.png'],  // NIGHT - Light sleet
+     [xucode: 1204, wuphrase: "Light Ice Pellets", wucode: "nt_sleet", day: 0, img: '5.png'],  // NIGHT - Light sleet
+     [xucode: 1204, wuphrase: "Light Hail", wucode: "nt_sleet", day: 0, img: '5.png'],  // NIGHT - Light sleet
+     [xucode: 1153, wuphrase: "Light Mist", wucode: "nt_rain", day: 0, img: '9.png'],  // NIGHT - Light drizzle
+     [xucode: 1135, wuphrase: "Light Fog", wucode: "nt_fog", day: 0, img: '20.png'],  // NIGHT - Fog
+     [xucode: 1135, wuphrase: "Light Fog Patches", wucode: "nt_fog", day: 0, img: '20.png'],  // NIGHT - Fog
+     [xucode: 1114, wuphrase: "Light Low Drifting Snow", wucode: "nt_snow", day: 0, img: '14.png'],  // NIGHT - Blowing snow
+     [xucode: 1114, wuphrase: "Light Blowing Snow", wucode: "nt_snow", day: 0, img: '14.png'],  // NIGHT - Blowing snow
+     [xucode: 1153, wuphrase: "Light Rain Mist", wucode: "nt_rain", day: 0, img: '9.png'],  // NIGHT - Light drizzle
+     [xucode: 1240, wuphrase: "Light Rain Showers", wucode: "nt_rain", day: 0, img: '11.png'],  // NIGHT - Light rain shower
+     [xucode: 1255, wuphrase: "Light Snow Showers", wucode: "nt_snow", day: 0, img: '16.png'],  // NIGHT - Light snow showers
+     [xucode: 1114, wuphrase: "Light Snow Blowing Snow Mist", wucode: "nt_snow", day: 0, img: '14.png'],  // NIGHT - Blowing snow
+     [xucode: 1261, wuphrase: "Light Ice Pellet Showers", wucode: "nt_snow", day: 0, img: '8.png'],  // NIGHT - Light showers of ice pellets
+     [xucode: 1261, wuphrase: "Light Hail Showers", wucode: "nt_snow", day: 0, img: '8.png'],  // NIGHT - Light showers of ice pellets
+     [xucode: 1261, wuphrase: "Light Small Hail Showers", wucode: "nt_snow", day: 0, img: '8.png'],  // NIGHT - Light showers of ice pellets
+     [xucode: 1273, wuphrase: "Light Thunderstorm", wucode: "nt_chancetstorms", day: 0, img: '47.png'],  // NIGHT - Patchy light rain with thunder
+     [xucode: 1273, wuphrase: "Light Thunderstorms and Rain", wucode: "nt_chancetstorms", day: 0, img: '47.png'],  // NIGHT - Patchy light rain with thunder
+     [xucode: 1279, wuphrase: "Light Thunderstorms and Snow", wucode: "nt_snow", day: 0, img: '41.png'],  // NIGHT - Patchy light snow with thunder
+     [xucode: 1279, wuphrase: "Light Thunderstorms and Ice Pellets", wucode: "nt_snow", day: 0, img: '41.png'],  // NIGHT - Patchy light snow with thunder
+     [xucode: 1249, wuphrase: "Light Thunderstorms with Hail", wucode: "nt_sleet", day: 0, img: '5.png'],  // NIGHT - Light sleet showers
+     [xucode: 1261, wuphrase: "Light Thunderstorms with Small Hail", wucode: "nt_snow", day: 0, img: '8.png'],  // NIGHT - Light showers of ice pellets
+     [xucode: 1168, wuphrase: "Light Freezing Drizzle", wucode: "nt_sleet", day: 0, img: '8.png'],  // NIGHT - Freezing drizzle
+     [xucode: 1198, wuphrase: "Light Freezing Rain", wucode: "nt_sleet", day: 0, img: '10.png'],  // NIGHT - Light freezing rain
+     [xucode: 1147, wuphrase: "Light Freezing Fog", wucode: "nt_fog", day: 0, img: '21.png'],  // NIGHT - Freezing fog
+     [xucode: 1189, wuphrase: "Heavy Drizzle", wucode: "nt_rain", day: 0, img: '5.png'],  // NIGHT - Moderate rain
+     [xucode: 1195, wuphrase: "Heavy Rain", wucode: "nt_rain", day: 0, img: '12.png'],  // NIGHT - Heavy rain
+     [xucode: 1258, wuphrase: "Heavy Snow", wucode: "nt_snow", day: 0, img: '16.png'],  // NIGHT - Moderate or heavy snow showers
+     [xucode: 1252, wuphrase: "Heavy Snow Grains", wucode: "nt_sleet", day: 0, img: '18.png'],  // NIGHT - Moderate or heavy sleet showers
+     [xucode: 1264, wuphrase: "Heavy Ice Crystals", wucode: "nt_sleet", day: 0, img: '3.png'],  // NIGHT - Moderate or heavy showers of ice pellets
+     [xucode: 1264, wuphrase: "Heavy Ice Pellets", wucode: "nt_sleet", day: 0, img: '3.png'],  // NIGHT - Moderate or heavy showers of ice pellets
+     [xucode: 1264, wuphrase: "Heavy Hail", wucode: "nt_sleet", day: 0, img: '3.png'],  // NIGHT - Moderate or heavy showers of ice pellets
+     [xucode: 1183, wuphrase: "Heavy Mist", wucode: "nt_rain", day: 0, img: '11.png'],  // NIGHT - Light rain
+     [xucode: 1135, wuphrase: "Heavy Fog", wucode: "nt_fog", day: 0, img: '20.png'],  // NIGHT - Fog
+     [xucode: 1135, wuphrase: "Heavy Fog Patches", wucode: "nt_fog", day: 0, img: '20.png'],  // NIGHT - Fog
+     [xucode: 1114, wuphrase: "Heavy Low Drifting Snow", wucode: "nt_snow", day: 0, img: '14.png'],  // NIGHT - Blowing snow
+     [xucode: 1114, wuphrase: "Heavy Blowing Snow", wucode: "nt_snow", day: 0, img: '14.png'],  // NIGHT - Blowing snow
+     [xucode: 1183, wuphrase: "Heavy Rain Mist", wucode: "nt_rain", day: 0, img: '11.png'],  // NIGHT - Light rain
+     [xucode: 1243, wuphrase: "Heavy Rain Showers", wucode: "nt_rain", day: 0, img: '40.png'],  // NIGHT - Moderate or heavy rain shower
+     [xucode: 1258, wuphrase: "Heavy Snow Showers", wucode: "nt_snow", day: 0, img: '16.png'],  // NIGHT - Moderate or heavy snow showers
+     [xucode: 1114, wuphrase: "Heavy Snow Blowing Snow Mist", wucode: "nt_snow", day: 0, img: '14.png'],  // NIGHT - Blowing snow
+     [xucode: 1264, wuphrase: "Heavy Ice Pellet Showers", wucode: "nt_sleet", day: 0, img: '3.png'],  // NIGHT - Moderate or heavy showers of ice pellets
+     [xucode: 1264, wuphrase: "Heavy Hail Showers", wucode: "nt_sleet", day: 0, img: '3.png'],  // NIGHT - Moderate or heavy showers of ice pellets
+     [xucode: 1252, wuphrase: "Heavy Small Hail Showers", wucode: "nt_sleet", day: 0, img: '18.png'],  // NIGHT - Moderate or heavy sleet showers
+     [xucode: 1276, wuphrase: "Heavy Thunderstorm", wucode: "nt_tstorms", day: 0, img: '38.png'],  // NIGHT - Moderate or heavy rain with thunder
+     [xucode: 1276, wuphrase: "Heavy Thunderstorms and Rain", wucode: "nt_tstorms", day: 0, img: '38.png'],  // NIGHT - Moderate or heavy rain with thunder
+     [xucode: 1282, wuphrase: "Heavy Thunderstorms and Snow", wucode: "nt_snow", day: 0, img: '18.png'],  // NIGHT - Moderate or heavy snow with thunder
+     [xucode: 1264, wuphrase: "Heavy Thunderstorms and Ice Pellets", wucode: "nt_sleet", day: 0, img: '3.png'],  // NIGHT - Moderate or heavy showers of ice pellets
+     [xucode: 1264, wuphrase: "Heavy Thunderstorms with Hail", wucode: "nt_sleet", day: 0, img: '3.png'],  // NIGHT - Moderate or heavy showers of ice pellets
+     [xucode: 1264, wuphrase: "Heavy Thunderstorms with Small Hail", wucode: "nt_sleet", day: 0, img: '3.png'],  // NIGHT - Moderate or heavy showers of ice pellets
+     [xucode: 1171, wuphrase: "Heavy Freezing Drizzle", wucode: "nt_sleet", day: 0, img: '10.png'],  // NIGHT - Heavy freezing drizzle
+     [xucode: 1201, wuphrase: "Heavy Freezing Rain", wucode: "nt_rain", day: 0, img: '12.png'],  // NIGHT - Moderate or heavy freezing rain
+     [xucode: 1147, wuphrase: "Heavy Freezing Fog", wucode: "nt_fog", day: 0, img: '21.png'],  // NIGHT - Freezing fog
 ]    
 //******************************************************************************************
