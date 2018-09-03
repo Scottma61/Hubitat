@@ -392,11 +392,11 @@ section(){
 	href "pageHelpVariables", title:"Message Variables Help", description:"Tap here to view the available variables"
 
     input "preCount", "number", title: "Number of 'Group1' Random Phrases?", required: true, defaultValue: 25;            
-    if(state.preCount>0){href "prePostPage1", title:"Group1 Random Messages", description:"Tap here to configure 'Group1' random messages"}
+    if(settings.preCount>0){href "prePostPage1", title:"Group1 Random Messages", description:"Tap here to configure 'Group1' random messages"}
     input "postCount", "number", title: "Number of 'Group2' Random Phrases?", required: true, defaultValue: 25;                
-    if(state.postCount>0){href "prePostPage2", title:"Group2 Random Messages", description:"Tap here to configure 'Group2 random messages"}
+    if(settings.postCount>0){href "prePostPage2", title:"Group2 Random Messages", description:"Tap here to configure 'Group2 random messages"}
     input "wakeCount", "number", title: "Number of 'Group3' Random Phrases?", required: true, defaultValue: 10;                
-    if(state.wakeCount>0){href "wakeUpPage", title:"Group3 Random Messages", description:"Tap here to configure 'Group3' random messages"}
+    if(settings.wakeCount>0){href "wakeUpPage", title:"Group3 Random Messages", description:"Tap here to configure 'Group3' random messages"}
     }
   }
 }    
