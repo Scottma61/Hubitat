@@ -518,7 +518,7 @@ def setLocalLevel(val, delay=0) {
 	def v = Math.max(Math.min(Math.round(val), 100), 0)
 	def result = []
 	if (delay) {
-		result << delayAction(delay)
+		//result << delayAction(delay)
 	}
 	result << mediaRendererAction("SetVolume", "RenderingControl", getDataValue("rccurl") , [InstanceID:0, Channel:"Master", DesiredVolume:v])
 	//result << delayAction(50)
@@ -665,19 +665,19 @@ def playByMode(uri, duration, volume,newTrack,mode) {
             uri = uri +  ( uri.contains("?") ? "&":"?") + "ts=$eventTime"
 
             result << mediaRendererAction("Stop")
-            result << delayAction(delayControl(1000) + actionsDelayTime)
+            //result << delayAction(delayControl(1000) + actionsDelayTime)
 
             if (level && (currentVolume != level )) {
                 //if(actionsDelayTime > 0){result << delayAction(actionsDelayTime)}
                 result << setVolume(level)
-				result << delayAction(delayControl(2200) + actionsDelayTime)
+				//result << delayAction(delayControl(2200) + actionsDelayTime)
 			}
             if (currentPlayMode != "NORMAL") {
                 result << setPlayMode("NORMAL")
-                result << delayAction(delayControl(2000) + actionsDelayTime)
+               // result << delayAction(delayControl(2000) + actionsDelayTime)
 			}
 			result << setTrack(uri)
-			result << delayAction(delayControl(2000) + actionsDelayTime)
+			//result << delayAction(delayControl(2000) + actionsDelayTime)
 			result << mediaRendererAction("Play")
 			if (duration < 2){
 				def matcher = uri =~ /[^\/]+.mp3/
@@ -686,12 +686,12 @@ def playByMode(uri, duration, volume,newTrack,mode) {
 			def delayTime = (duration * 1000) + 3000
 			delayTime = customDelay ? ((customDelay as Integer) * 1000) + delayTime : delayTime
 			state.secureEventTime = eventTime + delayTime + 7000
-			result << delayAction(delayTime)
+			//result << delayAction(delayTime)
 		}
 		if (track ) {
 
             result << mediaRendererAction("Stop")
-            result << delayAction(delayControl(1000) + actionsDelayTime)
+           // result << delayAction(delayControl(1000) + actionsDelayTime)
 
             if (level && restoreVolume ) {
                 result << setVolume(currentVolume)
@@ -699,11 +699,11 @@ def playByMode(uri, duration, volume,newTrack,mode) {
 			}
             if (currentPlayMode != "NORMAL") {
                 result << setPlayMode(currentPlayMode)
-                result << delayAction(delayControl(2000) + actionsDelayTime)
+               // result << delayAction(delayControl(2000) + actionsDelayTime)
 			}
 			if (!track.uri.startsWith("http://127.0.0.1")){
 				result << setTrack(track)
-				result << delayAction(delayControl(2000) + actionsDelayTime)
+				//result << delayAction(delayControl(2000) + actionsDelayTime)
 			}
 			if (playTrack) {
 				if (!track.uri.startsWith("http://127.0.0.1")){
@@ -759,10 +759,10 @@ def playTrack(String uri, metaData="") {
   //  result << mediaRendererAction("Stop")
   //  result << delayAction(100 + actionsDelayTime)
     result << setTrack(uri, metaData)
-   result << delayAction(1000 + actionsDelayTime)
+   //result << delayAction(1000 + actionsDelayTime)
     result << mediaRendererAction("Play")
 /*    if (!state.lastChange){
-    	result << delayAction(2000 + actionsDelayTime)
+    	//result << delayAction(2000 + actionsDelayTime)
     	result << getCurrentMedia()
     }*/
 	result.flatten()
@@ -771,7 +771,7 @@ def playTrack(String uri, metaData="") {
 def playTrack(Map trackData) {
 	def result = []
     result << setTrack(trackData)
-    result << delayAction(1000 + actionsDelayTime)
+    //result << delayAction(1000 + actionsDelayTime)
 	result << mediaRendererAction("Play")
     if (!state.lastChange){
         result << getCurrentMedia()
@@ -798,7 +798,7 @@ def resumeTrack(Map trackData = null) {
 	def result = []
     def actionsDelayTime =  actionsDelay ? (actionsDelay as Integer) * 1000 :0
     result << restoreTrack(trackData)
-    result << delayAction(2000 + actionsDelayTime)
+    //result << delayAction(2000 + actionsDelayTime)
 	result << mediaRendererAction("Play")
 	result.flatten()
 }
@@ -843,12 +843,12 @@ def speak(String msg){
 def subscribe() {
 	def result = []
 	result << subscribeAction(getDataValue("rceurl"))
-	result << delayAction(2500)
+	//result << delayAction(2500)
 	result << subscribeAction(getDataValue("avteurl"))
-	result << delayAction(2500)
+	//result << delayAction(2500)
     if (getDataValue("peurl")){
     	result << subscribeAction(getDataValue("peurl"))
-        result << delayAction(2500)
+       // result << delayAction(2500)
     }
 	result
 }
@@ -1194,7 +1194,7 @@ def getXState()
 def refreshParty(delay){
 	def result = []
     def actionsDelayTime =  delay ? (delay as Integer) * 1000 :0
-    result << delayAction(actionsDelayTime)
+    //result << delayAction(actionsDelayTime)
     result << getXState()
     result.flatten()
 }
@@ -1214,7 +1214,7 @@ def party(list){
             nList = nList - iList
             def rList = cList - iList
             if(nList && getDataValue("pcurl")) result << mediaRendererAction("X_Entry", "Party",getDataValue("pcurl") , [SingerSessionID:device.currentValue("sessionID"),ListenerList:nList.join(",")])
-            result << delayAction(1000 + actionsDelayTime)
+           // result << delayAction(1000 + actionsDelayTime)
             if(rList && getDataValue("pcurl")) result << mediaRendererAction("X_Leave", "Party",getDataValue("pcurl") , [SingerSessionID:device.currentValue("sessionID"),ListenerList:rList.join(",")])
            
         }else{
