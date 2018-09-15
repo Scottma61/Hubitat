@@ -13,8 +13,8 @@ definition(
 	description: "Allows you to control your Media Renderer from the Hubitat app. Perform basic functions like play, pause, stop, change track, and check artist and song name from the Things screen.",
 	category: "Hubitat",
 	singleInstance: true,
-	iconUrl: "https://graph.api.smartthings.com/api/devices/icons/st.secondary.smartapps-tile?displaySize=2x",
-    iconX2Url: "https://graph.api.smartthings.com/api/devices/icons/st.secondary.smartapps-tile?displaySize=2x"
+	iconUrl: "", //"https://graph.api.smartthings.com/api/devices/icons/st.secondary.smartapps-tile?displaySize=2x",
+    iconX2Url: "" //"https://graph.api.smartthings.com/api/devices/icons/st.secondary.smartapps-tile?displaySize=2x"
 )
 
 preferences {
@@ -207,6 +207,8 @@ private syncDevices() {
 		state.subscribe = true
 	}
 	discoverMediaRenderers()
+    unsubscribe()  // added two lines
+    state.subscribe = false
 }
 
 private timerAll(){
