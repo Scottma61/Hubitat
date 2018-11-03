@@ -44,7 +44,7 @@
  *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
  *  for the specific language governing permissions and limitations under the License.
  *
- *  Last Update 09/21/2018
+ *  Last Update 11/03/2018
  * { Left room below to document version changes...}
  *
  *  
@@ -56,8 +56,8 @@
  *  
  *  
  *  
- *  
- *  V2.0.7 - Changed sunrise-sunset.org api from https: to http:                               - 9/21/2108
+ *  V2.0.8 - Declared attributes: alert, twilight_begin, twilight_end, weatherSummary          - 11/3/2018
+ *  V2.0.7 - Changed sunrise-sunset.org api from https: to http:                               - 9/21/2018
  *  V2.0.6 - More cleanup of table lookups/translations.                                       - 9/03/2018
  *  V2.0.5 - Consolidated table lookups (transform.field), cleaned up forecast translations    - 8/20/2016
  *  V2.0.4 - Translated forecastIcon for APIXU to WU equivalent                                - 8/16/2018
@@ -103,6 +103,7 @@ metadata {
         attribute "moonIllumination", "string"
 
 // - Current Conditions
+        attribute "alert", "string"
         attribute "cloud", "number"
         attribute "condition_text", "string"
         attribute "icon", "string"
@@ -122,6 +123,7 @@ metadata {
         attribute "solarradiation", "string"
         attribute "UV", "number"
         attribute "vis", "string"
+        attribute "weatherSummary", "string"
         attribute "wind", "string"
         attribute "wind_gust", "string"
         attribute "wind_degree", "string"
@@ -184,7 +186,7 @@ metadata {
 def updated() {
     unschedule()
     logCheck()
-    state.driverVersion = "2.0.7"    // ************************* Update as required *************************************
+    state.driverVersion = "2.0.8"    // ************************* Update as required *************************************
 	state.driverNameSpace = "Matthew"
     
     state.extSource = (settings?.extSource ?: 1).toInteger()
@@ -268,7 +270,7 @@ def PollStationNow() {
     //  *****  stage Weather-Display variables  *****
     if(state.extSource==1){
 	    possAlert = null
-        if(!alert){alert = " Weather alerts are not available from this source."}
+        if(!alert){alert = "Weather alerts are not available from this source."}
     }
     setDateTimeFormats(state.datetimeFormat)
     isFahrenheit = (state.tempFormat == "Fahrenheit (°F)") ? true : false
@@ -463,7 +465,6 @@ def PollStationNow() {
     wind_string = "Wind: ${wind_string_bft} from the " + wd.everything.weather.wind.direction.cardinal + " at " + (isDistanceMetric ? wd.everything.weather.wind.avg_speed.kmh + " KPH" : wd.everything.weather.wind.avg_speed.mph + " MPH")
 //  ***** present Weather-Display variables  *****
     if(state.extSource==1){
-        sendEvent(name: "alert", value: alert, isStateChange: true, displayed: true)  
 	    sendEvent(name: "last_poll_Forecast", value: last_poll_Forecast, displayed: true)    
 	    sendEvent(name: "last_observation_Forecast", value: last_observation_Forecast, displayed: true)    
     }
@@ -504,8 +505,8 @@ def PollStationNow() {
     	sendEvent(name: "iconWithText", value: condition_iconWithText, isStateChange: true, displayed: true)    
     	sendEvent(name: "icon_url", value: condition_icon_url, isStateChange: true, displayed: false)    
 		sendEvent(name: "feelsLike", value: sfeelslike, unit: (isFahrenheit ? '°F' : '°C'), isStateChange: true, displayed: true) // only needed for SmartTiles dashboard
-		sendEvent(name: "twilightBegin", value: TwB.format("${timeFormat}"), isStateChange: true, displayed: true)
-		sendEvent(name: "twilightEnd", value: TwE.format("${timeFormat}"), isStateChange: true, displayed: true)
+		sendEvent(name: "twilight_begin", value: TwB.format("${timeFormat}"), isStateChange: true, displayed: true)
+		sendEvent(name: "twilight_end", value: TwE.format("${timeFormat}"), isStateChange: true, displayed: true)
 		sendEvent(name: "sunriseTime", value: sunriseTime.format("${timeFormat}"), isStateChange: true, displayed: true)
 		sendEvent(name: "sunsetTime", value: sunsetTime.format("${timeFormat}"), isStateChange: true, displayed: true)
 		sendEvent(name: "localSunset", value: localSunset.format("${timeFormat}"), isStateChange: true, displayed: false) // only needed for SmartTiles dashboard
@@ -580,9 +581,9 @@ def PollExternal(){
         }
         possAlert = wu.alerts.description
         if (possAlert){
-            alert = " " + wu.alerts.description
+            alert = wu.alerts.description.replaceAll('[', '').replaceAll(']','')
         } else {
-            alert = " No current weather alerts for this area."
+            alert = "No current weather alerts for this area."
         }
         if(state.sourceastronomy == 3) {
             localSunset = Date.parse("HH:mm", wu.sun_phase.sunset.hour + ":" + wu.sun_phase.sunset.minute).format("$timeFormat}")
@@ -695,7 +696,7 @@ def PollExternal(){
         fDate = futime.format("yyyy-MM-dd", tZ)
         fTimeOnly = futime.format("HH:mm", tZ)
         tz_id = xu.location.tz_id
-        alert = " Weather alerts are not available from this source."
+        alert = "Weather alerts are not available from this source."
         if(!state.sourcefeelsLike){	
             ffeelsLike = (isFahrenheit ? xu.current.feelslike_f : xu.current.feelslike_c)
             fforecast_text = xu.forecast.forecastday[0].day.condition.text.capitalize()
@@ -777,9 +778,9 @@ def PollExternal(){
         }
     }
 // *****   present Forecast Variables
-    sendEvent(name: "alert", value: alert, isStateChange: true, displayed: true)  
-    sendEvent(name: "twilightBegin", value: TwB.format("${timeFormat}"), isStateChange: true, displayed: true)
-    sendEvent(name: "twilightEnd", value: TwE.format("${timeFormat}"), isStateChange: true, displayed: true)
+    sendEvent(name: "alert", value: "$alert", isStateChange: true, displayed: true)  
+    sendEvent(name: "twilight_begin", value: TwB.format("${timeFormat}"), isStateChange: true, displayed: true)
+    sendEvent(name: "twilight_end", value: TwE.format("${timeFormat}"), isStateChange: true, displayed: true)
     sendEvent(name: "sunriseTime", value: sR.format("${timeFormat}"), isStateChange: true, displayed: true)
     sendEvent(name: "sunsetTime", value: sS.format("${timeFormat}"), isStateChange: true, displayed: true)
     sendEvent(name: "localSunset", value: sS.format("${timeFormat}"), descriptionText: "Sunset today at is $localSunset", isStateChange: true, displayed: false) // only needed for SmartTiles dashboard
@@ -830,7 +831,7 @@ private SummaryMessage(SType, Scity, Sstate, Slast_poll_date, Slast_poll_time, S
         sendEvent(name: "weatherSummary", value: "Weather summary for ${Scity}, ${Sstate} updated at ${Slast_poll_time} on ${Slast_poll_date}. "
 		+ ((!Scondition_text) ? "" : "${Scondition_text}") + ((!SforecastTemp) ? "" : "${SforecastTemp}") + "Humidity is currently around ${SHumidity} and temperature is ${Stemp} " 
 		+ "The temperature feels like it's ${SfeelsLike} ${Swind}"
-		+ ", with gusts up to ${Swind_gust}. " + ((!Sprecip) ? "" : "${Sprecip}") + ((!Svis) ? "" : "${Svis}") + ((!Salert) ? "" : "${Salert}"), isStateChange: true, displayed: true
+		+ ", with gusts up to ${Swind_gust}. " + ((!Sprecip) ? "" : "${Sprecip}") + ((!Svis) ? "" : "${Svis}") + ((!Salert) ? "" : " ${Salert}"), isStateChange: true, displayed: true
 		)
     } else {
 		sendEvent(name: "weatherSummary", value: ((!Scondition_text) ? "" : "${Scondition_text}")((!SforecastTemp) ? "" : "${SforecastTemp}")
