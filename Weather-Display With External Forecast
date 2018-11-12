@@ -581,7 +581,7 @@ def PollExternal(){
         }
         possAlert = wu.alerts.description
         if (possAlert){
-            alert = wu.alerts.description.replaceAll('[', '').replaceAll(']','')
+            alert = wu.alerts.description.toString().replaceAll("[{}\\[\\]]", "")
         } else {
             alert = "No current weather alerts for this area."
         }
