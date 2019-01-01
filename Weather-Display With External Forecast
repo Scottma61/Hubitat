@@ -828,7 +828,7 @@ def PollExternal(){
 		mytext+='<br>' + "${condition_text}"
 		mytext+='<br>' + "${temperature}" + (isFahrenheit ? '&deg;F ' : '&deg;C ') + '<span style = \"font-size:.5em;\">(Feels like ' + "${Summary_feelsLike}" + ')</span>  ' + "${humidity}" + '%<span style = \"font-size:.5em;\"> Humidity</span>'
 		mytext+='<br>' + sR.format("${timeFormat}") + ' <img style="height:1.5em" src=' + "${condition_icon_url}" + '> ' + sS.format("${timeFormat}")
-		mytext+='<br>' + "${wind_dir} winds " + (Math.round("${wind}".toDouble()) == 0 ? 'are calm. ' : "at ${wind} " + (isDistanceMetric ? 'KPH' : 'MPH'))
+		mytext+='<br>' + '<span style = \"font-size:.65em;\">' + "${wind_dir} wind: " + (Math.round("${wind}".toDouble()) == 0 ? 'calm' : "${wind} " + (isDistanceMetric ? 'KPH' : 'MPH')) + ', Gusts: ' + "${wind_gust}" + (isDistanceMetric ? " KPH" : " MPH") + '</span>'
 	sendEvent(name: "myTile", value: mytext, displayed: true)
 
 	return 
