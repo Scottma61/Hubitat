@@ -782,7 +782,7 @@ def PollExternal(){
 // ***** refresh DarkSky data  *****
         log.info "Weather-Display Driver - INFO: DarkSky: Executing 'poll', location: ${location.name}"
         ds = [:]
-        paramsDS = [ uri: "https://api.darksky.net/forecast/${apiKey}/${pollLocationForecast}?exclude=minutely,hourly,flags" ]
+        paramsDS = [ uri: "https://api.darksky.net/forecast/${apiKey}/${pollLocationForecast}?units=us&exclude=minutely,hourly,flags" ]
         try {
             httpGet(paramsDS)		{ resp -> ds << resp.data }
         } catch (e) { log.error "Weather-Display Driver - ERROR: http call failed for DarkSky weather api: $e" }
@@ -852,7 +852,7 @@ def PollExternal(){
 			default: forecast_code = "unknown"; break;
 		}
 
-		vis = (isDistanceMetric ? Math.round(ds.currently.visibility * 10) / 10 : Math.round(ds.currently.visibility * 1.60934 * 10) / 10)
+		vis = (isDistanceMetric ? Math.round(ds.currently.visibility * 1.60934 * 10) / 10 : Math.round(ds.currently.visibility * 10) / 10)
         uv = ds.currently.uvIndex
         percentPrecip = Math.round(ds.currently.precipProbability * 1000) /10
         chanceOfRain = percentPrecip.toString() + '%'
