@@ -906,16 +906,8 @@ def PollExternal(){
 		forecastIcon = condition_code
         forecastHigh = (isFahrenheit ? Math.round(ds.daily.data[0].temperatureHigh * 10) / 10 : Math.round((ds.daily.data[0].temperatureHigh * (9/5) + 32) * 10) / 10)
         forecastLow = (isFahrenheit ? Math.round(ds.daily.data[0].temperatureLow * 10) / 10 : Math.round((ds.daily.data[0].temperatureLow * (9/5) + 32) * 10) / 10)
-		if (!ds.daily.data[1].precipProbability) {
-			rainTommorrow = 0
-		} else {
-			rainTomorrow = Math.round(ds.daily.data[1].precipProbability * 1000) /10
-		}
-		if (!ds.daily.data[2].precipProbability) {
-			rainDayAfterTomorrow = 0
-		} else {
-			rainDayAfterTomorrow = Math.round(ds.daily.data[2].precipProbability * 1000) /10
-		}
+		rainTomorrow = (!ds.daily.data[1].precipProbability ? 0 : Math.round(ds.daily.data[1].precipProbability * 1000) /10)
+		rainDayAfterTomorrow = (!ds.daily.data[2].precipProbability ? 0 : Math.round(ds.daily.data[2].precipProbability * 1000) /10)
         if (!futime || !sunriseTime || !sunsetTime || !noonTime ||
             !twilight_begin || !twilight_end || !condition_code || !cloud || !tz_id) {
             log.debug "Weather-Display Driver - DEBUG: futime: $futime"
