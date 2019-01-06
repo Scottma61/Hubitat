@@ -50,7 +50,7 @@
  *  
  *  
  *  
- *  V2.1.4 - Bug fix for Dark Sky condition_code/text/icon values                              - 01/06/2019
+ *  V2.1.4 - Bug fix for Dark Sky condition_code/text/icon values; Added alerts to myTile      - 01/06/2019
  *  V2.1.3 - Code cleanup/correction - no functionality changes                                - 01/05/2019
  *  V2.1.2 - Added DarkSky as an external forecast source                                      - 01/04/2019
  *  V2.1.1 - Added Apparent temp ('Feels Like') to myTile                                      - 12/31/2018
@@ -708,6 +708,7 @@ def PollExternal(){
         fDate = futime.format("yyyy-MM-dd", tZ)
         fTimeOnly = futime.format("HH:mm", tZ)
         tz_id = xu.location.tz_id
+		possAlert = null
         alert = "Weather alerts are not available from this source."
         if(!state.sourcefeelsLike){	
             ffeelsLike = (isFahrenheit ? xu.current.feelslike_f : xu.current.feelslike_c)
@@ -835,7 +836,7 @@ def PollExternal(){
         } else {
 			cloud = (ds.currently.cloudCover <= 0.01) ? 0.1 : Math.round(ds.currently.cloudCover * 1000) /10
         }
-//        possAlert = wu.alerts.description
+        possAlert = ds.alerts
         if (!ds.alerts){
             alert = "No current weather alerts for this area."
         } else {
@@ -1006,7 +1007,7 @@ def PollExternal(){
     Summary_vis = "Visibility is around ${vis}" + (isDistanceMetric ? " kilometers." : " miles. ")
     SummaryMessage(state.summaryType, city, lstate, Summary_last_poll_date, Summary_last_poll_time, condition_text, "${humidity}"+'%', "${temperature}"+(isFahrenheit ? '°F. ' : '°C. '), Summary_forecastTemp, Summary_feelsLike, "${wind_string}", "${wind_gust}"+(isDistanceMetric ? " KPH" : " MPH"), "${wind_dir}", Summary_precip, Summary_vis, alert)
 	def mytext = "${city}" + ', ' + "${lstate}"
-		mytext+='<br>' + "${condition_text}"
+		mytext+='<br>' + '<span style = ' + (!possAlert ? '\"font-size:1em;\">' : '\"font-size:.65em;\">')  + "${condition_text}" + (!possAlert ? "" : " ${alert}" ) + '</span>'
 		mytext+='<br>' + "${temperature}" + (isFahrenheit ? '&deg;F ' : '&deg;C ') + '<span style = \"font-size:.5em;\">(Feels like ' + "${Summary_feelsLike}" + ')</span>  ' + "${humidity}" + '%<span style = \"font-size:.5em;\"> Humidity</span>'
 		mytext+='<br>' + sR.format("${timeFormat}") + ' <img style="height:1.5em" src=' + "${condition_icon_url}" + '> ' + sS.format("${timeFormat}")
 		mytext+='<br>' + '<span style = \"font-size:.65em;\">' + "${wind_dir} wind: " + (Math.round("${wind}".toDouble()) == 0 ? 'calm' : "${wind} " + (isDistanceMetric ? 'KPH' : 'MPH')) + ', gusts: ' + "${wind_gust}" + (isDistanceMetric ? " KPH" : " MPH") + '</span>'
