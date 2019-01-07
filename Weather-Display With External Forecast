@@ -861,10 +861,10 @@ def PollExternal(){
         sR = sunriseTime
         sS = sunsetTime
 		if(is_day == null){
-			if(twilight_begin == null || twilight_end == null) {
+			if(sunriseTime == null || sunsetTime == null) {
 				is_day = 1
 			} else {
-			 if(timeOfDayIsBetween(twilight_begin, twilight_end, futime, tZ))      {
+			 if(timeOfDayIsBetween(sunriseTime, sunsetTime, futime, tZ)) {
         		is_day = 1
 			 } else {
 				 is_day = 0
@@ -872,8 +872,8 @@ def PollExternal(){
 			}
 		}
 		switch(ds.daily.data[0].icon){
-			case "clear-day": forecast_code = "sunny"; break;
-			case "clear-night": forecast_code = "nt_clear"; break;
+			case "clear-day": forecast_code =  (is_day ? "sunny" : "nt_clear"); break;
+			case "clear-night": forecast_code =  (is_day ? "sunny" : "nt_clear"); break;
 			case "rain": forecast_code = (is_day ? "rain" : "nt_rain"); break;
 			case "snow": forecast_code = (is_day ? "snow" : "nt_snow"); break;
 			case "sleet": forecast_code = (is_day ? "sleet" : "nt_sleet"); break;
@@ -883,27 +883,27 @@ def PollExternal(){
 			case "partly-cloudy-night": forecast_code = "nt_partlycloudy"; break;
 			default: forecast_code = "unknown"; break;
 		}
-        forecast_text = getDSTextName(forecast_code)
+		forecast_text = getDSTextName(forecast_code)
 		vis = (isDistanceMetric ? Math.round(ds.currently.visibility * 1.60934 * 10) / 10 : Math.round(ds.currently.visibility * 10) / 10)
         uv = ds.currently.uvIndex
         percentPrecip = Math.round(ds.currently.precipProbability * 1000) /10
         chanceOfRain = percentPrecip.toString() + '%'
 		switch((state.iconType ? ds.currently.icon : ds.daily.data[0].icon)) {
-			case "clear-day": condition_code = "sunny"; break;
-			case "clear-night": condition_code = "nt_clear"; break;
+			case "clear-day": condition_code = (is_day ? "sunny" : "nt_clear"); break;
+			case "clear-night": condition_code = (is_day ? "sunny" : "nt_clear"); break;
 			case "rain": condition_code = (is_day ? "rain" : "nt_rain"); break;
 			case "snow": condition_code = (is_day ? "snow" : "nt_snow"); break;
 			case "sleet": condition_code = (is_day ? "sleet" : "nt_sleet"); break;
 			case "fog": condition_code = (is_day ? "fog" : "nt_fog"); break;
 			case "cloudy": condition_code = (is_day ? "cloudy" : "nt_cloudy"); break;
-			case "partly-cloudy-day": condition_code = "partlycloudy"; break;
-			case "partly-cloudy-night": condition_code = "nt_partlycloudy"; break;
+			case "partly-cloudy-day": condition_code = (is_day ? "partlycloudy" : "nt_partlycloudy"); break;
+			case "partly-cloudy-night": condition_code = (is_day ? "partlycloudy" : "nt_partlycloudy"); break;
 			default: condition_code = "unknown"; break;
 		}
 		condition_text = getDSTextName(condition_code)
 		weather = condition_text
 		weatherIcon = condition_code
-		forecastIcon = condition_code
+		forecastIcon = forecast_code
         forecastHigh = (isFahrenheit ? Math.round(ds.daily.data[0].temperatureHigh * 10) / 10 : Math.round((ds.daily.data[0].temperatureHigh * (9/5) + 32) * 10) / 10)
         forecastLow = (isFahrenheit ? Math.round(ds.daily.data[0].temperatureLow * 10) / 10 : Math.round((ds.daily.data[0].temperatureLow * (9/5) + 32) * 10) / 10)
 		rainTomorrow = (!ds.daily.data[1].precipProbability ? 0 : Math.round(ds.daily.data[1].precipProbability * 1000) /10)
