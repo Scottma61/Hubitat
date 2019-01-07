@@ -999,7 +999,7 @@ def PollExternal(){
     Summary_vis = "Visibility is around ${vis}" + (isDistanceMetric ? " kilometers." : " miles. ")
     SummaryMessage(state.summaryType, city, lstate, Summary_last_poll_date, Summary_last_poll_time, condition_text, "${humidity}"+'%', "${temperature}"+(isFahrenheit ? '°F. ' : '°C. '), Summary_forecastTemp, Summary_feelsLike, "${wind_string}", "${wind_gust}"+(isDistanceMetric ? " KPH" : " MPH"), "${wind_dir}", Summary_precip, Summary_vis, alert)
 	def mytext = "${city}" + ', ' + "${lstate}"
-		mytext+='<br>' + '<span style = ' + (!possAlert ? '\"font-size:1em;\">' : '\"font-size:.65em;\">')  + "${condition_text}" + (!possAlert ? "" : " ${alert}" ) + '</span>'
+		mytext+='<br>' + '<span style = ' + (!possAlert ? '\"font-size:1em;\">' : '\"font-size:.65em;\">')  + "${condition_text}" + (!possAlert ? "" : " | ${alert}" ) + '</span>'
 		mytext+='<br>' + "${temperature}" + (isFahrenheit ? '&deg;F ' : '&deg;C ') + '<span style = \"font-size:.5em;\">(Feels like ' + "${Summary_feelsLike}" + ')</span>  ' + "${humidity}" + '%<span style = \"font-size:.5em;\"> Humidity</span>'
 		mytext+='<br>' + sR.format("${timeFormat}") + ' <img style="height:1.5em" src=' + "${condition_icon_url}" + '> ' + sS.format("${timeFormat}")
 		mytext+='<br>' + '<span style = \"font-size:.65em;\">' + "${wind_dir} wind: " + (Math.round("${wind}".toDouble()) == 0 ? 'calm' : "${wind} " + (isDistanceMetric ? 'KPH' : 'MPH')) + ', gusts: ' + "${wind_gust}" + (isDistanceMetric ? " KPH" : " MPH") + '</span>'
