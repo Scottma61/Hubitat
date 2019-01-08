@@ -501,7 +501,7 @@ def PollStationNow() {
     sendEvent(name: "moonPhase", value: moonPhase, displayed: true)
     sendEvent(name: "moonIllumination", value: moonIllumination, unit: '%', displayed: true)
 	sendEvent(name: "dewpoint", value: dewpoint, unit: (isFahrenheit ? '°F' : '°C'), displayed: true)
-    if(state.sourcefeelsLike){
+    if(state.sourcefeelsLike==true){
 	    sendEvent(name: "feelsLike", value: sfeelsLike, unit: (isFahrenheit ? '°F' : '°C'), displayed: true) // only needed for SmartTiles dashboard
     }
 	if(state.iconType) {
@@ -528,10 +528,10 @@ def PollStationNow() {
     if(state.extSource==1){
         Summary_last_observation_time = (sotime > fotime ? "${sotime.format("${timeFormat}")}" : "${fotime.format("${timeFormat}")}")
         Summary_last_observation_date = (sotime > fotime ? "${sotime.format("${dateFormat}")}" : "${fotime.format("${dateFormat}")}")
-        if(state.sourcefeelsLike){
+        if(state.sourcefeelsLike==true){
             Summary_feelsLike = sfeelsLike + (isFahrenheit ? '°F.' : '°C.')
         } else {
-            if(!ffeelslike){
+            if(ffeelslike==null){
                 Summary_feelsLike = sfeelsLike + (isFahrenheit ? '°F.' : '°C.')
             } else {
                 Summary_feelsLike = ""
@@ -602,7 +602,7 @@ def PollExternal(){
             localSunset = Date.parse("HH:mm", wu.sun_phase.sunset.hour + ":" + wu.sun_phase.sunset.minute).format("$timeFormat}")
             localSunrise = Date.parse("HH:mm", wu.sun_phase.sunrise.hour + ":" + wu.sun_phase.sunrise.minute).format("$timeFormat}")
         }
-        if(!state.sourcefeelsLike){
+        if(state.sourcefeelsLike==false){
             ffeelsLike = (isFahrenheit ? wu.current_observation.feelslike_f : wu.current_observation.feelslike_c)
             fforecast_text = wu.forecast.simpleforecast.forecastday[0].conditions
         }    
@@ -646,7 +646,7 @@ def PollExternal(){
         } else {
             is_day = null
             lux = estimateLux(futime, sunriseTime, sunsetTime, noonTime, twilight_begin, twilight_end, condition_code, cloud, tz_id)
-           if(!state.sourceImg){
+           if(state.sourceImg==false){
                 imgName = getImgName(condition_text, is_day)
                 condition_icon = '<img src=' + imgName + '>'
                 condition_iconWithText = "<img src=" + imgName + "><br>" + condition_text
@@ -668,7 +668,7 @@ def PollExternal(){
                 forecast_icon_url = 'https://icons.wxug.com/i/c/a/' + wu.forecast.simpleforecast.forecastday[0].icon_url.split("/")[-1]
             }
         }
-        if(!state.sourceIllumination || state.sourceIllumination==false) {
+        if(state.sourceIllumination==false) {
             illuminance = lux
             lux = lux
             sendEvent(name: "lux", value: lux, unit: 'lux', displayed: true)
@@ -710,7 +710,7 @@ def PollExternal(){
         tz_id = xu.location.tz_id
 		possAlert = null
         alert = "Weather alerts are not available from this source."
-        if(!state.sourcefeelsLike){	
+        if(state.sourcefeelsLike==false){	
             ffeelsLike = (isFahrenheit ? xu.current.feelslike_f : xu.current.feelslike_c)
             fforecast_text = xu.forecast.forecastday[0].day.condition.text.capitalize()
         }
@@ -762,7 +762,7 @@ def PollExternal(){
         } else {
             is_day = xu.current.is_day
             lux = estimateLux(futime, sunriseTime, sunsetTime, noonTime, twilight_begin, twilight_end, condition_code, cloud, tz_id)
-            if(!state.sourceImg){
+            if(state.sourceImg==false){
                 imgName = getImgName((state.iconType ? xu.current.condition.code : xu.forecast.forecastday[0].day.condition.code), is_day)
                 condition_icon = '<img src=' + imgName + '>'
                 condition_iconWithText = "<img src=" + imgName + "><br>" + condition_text
@@ -783,7 +783,7 @@ def PollExternal(){
                 forecast_icon_url = 'https:' + xu.forecast.forecastday[0].day.condition.icon
                 forecast_code = xu.forecast.forecastday[0].day.condition.code
             }
-            if(!state.sourceIllumination) {
+            if(state.sourceIllumination==false) {
                 illuminance = lux
                 lux = lux
                 sendEvent(name: "lux", value: lux, unit: 'lux', displayed: true)
@@ -846,7 +846,7 @@ def PollExternal(){
             localSunset = new Date(ds.daily.data[0].sunriseTime * 1000L)    
             localSunrise = new Date(ds.daily.data[0].sunsetTime * 1000L)
         }
-        if(!state.sourcefeelsLike){
+        if(state.sourcefeelsLike==false){
             ffeelsLike = (isFahrenheit ? Math.round(ds.currently.apparentTemperature * 10) / 10 : Math.round((ds.currently.apparentTemperature * (9/5) + 32) * 10) / 10)
             fforecast_text = ds.daily.data[0].summary
         }    
@@ -875,6 +875,7 @@ def PollExternal(){
 			case "clear-day": forecast_code =  (is_day ? "sunny" : "nt_clear"); break;
 			case "clear-night": forecast_code =  (is_day ? "sunny" : "nt_clear"); break;
 			case "rain": forecast_code = (is_day ? "rain" : "nt_rain"); break;
+			case "wind": forecast_code = (is_day ? "breezy" : "nt_breezy"); break;
 			case "snow": forecast_code = (is_day ? "snow" : "nt_snow"); break;
 			case "sleet": forecast_code = (is_day ? "sleet" : "nt_sleet"); break;
 			case "fog": forecast_code = (is_day ? "fog" : "nt_fog"); break;
@@ -892,6 +893,7 @@ def PollExternal(){
 			case "clear-day": condition_code = (is_day ? "sunny" : "nt_clear"); break;
 			case "clear-night": condition_code = (is_day ? "sunny" : "nt_clear"); break;
 			case "rain": condition_code = (is_day ? "rain" : "nt_rain"); break;
+			case "wind": condition_code = (is_day ? "breezy" : "nt_breezy"); break;
 			case "snow": condition_code = (is_day ? "snow" : "nt_snow"); break;
 			case "sleet": condition_code = (is_day ? "sleet" : "nt_sleet"); break;
 			case "fog": condition_code = (is_day ? "fog" : "nt_fog"); break;
@@ -923,7 +925,7 @@ def PollExternal(){
         } else {
             is_day = null
             lux = estimateLux(futime, sunriseTime, sunsetTime, noonTime, twilight_begin, twilight_end, condition_code, cloud, tz_id)
-           if(!state.sourceImg){
+           if(state.sourceImg==false){
                 imgName = getImgName(condition_code, is_day)
                 condition_icon = '<img src=' + imgName + '>'
                 condition_iconWithText = "<img src=" + imgName + "><br>" + condition_text
@@ -945,7 +947,7 @@ def PollExternal(){
                 forecast_icon_url = 'https://icons.wxug.com/i/c/a/' + forecast_code + '.gif'
             }
         }
-        if(!state.sourceIllumination || state.sourceIllumination==false) {
+        if(state.sourceIllumination==false) {
             illuminance = lux
             lux = lux
             sendEvent(name: "lux", value: lux, unit: 'lux', displayed: true)
@@ -973,7 +975,7 @@ def PollExternal(){
     sendEvent(name: "forecastIcon", value: forecastIcon, displayed: false) // only needed for ShaptTools.io    
 	sendEvent(name: "cloud", value: "${cloud}", unit: "%", displayed: true)
     sendEvent(name: "vis", value: vis, unit: (isDistanceMetric ? 'KM' : 'MILES'), displayed: true)
-    if(!state.sourceUV){
+    if(state.sourceUV==false){
     	sendEvent(name: "UV", value: UV, displayed: true)
     }
     sendEvent(name: "percentPrecip", value: percentPrecip, displayed: true) // only needed for SmartTiles dashboard
@@ -982,13 +984,15 @@ def PollExternal(){
     sendEvent(name: "forecastLow", value: forecastLow, unit: (isFahrenheit ? '°F' : '°C'), displayed: true)
     sendEvent(name: "rainTomorrow", value: rainTomorrow, unit: (state.extSource == 4 ? '%' : (isRainMetric ? 'mm' : 'in')), displayed: true)
     sendEvent(name: "rainDayAfterTomorrow", value: rainDayAfterTomorrow, unit: (state.extSource == 4 ? '%' : (isRainMetric ? 'mm' : 'in')), displayed: true)
-    if(!state.sourcefeelsLike){
+    if(state.sourcefeelsLike==false){
     	sendEvent(name: "feelsLike", value: ffeelsLike, unit: (isFahrenheit ? '°F' : '°C'), displayed: true) // only needed for SmartTiles dashboard
-    }
+	} else {
+		sendEvent(name: "feelsLike", value: sfeelsLike, unit: (isFahrenheit ? '°F' : '°C'), displayed: true) // only needed for SmartTiles dashboard
+	}
 // ***** Build Summry Display variables  *****    
     Summary_last_poll_time = (sutime > futime ? "${sutime.format("${timeFormat}")}" : "${futime.format("${timeFormat}")}")
     Summary_last_poll_date = (sutime > futime ? "${sutime.format("${dateFormat}")}" : "${futime.format("${dateFormat}")}")
-    if(!state.sourcefeelsLike){
+    if(state.sourcefeelsLike==false){
         Summary_feelsLike =  ffeelsLike + (isFahrenheit ? '°F' : '°C')
     } else {
         Summary_feelsLike = sfeelsLike + (isFahrenheit ? '°F' : '°C')
@@ -1183,7 +1187,7 @@ private getDSTextName(wCode){
 }
 
 @Field final List    LUTable =     [
-     [xucode: 1000, wuphrase: 'Clear', wucode: 'sunny', day: 1, img: '32.png', luxpercent: 1],   // DAY: Sunny - Clear
+          [xucode: 1000, wuphrase: 'Clear', wucode: 'sunny', day: 1, img: '32.png', luxpercent: 1],   // DAY: Sunny - Clear
      [xucode: 1003, wuphrase: 'Partly Cloudy', wucode: 'partlycloudy', day: 1, img: '30.png', luxpercent: 0.8],   // DAY: Partly cloudy
      [xucode: 1003, wuphrase: 'Scattered Clouds', wucode: 'partlycloudy', day: 1, img: '30.png', luxpercent: 0.8],   // DAY: Partly cloudy - Scattered Clouds
      [xucode: 1006, wuphrase: 'Mostly Cloudy', wucode: 'cloudy', day: 1, img: '26.png', luxpercent: 0.6],   // DAY: Cloudy - Mostly Cloudy
@@ -1205,7 +1209,7 @@ private getDSTextName(wCode){
      [xucode: 1117, wuphrase: 'Heavy Snow', wucode: 'snow', day: 1, img: '41.png', luxpercent: 0.3],   // DAY: Blizzard - Heavy Snow
      [xucode: 1135, wuphrase: 'Fog', wucode: 'fog', day: 1, img: '20.png', luxpercent: 0.2],   // DAY: Fog
      [xucode: 1135, wuphrase: 'Fog Patches', wucode: 'fog', day: 1, img: '20.png', luxpercent: 0.2],   // DAY: Fog - Fog Patches
-     [xucode: 1135, wuphrase: 'Haze', wucode: 'fog', day: 1, img: '20.png', luxpercent: 0.2],   // DAY: Fog - Haze
+     [xucode: 1135, wuphrase: 'Hazy', wucode: 'fog', day: 1, img: '20.png', luxpercent: 0.2],   // DAY: Fog - Haze
      [xucode: 1135, wuphrase: 'Heavy Fog', wucode: 'fog', day: 1, img: '20.png', luxpercent: 0.2],   // DAY: Fog - Heavy Fog
      [xucode: 1135, wuphrase: 'Heavy Fog Patches', wucode: 'fog', day: 1, img: '20.png', luxpercent: 0.2],   // DAY: Fog - Heavy Fog Patches
      [xucode: 1135, wuphrase: 'Light Fog', wucode: 'fog', day: 1, img: '20.png', luxpercent: 0.2],   // DAY: Fog - Light Fog
@@ -1296,6 +1300,7 @@ private getDSTextName(wCode){
      [xucode: 1279, wuphrase: 'Light Thunderstorms and Ice Pellets', wucode: 'chancesnow', day: 1, img: '41.png', luxpercent: 0.3],   // DAY: Patchy light snow with thunder - Light Thunderstorms and Ice Pellets
      [xucode: 1279, wuphrase: 'Light Thunderstorms and Snow', wucode: 'chancesnow', day: 1, img: '41.png', luxpercent: 0.3],   // DAY: Patchy light snow with thunder - Light Thunderstorms and Snow
      [xucode: 1282, wuphrase: 'Thunderstorms and Snow', wucode: 'snow', day: 1, img: '41.png', luxpercent: 0.3],   // DAY: Moderate or heavy snow with thunder - Thunderstorms and Snow
+     [xucode: 1000, wuphrase: 'Breezy', wucode: 'breezy', day: 1, img: '22.png', luxpercent: 1],   // DAY: Breezy
      [xucode: 1000, wuphrase: 'Clear', wucode: 'nt_clear', day: 0, img: '31.png', luxpercent: 0],   // NIGHT: Clear
      [xucode: 1003, wuphrase: 'Partly Cloudy', wucode: 'nt_partlycloudy', day: 0, img: '29.png', luxpercent: 0],   // NIGHT: Partly cloudy
      [xucode: 1003, wuphrase: 'Scattered Clouds', wucode: 'nt_partlycloudy', day: 0, img: '29.png', luxpercent: 0],   // NIGHT: Partly cloudy - Scattered Clouds
@@ -1318,7 +1323,7 @@ private getDSTextName(wCode){
      [xucode: 1117, wuphrase: 'Heavy Snow', wucode: 'nt_snow', day: 0, img: '5.png', luxpercent: 0],   // NIGHT: Blizzard - Heavy Snow
      [xucode: 1135, wuphrase: 'Fog', wucode: 'nt_fog', day: 0, img: '20.png', luxpercent: 0],   // NIGHT: Fog
      [xucode: 1135, wuphrase: 'Fog Patches', wucode: 'nt_fog', day: 0, img: '20.png', luxpercent: 0],   // NIGHT: Fog - Fog Patches
-     [xucode: 1135, wuphrase: 'Haze', wucode: 'nt_fog', day: 0, img: '20.png', luxpercent: 0],   // NIGHT: Fog - Haze
+     [xucode: 1135, wuphrase: 'Hazy', wucode: 'nt_fog', day: 0, img: '20.png', luxpercent: 0],   // NIGHT: Fog - Haze
      [xucode: 1135, wuphrase: 'Heavy Fog', wucode: 'nt_fog', day: 0, img: '20.png', luxpercent: 0],   // NIGHT: Fog - Heavy Fog
      [xucode: 1135, wuphrase: 'Heavy Fog Patches', wucode: 'nt_fog', day: 0, img: '20.png', luxpercent: 0],   // NIGHT: Fog - Heavy Fog Patches
      [xucode: 1135, wuphrase: 'Light Fog', wucode: 'nt_fog', day: 0, img: '20.png', luxpercent: 0],   // NIGHT: Fog - Light Fog
@@ -1407,5 +1412,6 @@ private getDSTextName(wCode){
      [xucode: 1282, wuphrase: 'Heavy Thunderstorms and Snow', wucode: 'nt_snow', day: 0, img: '18.png', luxpercent: 0],   // NIGHT: Moderate or heavy snow with thunder - Heavy Thunderstorms and Snow
      [xucode: 1282, wuphrase: 'Thunderstorms and Ice Pellets', wucode: 'nt_snow', day: 0, img: '18.png', luxpercent: 0],   // NIGHT: Moderate or heavy snow with thunder - Thunderstorms and Ice Pellets
      [xucode: 1282, wuphrase: 'Thunderstorms and Snow', wucode: 'nt_snow', day: 0, img: '18.png', luxpercent: 0],   // NIGHT: Moderate or heavy snow with thunder - Thunderstorms and Snow
+     [xucode: 1000, wuphrase: 'Breezy', wucode: 'nt_breezy', day: 0, img: '23.png', luxpercent: 0],   // NIGHT: Breezy
 ]    
 //******************************************************************************************
