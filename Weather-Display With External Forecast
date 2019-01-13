@@ -469,7 +469,7 @@ def PollStationNow() {
 	temperature = (isFahrenheit ? wd.everything.weather.temperature.current.f : wd.everything.weather.temperature.current.c)
     UV = wd.everything.weather.uv.uvi
 	wind = (isDistanceMetric ? wd.everything.weather.wind.avg_speed.kmh : wd.everything.weather.wind.avg_speed.mph)
-	wind_gust = (isDistanceMetric ? wd.everything.weather.wind.max_gust_speed.kmh : wd.everything.weather.wind.max_gust_speed.mph)
+	wind_gust = (isDistanceMetric ? wd.everything.weather.wind.gust_speed.kmh : wd.everything.weather.wind.gust_speed.mph)
 	wind_degree = wd.everything.weather.wind.direction.degrees
 	wind_dir = wd.everything.weather.wind.direction.cardinal
     wind_bft = wd.everything.weather.wind.avg_speed.bft
@@ -1008,7 +1008,7 @@ def PollExternal(){
 	def mytext = '<div style=\"text-align:center;display:inline;font-size:1em;line-height=100%;margin-top:0em;margin-bottom:0em;\">' + "${city}" + ', ' + "${lstate}"
 		mytext+='<br>' + (!possAlert ? '' : '<span style=\"font-size:0.65em;\">')  + "${condition_text}" + (!possAlert ? "" : " | ${alert}" ) + (!possAlert ? '' : '</span>') + '<br>' +  '</div>'
 		mytext+="${temperature}" + (isFahrenheit ? '&deg;F ' : '&deg;C ') + '<img style="height:1em" src=' + "${condition_icon_url}" + '>' + '<span style = \"font-size:.65em;\">(Feels like ' + "${Summary_feelsLike}" + ')</span><br>'
-		mytext+='<div style=\"text-align:center;font-size:0.5em;line-height=50%;margin-top:0em;margin-bottom:0em;\">' + '<img style="height:2.0em;" src=' + state.iconStore + wind_bft_icon + iconClose + '>' + "${wind_dir} " + (Math.round("${wind}".toDouble()) == 0 ? 'calm' : "@ ${wind} " + (isDistanceMetric ? 'KPH' : 'MPH')) + ', gusts @ ' + "${wind_gust}" + (isDistanceMetric ? " KPH" : " MPH")
+		mytext+='<div style=\"text-align:center;font-size:0.5em;line-height=50%;margin-top:0em;margin-bottom:0em;\">' + '<img style="height:2.0em;" src=' + state.iconStore + wind_bft_icon + iconClose + '>' + "${wind_dir} " + (Math.round("${wind}".toDouble()) == 0 ? 'calm' : "@ ${wind} " + (isDistanceMetric ? 'KPH' : 'MPH')) + ', gusts ' + (Math.round("${wind_gust}".toDouble()) == 0 ? 'calm' : "@ ${wind_gust}" + (isDistanceMetric ? " KPH" : " MPH"))
 		mytext+='<br><img style="height:1em;" src=' + state.iconStore + 'wi-barometer.png' + iconClose + '>' + "${pressure}" + (isPressureMetric ? 'MB' : 'IN') + '  <img style="height:1em;" src=' + state.iconStore + 'wi-humidity.png' + iconClose + '>' + "${humidity}" + '%  ' + '<img style="height:1em;" src=' + state.iconStore + 'wi-umbrella.png' + iconClose + '>' + "${percentPrecip}" + '%' + (precip_today > 0 ? '  <img style="height:1em;" src=' + state.iconStore + 'wi-raindrops.png' + iconClose + '>' + "${precip_today}" + (isRainMetric ? ' mm' : ' inches') : '')
 		mytext+='<br><img style="height:1em;" src=' + state.iconStore + 'wi-sunrise.png' + iconClose + '>' + sR.format("${timeFormat}") + '     <img style="height:1em;" src=' + state.iconStore + 'wi-sunset.png' + iconClose + '>' + sS.format("${timeFormat}") + '</div>'
 	sendEvent(name: "myTile", value: mytext, displayed: true)
