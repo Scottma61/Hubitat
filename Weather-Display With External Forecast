@@ -302,11 +302,44 @@ def PollStationNow() {
             }
         }
     }
-//    condition_code = 'unknown'
+	if(state.stationLatHemi == "North"){
+    	latitude = wd.station.latitude
+    } else {
+        latitude =  0 - wd.station.latitude.toDouble()
+    }
+    if(state.stationLongHemi == "East"){
+        longitude = wd.station.longitude
+    } else {
+    	longitude =  0 - wd.station.longitude.toDouble()
+    }
+	sunriseAndSunset = getSunriseAndSunset(latitude, longitude, sutime.format("yyyy-MM-dd", tZ))       
+	twilight_begin = new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", sunriseAndSunset.results.civil_twilight_begin, tZ)
+	noonTime = new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", sunriseAndSunset.results.solar_noon, tZ)    
+	twilight_end = new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", sunriseAndSunset.results.civil_twilight_end, tZ)
+	if(state.sourceastronomy == 2) {
+		localSunset = Date.parse("HH:mm", wd.everything.astronomy.sun.sunset_time.time).format("${timeFormat}", tZ)
+		localSunrise = Date.parse("HH:mm", wd.everything.astronomy.sun.sunrise_time.time).format("${timeFormat}", tZ)
+		sunsetTime = localSunset
+		sunriseTime = localSunrise
+	} else {
+		sunriseTime = new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", sunriseAndSunset.results.sunrise, tZ)			
+		sunsetTime = new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", sunriseAndSunset.results.sunset, tZ)
+		localSunset = sunsetTime
+		localSunrise = sunriseTime
+	}
+	TwB = twilight_begin
+	TwE = twilight_end
+	sR = sunriseTime
+	sS = sunsetTime
+	if(timeOfDayIsBetween(sunriseTime, sunsetTime, futime, tZ)) {
+		is_day = 1
+	} else {
+	 	is_day = 0
+	}
 	switch(wd.everything.forecast.icon.code.toInteger()) {
     	case 0: condition_code = 'sunny'; break;    
 		case 1: condition_code = 'clear'; break;        
-    	case 2: condition_code = 'cloudy'; break;
+    	case 2: condition_code = 'partlycloudy'; break;
     	case 3: condition_code = 'clear'; break;    
 		case 4: condition_code = 'cloudy'; break;    
 		case 6: condition_code = 'fog'; break;
@@ -341,38 +374,9 @@ def PollStationNow() {
 	}
 	condition_text = getDSTextName(condition_code)
 	
-    if(state.stationLatHemi == "North"){
-    	latitude = wd.station.latitude
-    } else {
-        latitude =  0 - wd.station.latitude.toDouble()
-    }
-    if(state.stationLongHemi == "East"){
-        longitude = wd.station.longitude
-    } else {
-    	longitude =  0 - wd.station.longitude.toDouble()
-    }
     if(state.extSource==1){
     	if(!weatherIcon){weatherIcon = condition_code}
     	if(!forecastIcon){forecastIcon = condition_code}        
-        sunriseAndSunset = getSunriseAndSunset(latitude, longitude, sutime.format("yyyy-MM-dd", tZ))       
-		twilight_begin = new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", sunriseAndSunset.results.civil_twilight_begin, tZ)
-		noonTime = new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", sunriseAndSunset.results.solar_noon, tZ)    
-		twilight_end = new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", sunriseAndSunset.results.civil_twilight_end, tZ)
-		if(state.sourceastronomy == 2) {
-			localSunset = Date.parse("HH:mm", wd.everything.astronomy.sun.sunset_time.time).format("${timeFormat}", tZ)
-			localSunrise = Date.parse("HH:mm", wd.everything.astronomy.sun.sunrise_time.time).format("${timeFormat}", tZ)
-			sunsetTime = localSunset
-			sunriseTime = localSunrise
-		} else {
-			sunriseTime = new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", sunriseAndSunset.results.sunrise, tZ)			
-			sunsetTime = new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", sunriseAndSunset.results.sunset, tZ)
-			localSunset = sunsetTime
-			localSunrise = sunriseTime
-		}
-		TwB = twilight_begin
-		TwE = twilight_end
-		sR = sunriseTime
-		sS = sunsetTime
 		if (!sutime || !sunriseTime || !sunsetTime || !noonTime ||
 			!twilight_begin || !twilight_end || !condition_code || !cloud || !tz_id) {
 			log.debug "Weather-Display Driver - DEBUG: sutime: $sutime"
