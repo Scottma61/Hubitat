@@ -167,7 +167,7 @@ metadata {
                 input "sourceImg", "bool", required: true, defaultValue: false, title: "Icons from: On = Standard - Off = Alternative"
                 input "iconStore", "text", required: true, defaultValue: "https://github.com/Scottma61/WeatherIcons/blob/master/", title: "Alternative Icon Location:"
             }
-            input "iconType", "bool", title: "Condition Icon: On = Current - Off = Forecast", required: true, defaultValue: false
+            input "iconType", "bool", title: "Condition Icon: On = Station - Off = Forecast", required: true, defaultValue: false
 	    	input "tempFormat", "enum", required: true, defaultValue: "Fahrenheit (°F)", title: "Display Unit - Temperature: Fahrenheit (°F) or Celsius (°C)",  options: ["Fahrenheit (°F)", "Celsius (°C)"]
             input "datetimeFormat", "enum", required: true, defaultValue: "m/d/yyyy 12 hour (am|pm)", title: "Display Unit - Date-Time Format",  options: [1:"m/d/yyyy 12 hour (am|pm)", 2:"m/d/yyyy 24 hour", 3:"mm/dd/yyyy 12 hour (am|pm)", 4:"mm/dd/yyyy 24 hour", 5:"d/m/yyyy 12 hour (am|pm)", 6:"d/m/yyyy 24 hour", 7:"dd/mm/yyyy 12 hour (am|pm)", 8:"dd/mm/yyyy 24 hour", 9:"yyyy/mm/dd 24 hour"]
             input "distanceFormat", "enum", required: true, defaultValue: "Miles (mph)", title: "Display Unit - Distance/Speed: Miles or Kilometres",  options: ["Miles (mph)", "Kilometers (kph)"]
@@ -614,8 +614,10 @@ def PollExternal(){
         uv = wu.current_observation.UV
         percentPrecip = wu.forecast.simpleforecast.forecastday[0].pop
         chanceOfRain = wu.forecast.simpleforecast.forecastday[0].pop + '%'
-		condition_code = (state.iconType ? wu.current_observation.icon : wu.forecast.simpleforecast.forecastday[0].icon)
-		condition_text = (state.iconType ? wu.current_observation.weather.capitalize() : wu.forecast.simpleforecast.forecastday[0].conditions.capitalize())
+		if(condition_code==null || state.iconType==false){
+			condition_code = wu.current_observation.icon
+			condition_text = wu.current_observation.weather.capitalize()
+		}
 		weather = condition_text
         weatherIcon = condition_code
         forecastIcon = condition_code
@@ -721,7 +723,9 @@ def PollExternal(){
         last_poll_Forecast = futime.format("${dateFormat}") + ", " + futime.format("${timeFormat}")
         last_observation_Forecast = fotime.format("${dateFormat}") + ", " + fotime.format("${timeFormat}")
 		
-		condition_code = (state.iconType ? getWUCodeName(xu.current.condition.code, xu.current.is_day) : getWUCodeName(xu.forecast.forecastday[0].day.condition.code, xu.current.is_day))
+		if(condition_code==null || state.iconType == false) {
+			condition_code = getWUCodeName(xu.current.condition.code, xu.current.is_day)
+		}
 		condition_text = getDSTextName(condition_code)
 		weatherIcon = condition_code
 		weather = condition_text
@@ -891,18 +895,20 @@ def PollExternal(){
         uv = ds.currently.uvIndex
         percentPrecip = Math.round(ds.daily.data[0].precipProbability * 1000) /10
         chanceOfRain = percentPrecip.toString() + '%'
-		switch((state.iconType ? ds.currently.icon : ds.daily.data[0].icon)) {
-			case "clear-day": condition_code = (is_day ? "sunny" : "nt_clear"); break;
-			case "clear-night": condition_code = (is_day ? "sunny" : "nt_clear"); break;
-			case "rain": condition_code = (is_day ? "rain" : "nt_rain"); break;
-			case "wind": condition_code = (is_day ? "breezy" : "nt_breezy"); break;
-			case "snow": condition_code = (is_day ? "snow" : "nt_snow"); break;
-			case "sleet": condition_code = (is_day ? "sleet" : "nt_sleet"); break;
-			case "fog": condition_code = (is_day ? "fog" : "nt_fog"); break;
-			case "cloudy": condition_code = (is_day ? "cloudy" : "nt_cloudy"); break;
-			case "partly-cloudy-day": condition_code = (is_day ? "partlycloudy" : "nt_partlycloudy"); break;
-			case "partly-cloudy-night": condition_code = (is_day ? "partlycloudy" : "nt_partlycloudy"); break;
-			default: condition_code = "unknown"; break;
+		if(condition_code == null || state.iconType==false){
+			switch(ds.currently.icon) {
+				case "clear-day": condition_code = (is_day ? "sunny" : "nt_clear"); break;
+				case "clear-night": condition_code = (is_day ? "sunny" : "nt_clear"); break;
+				case "rain": condition_code = (is_day ? "rain" : "nt_rain"); break;
+				case "wind": condition_code = (is_day ? "breezy" : "nt_breezy"); break;
+				case "snow": condition_code = (is_day ? "snow" : "nt_snow"); break;
+				case "sleet": condition_code = (is_day ? "sleet" : "nt_sleet"); break;
+				case "fog": condition_code = (is_day ? "fog" : "nt_fog"); break;
+				case "cloudy": condition_code = (is_day ? "cloudy" : "nt_cloudy"); break;
+				case "partly-cloudy-day": condition_code = (is_day ? "partlycloudy" : "nt_partlycloudy"); break;
+				case "partly-cloudy-night": condition_code = (is_day ? "partlycloudy" : "nt_partlycloudy"); break;
+				default: condition_code = "unknown"; break;
+			}
 		}
 		condition_text = getDSTextName(condition_code)
 		weather = condition_text
@@ -1007,7 +1013,7 @@ def PollExternal(){
 	iconClose = (((state.iconStore.toLowerCase().contains('://github.com/')) && (state.iconStore.toLowerCase().contains('/blob/master/'))) ? "?raw=true" : "")
 	def mytext ='<div style=\"text-align:center;display:inline;font-size:0.65em;line-height=65%;margin-top:0em;margin-bottom:0em;\">' + "${city}" + ', ' + "${lstate}<br></div>"
 		mytext+='<div style=\"text-align:center;display:inline;font-size:1em;line-height=100%;margin-top:0em;margin-bottom:0em;\">' + (!possAlert ?  '<span style=\"font-size:1em;line-height=100%;\">' : '<span style=\"font-size:0.65em;line-height=65%;\">')  + "${condition_text}" + (!possAlert ? '' : ' | <span style=\"font-style:italic;\">' + "${alert}</span>" ) + '</span><br></div>'
-		mytext+="${temperature}" + (isFahrenheit ? '&deg;F ' : '&deg;C ') + '<img style="height:1em" src=' + "${condition_icon_url}" + '>' + '<span style = \"font-size:.65em;\">(Feels like ' + "${Summary_feelsLike}" + ')</span><br>'
+		mytext+="${temperature}" + (isFahrenheit ? '&deg;F ' : '&deg;C ') + '<img style="height:1em" src=' + "${condition_icon_url}" + '>' + '<span style = \"font-size:.65em;\"> Feels like ' + "${Summary_feelsLike}" + '</span><br>'
 		mytext+='<div style=\"text-align:center;font-size:0.5em;line-height=50%;margin-top:0em;margin-bottom:0em;\">' + '<img style="height:2.0em;" src=' + state.iconStore + wind_bft_icon + iconClose + '>' + "${wind_dir} " + (Math.round("${wind}".toDouble()) == 0 ? 'calm' : "@ ${wind} " + (isDistanceMetric ? 'KPH' : 'MPH')) + ', gusts ' + (Math.round("${wind_gust}".toDouble()) == 0 ? 'calm' : "@ ${wind_gust}" + (isDistanceMetric ? " KPH" : " MPH"))
 		mytext+='<br><img style="height:1em;" src=' + state.iconStore + 'wi-barometer.png' + iconClose + '>' + "${pressure}" + (isPressureMetric ? 'MB' : 'IN') + '  <img style="height:1em;" src=' + state.iconStore + 'wi-humidity.png' + iconClose + '>' + "${humidity}" + '%  ' + '<img style="height:1em;" src=' + state.iconStore + 'wi-umbrella.png' + iconClose + '>' + "${percentPrecip}" + '%' + (precip_today > 0 ? '  <img style="height:1em;" src=' + state.iconStore + 'wi-raindrops.png' + iconClose + '>' + "${precip_today}" + (isRainMetric ? ' mm' : ' inches') : '')
 		mytext+='<br><img style="height:1em;" src=' + state.iconStore + 'wi-sunrise.png' + iconClose + '>' + sR.format("${timeFormat}") + '     <img style="height:1em;" src=' + state.iconStore + 'wi-sunset.png' + iconClose + '>' + sS.format("${timeFormat}") + '</div>'
