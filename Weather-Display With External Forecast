@@ -889,7 +889,7 @@ def PollExternal(){
 		forecast_text = getDSTextName(forecast_code)
 		vis = (isDistanceMetric ? Math.round(ds.currently.visibility * 1.60934 * 10) / 10 : Math.round(ds.currently.visibility * 10) / 10)
         uv = ds.currently.uvIndex
-        percentPrecip = Math.round(ds.currently.precipProbability * 1000) /10
+        percentPrecip = Math.round(ds.daily.data[0].precipProbability * 1000) /10
         chanceOfRain = percentPrecip.toString() + '%'
 		switch((state.iconType ? ds.currently.icon : ds.daily.data[0].icon)) {
 			case "clear-day": condition_code = (is_day ? "sunny" : "nt_clear"); break;
@@ -1005,8 +1005,8 @@ def PollExternal(){
     Summary_vis = "Visibility is around ${vis}" + (isDistanceMetric ? " kilometers." : " miles. ")
     SummaryMessage(state.summaryType, city, lstate, Summary_last_poll_date, Summary_last_poll_time, condition_text, "${humidity}"+'%', "${temperature}"+(isFahrenheit ? '°F. ' : '°C. '), Summary_forecastTemp, Summary_feelsLike, "${wind_string}", "${wind_gust}"+(isDistanceMetric ? " KPH" : " MPH"), "${wind_dir}", Summary_precip, Summary_vis, alert)
 	iconClose = (((state.iconStore.toLowerCase().contains('://github.com/')) && (state.iconStore.toLowerCase().contains('/blob/master/'))) ? "?raw=true" : "")
-	def mytext = '<div style=\"text-align:center;display:inline;font-size:1em;line-height=100%;margin-top:0em;margin-bottom:0em;\">' + "${city}" + ', ' + "${lstate}"
-		mytext+='<br>' + (!possAlert ? '' : '<span style=\"font-size:0.65em;\">')  + "${condition_text}" + (!possAlert ? "" : " | ${alert}" ) + (!possAlert ? '' : '</span>') + '<br>' +  '</div>'
+	def mytext ='<div style=\"text-align:center;display:inline;font-size:0.65em;line-height=65%;margin-top:0em;margin-bottom:0em;\">' + "${city}" + ', ' + "${lstate}<br></div>"
+		mytext+='<div style=\"text-align:center;display:inline;font-size:1em;line-height=100%;margin-top:0em;margin-bottom:0em;\">' + (!possAlert ?  '<span style=\"font-size:1em;line-height=100%;\">' : '<span style=\"font-size:0.65em;line-height=65%;\">')  + "${condition_text}" + (!possAlert ? '' : ' | <span style=\"font-style:italic;\">' + "${alert}</span>" ) + '</span><br></div>'
 		mytext+="${temperature}" + (isFahrenheit ? '&deg;F ' : '&deg;C ') + '<img style="height:1em" src=' + "${condition_icon_url}" + '>' + '<span style = \"font-size:.65em;\">(Feels like ' + "${Summary_feelsLike}" + ')</span><br>'
 		mytext+='<div style=\"text-align:center;font-size:0.5em;line-height=50%;margin-top:0em;margin-bottom:0em;\">' + '<img style="height:2.0em;" src=' + state.iconStore + wind_bft_icon + iconClose + '>' + "${wind_dir} " + (Math.round("${wind}".toDouble()) == 0 ? 'calm' : "@ ${wind} " + (isDistanceMetric ? 'KPH' : 'MPH')) + ', gusts ' + (Math.round("${wind_gust}".toDouble()) == 0 ? 'calm' : "@ ${wind_gust}" + (isDistanceMetric ? " KPH" : " MPH"))
 		mytext+='<br><img style="height:1em;" src=' + state.iconStore + 'wi-barometer.png' + iconClose + '>' + "${pressure}" + (isPressureMetric ? 'MB' : 'IN') + '  <img style="height:1em;" src=' + state.iconStore + 'wi-humidity.png' + iconClose + '>' + "${humidity}" + '%  ' + '<img style="height:1em;" src=' + state.iconStore + 'wi-umbrella.png' + iconClose + '>' + "${percentPrecip}" + '%' + (precip_today > 0 ? '  <img style="height:1em;" src=' + state.iconStore + 'wi-raindrops.png' + iconClose + '>' + "${precip_today}" + (isRainMetric ? ' mm' : ' inches') : '')
