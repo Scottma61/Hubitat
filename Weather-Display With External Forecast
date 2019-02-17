@@ -168,7 +168,7 @@ metadata {
                 input "sourceImg", "bool", required: true, defaultValue: false, title: "Icons from: On = Standard - Off = Alternative"
                 input "iconStore", "text", required: true, defaultValue: "https://github.com/Scottma61/WeatherIcons/blob/master/", title: "Alternative Icon Location:"
             }
-            input "iconType", "bool", title: "Condition Icon: On = Station - Off = Forecast", required: true, defaultValue: false
+            input "iconType", "bool", title: "Condition Icon: On = Current - Off = Forecast", required: true, defaultValue: false
 	    	input "tempFormat", "enum", required: true, defaultValue: "Fahrenheit (°F)", title: "Display Unit - Temperature: Fahrenheit (°F) or Celsius (°C)",  options: ["Fahrenheit (°F)", "Celsius (°C)"]
             input "datetimeFormat", "enum", required: true, defaultValue: "m/d/yyyy 12 hour (am|pm)", title: "Display Unit - Date-Time Format",  options: [1:"m/d/yyyy 12 hour (am|pm)", 2:"m/d/yyyy 24 hour", 3:"mm/dd/yyyy 12 hour (am|pm)", 4:"mm/dd/yyyy 24 hour", 5:"d/m/yyyy 12 hour (am|pm)", 6:"d/m/yyyy 24 hour", 7:"dd/mm/yyyy 12 hour (am|pm)", 8:"dd/mm/yyyy 24 hour", 9:"yyyy/mm/dd 24 hour"]
             input "distanceFormat", "enum", required: true, defaultValue: "Miles (mph)", title: "Display Unit - Distance/Speed: Miles or Kilometres",  options: ["Miles (mph)", "Kilometers (kph)"]
@@ -667,7 +667,7 @@ def PollExternal(){
         last_poll_Forecast = futime.format("${dateFormat}") + ", " + futime.format("${timeFormat}")
         last_observation_Forecast = fotime.format("${dateFormat}") + ", " + fotime.format("${timeFormat}")
 		state.is_day = xu.current.is_day
-		if(condition_code==null || state.iconType == false) {
+		if(condition_code==null || state.iconType == true) {
 			condition_code = getWUCodeName(xu.current.condition.code)
 		}
 		condition_text = getDSTextName(xu.current.condition.text, condition_code)
@@ -708,10 +708,10 @@ def PollExternal(){
 			forecast_icon_url = fimgName
 			forecast_icon_only = fimgName.split("/")[-1].replaceFirst("\\?raw=true","")
 		} else {
-			condition_icon = (iconType ? '<img src=http:' + xu.current.condition.icon + '>' : '<img src=http:' + xu.forecast.forecastday[0].day.condition.icon + '>')
+			condition_icon = (state.iconType ? '<img src=http:' + xu.current.condition.icon + '>' : '<img src=http:' + xu.forecast.forecastday[0].day.condition.icon + '>')
 			condition_iconWithText = condition_icon + '<br>' + condition_text
-			condition_icon_url = (iconType ? 'https:' + xu.current.condition.icon : 'https:' + xu.forecast.forecastday[0].day.condition.icon)
-			condition_icon_only = (iconType ? xu.current.condition.icon.split("/")[-1] : xu.forecast.forecastday[0].day.condition.icon.split("/")[-1])
+			condition_icon_url = (state.iconType ? 'https:' + xu.current.condition.icon : 'https:' + xu.forecast.forecastday[0].day.condition.icon)
+			condition_icon_only = (state.iconType ? xu.current.condition.icon.split("/")[-1] : xu.forecast.forecastday[0].day.condition.icon.split("/")[-1])
 			forecast_icon = '<img src=http:' + xu.forecast.forecastday[0].day.condition.icon + '>'
 			forecast_icon_only = xu.forecast.forecastday[0].day.condition.icon.split("/")[-1]
 			forecast_icon_url = 'https:' + xu.forecast.forecastday[0].day.condition.icon
@@ -724,7 +724,7 @@ def PollExternal(){
 			log.error "<<< Dark Sky requires 'latitude,longtitude' for forecast location >>>"
 		}
 		GetDateFormat("${state.riseTime}")
-		fotime = new Date(ds.currently.time * 1000L).format(df, tZ)
+		fotime = new Date(ds.currently.time * 1000L)
         futime = new Date()
         last_poll_Forecast = futime.format("${dateFormat}", tZ) + ", " + futime.format("${timeFormat}", tZ)
         last_observation_Forecast = fotime.format("${dateFormat}", tZ) + ", " + fotime.format("${timeFormat}", tZ)
@@ -777,7 +777,7 @@ def PollExternal(){
 			default: forecast_code = "unknown"; break;
 		}
 		forecast_text = getDSTextName(ds.daily.data[0].summary, forecast_code)
-		if(condition_code == null || state.iconType == false){
+		if(condition_code == null || state.iconType == true){
 			switch(ds.currently.icon) {
 				case "clear-day": condition_code = "sunny"; break;
 				case "clear-night": condition_code = "nt_clear"; break;
