@@ -140,8 +140,6 @@ metadata {
         attribute "rainDayAfterTomorrow", "string"
 
 // SunriseSunSet Sourced variables
-        attribute "twilight_begin", "string"
-        attribute "twilight_end", "string"
         attribute "sunsetTime", "string"
         attribute "sunriseTime", "string"
         
