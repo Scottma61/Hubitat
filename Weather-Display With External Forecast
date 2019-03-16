@@ -44,10 +44,10 @@
  *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
  *  for the specific language governing permissions and limitations under the License.
  *
- *  Last Update 02/16/2019
+ *  Last Update 03/16/2019
  * { Left room below to document version changes...}
  *
- *
+ *  V3.0.1 - Code tweaks and corrections.                                                      - 03/16/2019
  *  V3.0.0 - Major code optimization/reorganization - Removed WU option                        - 02/16/2019
  *  V2.1.6 - Format cleanup; improved Dark Sky condition mapping                               - 01/21/2019
  *  V2.1.5 - myTile redo - added icons, Pressure, Chance of rain, Precipitation                - 01/12/2019
@@ -145,27 +145,39 @@ metadata {
         
     }
     preferences() {
-        datetimeFormat = 1
-        sourceastronomy = 1
-        extSource = 0
-        is_day = 0
-        sourceImg = true 
-        iconStore = "https://github.com/Scottma61/WeatherIcons/blob/master/"
-        section("Query Inputs"){
-            input "extSource", "enum", title: "Select External Source", required:true, defaultValue: "None", options: [1:"None", 2:"Apixu", 3:"DarkSky"]
+        if (datetimeFormat == null) datetimeFormat = 1
+        if (sourceastronomy == null) sourceastronomy = 1
+        if (extSource == null) extSource = 1
+        if (is_day == null) is_day = 0
+        if (sourceImg == null) sourceImg = true 
+        if (iconStore == null) iconStore = "https://github.com/Scottma61/WeatherIcons/blob/master/"
+		if (apiKey == null) apiKey = "Type API Key Here"
+		if (pollIntervalForecast == null) pollIntervalForecast = "3 Hours"
+		if (pollLocationForecast == null) pollLocationForecast = "ZIP Code or Location"		
+		if (iconType == null) iconType = false
+		if (tempFormat == null) tempFormat = "Fahrenheit (°F)"
+		if (datetimeFormat == null) datetimeFormat = "m/d/yyyy 12 hour (am|pm)"
+		if (distanceFormat == null) distanceFormat = "Miles (mph)"
+		if (pressureFormat == null) pressureFormat = "Inches"
+		if (rainFormat == null) rainFormat = "Inches"
+		if (summaryType == null) summaryType = false
+		if (logSet == null) logSet = false
+		if (sourcefeelsLike == null) sourcefeelsLike = false
+		if (sourceIllumination == null) sourceIllumination = true
+		if (sourceUV == null) sourceUV = true
+		if (sourceastronomy == null) sourceastronomy = "Sunrise-Sunset.org"
+
+		section("Query Inputs"){
+            input "extSource", "enum", title: "Select External Source", required:true, defaultValue: 1, options: [1:"None", 2:"Apixu", 3:"DarkSky"]
             input "pollIntervalStation", "enum", title: "Station Poll Interval", required: true, defaultValue: "3 Hours", options: ["Manual Poll Only", "5 Minutes", "10 Minutes", "15 Minutes", "30 Minutes", "1 Hour", "3 Hours"]
             input "stationLatHemi", "enum", title: "Station Northern or Southern hemisphere?", required: true, defaultValue: "North", options: ["North", "South"]
             input "stationLongHemi", "enum", title: "Station East or West of GMT (London, UK)?", required: true, defaultValue: "West", options: ["West", "East"]
             input "pollLocationStation", "text", required: true, title: "Station Data File Location:", defaultValue: "http://"
-            LOGINFO("extSource: ${extSource}")
-            if(extSource.toInteger() != 1){
-                input "apiKey", "text", required: true, title: "API Key"
-                input "pollIntervalForecast", "enum", title: "External Source Poll Interval", required: true, defaultValue: "3 Hours", options: ["Manual Poll Only", "5 Minutes", "10 Minutes", "15 Minutes", "30 Minutes", "1 Hour", "3 Hours"]
-                input "pollLocationForecast", "text", required: true, title: "ZIP Code or Location"
-				LOGINFO("pollLocationForecast: ${pollLocationForecast}")                
-                input "sourceImg", "bool", required: true, defaultValue: false, title: "Icons from: On = Standard - Off = Alternative"
-                input "iconStore", "text", required: true, defaultValue: "https://github.com/Scottma61/WeatherIcons/blob/master/", title: "Alternative Icon Location:"
-            }
+			input "apiKey", "text", required: true, defaultValue: "Type API Key Here", title: "API Key"
+			input "pollIntervalForecast", "enum", title: "External Source Poll Interval", required: true, defaultValue: "3 Hours", options: ["Manual Poll Only", "5 Minutes", "10 Minutes", "15 Minutes", "30 Minutes", "1 Hour", "3 Hours"]
+			input "pollLocationForecast", "text", required: true, title: "ZIP Code or Location"
+			input "sourceImg", "bool", required: true, defaultValue: false, title: "Icons from: On = Standard - Off = Alternative"
+			input "iconStore", "text", required: true, defaultValue: "https://github.com/Scottma61/WeatherIcons/blob/master/", title: "Alternative Icon Location:"
             input "iconType", "bool", title: "Condition Icon: On = Current - Off = Forecast", required: true, defaultValue: false
 	    	input "tempFormat", "enum", required: true, defaultValue: "Fahrenheit (°F)", title: "Display Unit - Temperature: Fahrenheit (°F) or Celsius (°C)",  options: ["Fahrenheit (°F)", "Celsius (°C)"]
             input "datetimeFormat", "enum", required: true, defaultValue: "m/d/yyyy 12 hour (am|pm)", title: "Display Unit - Date-Time Format",  options: [1:"m/d/yyyy 12 hour (am|pm)", 2:"m/d/yyyy 24 hour", 3:"mm/dd/yyyy 12 hour (am|pm)", 4:"mm/dd/yyyy 24 hour", 5:"d/m/yyyy 12 hour (am|pm)", 6:"d/m/yyyy 24 hour", 7:"dd/mm/yyyy 12 hour (am|pm)", 8:"dd/mm/yyyy 24 hour", 9:"yyyy/mm/dd 24 hour"]
@@ -174,8 +186,6 @@ metadata {
             input "rainFormat", "enum", required: true, defaultValue: "Inches", title: "Display Unit - Precipitation: Inches or Millimetres",  options: ["Inches", "Millimetres"]
             input "summaryType", "bool", title: "Full Weather Summary", required: true, defaultValue: false
             input "logSet", "bool", title: "Create extended Logging", required: true, defaultValue: false
-            
-
             input "sourcefeelsLike", "bool", required: true, title: "Feelslike from Weather-Display?", defaultValue: false
 		    input "sourceIllumination", "bool", required: true, title: "Illuminance from Weather-Display?", defaultValue: true
             input "sourceUV", "bool", required: true, title: "UV from Weather-Display?", defaultValue: true
@@ -187,7 +197,7 @@ metadata {
 def updated() {
     unschedule()
     logCheck()
-	state.driverVersion = "3.0.0"    // ************************* Update as required *************************************
+	state.driverVersion = "3.0.1"    // ************************* Update as required *************************************
 	state.driverNameSpace = "Matthew"
     
     state.extSource = (settings?.extSource ?: 1).toInteger()
@@ -223,7 +233,6 @@ def updated() {
 	state.noonTime = new Date().parse(df, "${yesterday}")
 	state.tw_begin = new Date().parse(df, "${yesterday}")
 	state.tw_end = new Date().parse(df, "${yesterday}")
-
 	state.is_day = is_day
 	
     if(state.extSource > 1){
@@ -292,18 +301,6 @@ def PollStationNow() {
 		stationUpTime = new Date()
 	}
     //  *****  stage Weather-Display variables  *****
-	sotime = new Date().parse("HH:mm d/M/yyyy", "${wd.time.time_date}", tZ)
-	sutime = new Date().parse("HH:mm d/M/yyyy", "${wd.time.time_date}", tZ)
-	if(state.extSource==1){
-    	fotime = new Date().parse("HH:mm d/M/yyyy", "${wd.time.time_date}", tZ)
-		last_observation_Forecast = fotime.format("${dateFormat}", tZ) + ", " + fotime.format("${timeFormat}", tZ)
-		futime = new Date().parse("HH:mm d/M/yyyy", "${wd.time.time_date}", tZ)
-		last_poll_Forecast = futime.format("${dateFormat}", tZ) + ", " + futime.format("${timeFormat}", tZ)
-	}
-	last_poll_Station = sutime.format("${dateFormat}", tZ) + ", " + sutime.format("${timeFormat}", tZ)
-	last_observation_Station = sotime.format("${dateFormat}", tZ) + ", " + sotime.format("${timeFormat}", tZ)
-    sDate = sutime.format("yyyy-MM-dd", tZ)
-    sTimeOnly = sutime.format("HH:mm", tZ)
 	if(state.pollLocationForecast.contains(',')==true) {
 		latitude=state.pollLocationForecast.split(',')[0].toDouble()
 		longitude=state.pollLocationForecast.split(',')[1].toDouble()
@@ -319,6 +316,52 @@ def PollStationNow() {
 			longitude =  0 - wd.station.longitude.toDouble()
 		}
 	}
+	sotime = new Date().parse("HH:mm d/M/yyyy", "${wd.time.time_date}", tZ)
+	sutime = new Date().parse("HH:mm d/M/yyyy", "${wd.time.time_date}", tZ)
+	if(state.extSource==1){
+    	fotime = new Date().parse("HH:mm d/M/yyyy", "${wd.time.time_date}", tZ)
+		last_observation_Forecast = fotime.format("${dateFormat}", tZ) + ", " + fotime.format("${timeFormat}", tZ)
+		futime = new Date().parse("HH:mm d/M/yyyy", "${wd.time.time_date}", tZ)
+		last_poll_Forecast = futime.format("${dateFormat}", tZ) + ", " + futime.format("${timeFormat}", tZ)
+	}
+	last_poll_Station = sutime.format("${dateFormat}", tZ) + ", " + sutime.format("${timeFormat}", tZ)
+	last_observation_Station = sotime.format("${dateFormat}", tZ) + ", " + sotime.format("${timeFormat}", tZ)
+    sDate = sutime.format("yyyy-MM-dd", tZ)
+    sTimeOnly = sutime.format("HH:mm", tZ)
+	if(state.sourceastronomy == 1) {
+		GetDateFormat("${state.riseTime}")
+		state.setTime = Date.parse("yyyy-MM-dd HH:mm", fotime.format("yyyy-MM-dd", tZ) + " ${wd.everything.astronomy.sun.sunset_time.hour}" + ":" + "${wd.everything.astronomy.sun.sunset_time.minute}")
+		state.riseTime = Date.parse("yyyy-MM-dd HH:mm", fotime.format("yyyy-MM-dd", tZ) + " ${wd.everything.astronomy.sun.sunrise_time.hour}" + ":" + "${wd.everything.astronomy.sun.sunrise_time.minute}")
+	} else if (state.sourceastronomy == 2) {
+		state.riseTime = Date.parse("yyyy-MM-dd hh:mm a", "${Date.parse("yyyy-MM-dd HH:mm", "${xu.current.last_updated}", tZ).format("yyyy-MM-dd") + " ${xu.forecast.forecastday[0].astro.sunrise}"}").format(df, tZ)
+		state.setTime = Date.parse("yyyy-MM-dd hh:mm a", "${Date.parse("yyyy-MM-dd HH:mm", "${xu.current.last_updated}", tZ).format("yyyy-MM-dd") + " ${xu.forecast.forecastday[0].astro.sunset}"}").format(df, tZ)
+	} else if (state.sourceastronomy == 3) {
+		state.riseTime = new Date(ds.daily.data[0].sunriseTime * 1000L).format(df, tZ)
+		state.setTime = new Date(ds.daily.data[0].sunsetTime * 1000L).format(df, tZ)
+	} else if (state.sourceastronomy == 4) {
+		cDate = new Date().format("yyyy-MM-dd", tZ)
+		GetDateFormat("${state.riseTime}")
+		srDate = new Date().parse(df, "${state.riseTime}").format("yyyy-MM-dd", tZ)
+		ssDate = new Date().parse(df, "${state.setTime}").format("yyyy-MM-dd", tZ)	
+		if(!((cDate == srDate) && (cDate == ssDate)) && state.sourceIllumination==false) {
+			getSunriseAndSunset(latitude, longitude, sutime.format("yyyy-MM-dd", tZ))      
+			state.riseTime = new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", "${sunriseAndSunset.results.sunrise}").format(df, tZ)
+			state.setTime = new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", "${sunriseAndSunset.results.sunset}").format(df, tZ)
+		}
+	}		
+	if(state.riseTime == null || state.setTime == null) {
+		state.is_day = 1
+	} else {
+		GetDateFormat("${state.riseTime}")
+		Date checkTime = new Date()
+		srTime = new Date().parse(df, "${state.riseTime}")
+		ssTime = new Date().parse(df, "${state.setTime}")
+		if(srTime <= checkTime && ssTime >= checkTime) {
+			state.is_day = 1
+		} else {
+			state.is_day = 0
+		}
+	}
     if(!cloud){
         if(!wd.everything.weather.solar.percentage){
             cloud = 0.1
@@ -332,7 +375,7 @@ def PollStationNow() {
     }
 	if(state.extSource==1){
 		condition_code = (state.is_day ? '' : 'nt_')
-		switch(wd.everything.forecast.icon.code.toInteger()) {
+		switch(wd.everything.forecast.icon.code.toInteger() ? wd.everything.forecast.icon.code.toInteger(): 99) {
 			case 0: condition_code += 'sunny'; break;    
 			case 1: condition_code += 'clear'; break;        
 			case 2: condition_code += 'partlycloudy'; break;
@@ -429,9 +472,6 @@ def PollStationNow() {
 	if(state.extSource==1){
 	    possAlert = null
         if(!alert){alert = "Weather alerts are not available from this source."}		
-        condition_icon = '<img src=https://icons.wxug.com/i/c/a/' + condition_code + '.gif>'
-        condition_iconWithText = '<img src=https://icons.wxug.com/i/c/a/' + condition_code + '.gif><br>' + condition_text
-        condition_icon_url = 'https://icons.wxug.com/i/c/a/' + condition_code +'.gif'
         if(!percentPrecip){percentPrecip = 'Not available from this source'}
         if(!chanceOfRain){chanceOfRain = 'Not available from this source'}
 	}
@@ -469,11 +509,6 @@ def PollStationNow() {
     wind_bft = wd.everything.weather.wind.avg_speed.bft
 	wind_string = "Wind: ${wind_string_bft} from the ${wind_direction}" + (Math.round(wind) == 0 ? '': " at " + String.format("%.1f" , wind) + (isDistanceMetric ? " KPH" : " MPH"))
 
-	if(state.sourceastronomy == 1) {
-		GetDateFormat("${state.riseTime}")
-		state.setTime = Date.parse("yyyy-MM-dd HH:mm", fotime.format("yyyy-MM-dd", tZ) + " ${wd.everything.astronomy.sun.sunset_time.hour}" + ":" + "${wd.everything.astronomy.sun.sunset_time.minute}")
-		state.riseTime = Date.parse("yyyy-MM-dd HH:mm", fotime.format("yyyy-MM-dd", tZ) + " ${wd.everything.astronomy.sun.sunrise_time.hour}" + ":" + "${wd.everything.astronomy.sun.sunrise_time.minute}")
-	}
 	//  ***** present Weather-Display variables  *****
     sendEvent(name: "last_poll_Station", value: last_poll_Station, displayed: true)    
 	sendEvent(name: "last_observation_Station", value: last_observation_Station, displayed: true)    
@@ -506,7 +541,28 @@ def PollStationNow() {
     if(state.sourcefeelsLike==true || state.extSource==1){
 		sendEvent(name: "feelsLike", value: "${sfeelsLike}", unit: (isFahrenheit ? '°F' : '°C'), displayed: true) // only needed for SmartTiles dashboard
     }
-	if(state.iconType && state.extSource==1) {
+	if(state.sourceImg==false && state.extSource==1){
+		imgName = getImgName(condition_text)
+		condition_icon = '<img src=' + imgName + '>'
+		condition_iconWithText = "<img src=" + imgName + "><br>" + condition_text
+		condition_icon_url = imgName
+		condition_icon_only = imgName.split("/")[-1].replaceFirst("\\?raw=true","")
+		fimgName = getImgName(forecast_text)
+		forecast_icon = '<img src=' + fimgName + '>'
+		forecast_iconWithText = "<img src=" + fimgName + "><br>" + forecast_text
+		forecast_icon_url = fimgName
+		forecast_icon_only = fimgName.split("/")[-1].replaceFirst("\\?raw=true","")
+	} else if(state.sourceImg==true && state.extSource==1) {
+		condition_icon = '<img src=https://icons.wxug.com/i/c/a/' + condition_code + '.gif>'
+		condition_iconWithText = '<img src=https://icons.wxug.com/i/c/a/' + condition_code + '.gif><br>' + condition_text
+		condition_icon_url = 'https://icons.wxug.com/i/c/a/' + condition_code +'.gif'
+		condition_icon_only = condition_code +'.gif'
+		forecast_icon = '<img src=https://icons.wxug.com/i/c/a/' + forecast_code + '.gif>'
+		forecast_iconWithText = '<img src=https://icons.wxug.com/i/c/a/' + forecast_code + '.gif><br>' + forecast_text
+		forecast_icon_only = forecast_code
+		forecast_icon_url = 'https://icons.wxug.com/i/c/a/' + forecast_code + '.gif'
+	}
+	if(state.extSource==1) {  //state.iconType && 
 		sendEvent(name: "condition_code", value: condition_code, displayed: true)
 		sendEvent(name: "condition_text", value: condition_text, displayed: true)            
     	sendEvent(name: "icon", value: condition_icon, displayed: true)
@@ -665,9 +721,7 @@ def PollExternal(){
         last_poll_Forecast = futime.format("${dateFormat}") + ", " + futime.format("${timeFormat}")
         last_observation_Forecast = fotime.format("${dateFormat}") + ", " + fotime.format("${timeFormat}")
 		state.is_day = xu.current.is_day
-		if(condition_code==null || state.iconType == true) {
-			condition_code = getWUCodeName(xu.current.condition.code)
-		}
+		condition_code = getWUCodeName((state.iconType ? xu.current.condition.code : xu.forecast.forecastday[0].day.condition.code))
 		condition_text = getDSTextName(xu.current.condition.text, condition_code)
 		weatherIcon = condition_code
 		weather = condition_text
@@ -695,12 +749,12 @@ def PollExternal(){
 		sendEvent(name: "lux", value: lux, unit: 'lux', displayed: true)
 		sendEvent(name: "illuminance", value: illuminance, unit: 'lux', displayed: true)
 		if(state.sourceImg==false){
-			imgName = getImgName((state.iconType ? xu.current.condition.code : xu.forecast.forecastday[0].day.condition.code))
+			imgName = getImgName((state.iconType ? xu.current.condition.code.toInteger() : xu.forecast.forecastday[0].day.condition.code.toInteger()))
 			condition_icon = '<img src=' + imgName + '>'
 			condition_iconWithText = "<img src=" + imgName + "><br>" + condition_text
 			condition_icon_url = imgName
-			condition_icon_only = imgName.split("/")[-1].replaceFirst("\\?raw=true","")
-			fimgName = getImgName(forecast_text)
+			condition_icon_only = imgName.split("/")[-1].replaceFirst("\\?raw=true","")		
+			fimgName = getImgName(xu.forecast.forecastday[0].day.condition.code)
 			forecast_icon = '<img src=' + fimgName + '>'
 			forecast_iconWithText = "<img src=" + fimgName + "><br>" + forecast_text
 			forecast_icon_url = fimgName
@@ -828,7 +882,6 @@ def PollExternal(){
 			forecast_icon_url = 'https://icons.wxug.com/i/c/a/' + forecast_code + '.gif'
 		}
     }	
-//    if(state.extSource >=2){PollStationNow()}
 	PollStationNow()
 	localSunset = state.setTime
 	localSunrise = state.riseTime
@@ -1084,7 +1137,7 @@ public setDateTimeFormats(formatselector){
 
 private getImgName(wCode){
     url = state.iconStore
-    LOGINFO("wCode: " + wCode + "  state.is_day: " + state.is_day + " iconStore: " + state.iconState)
+    LOGINFO("wCode: " + wCode + "  state.is_day: " + state.is_day + " iconStore: " + state.iconStore)
     LUitem = LUTable.find{ (state.extSource==1 ? it.wuphrase : (state.extSource == 2 ? it.xucode : it.wucode)) == wCode && it.day == state.is_day }    
     LOGINFO("image url: " + url + (LUitem ? LUitem.img : 'na.png') + "?raw=true")
     return (url + (LUitem ? LUitem.img : 'na.png') + (((state.iconStore.toLowerCase().contains('://github.com/')) && (state.iconStore.toLowerCase().contains('/blob/master/'))) ? "?raw=true" : ""))    
