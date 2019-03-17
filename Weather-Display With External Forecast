@@ -375,7 +375,7 @@ def PollStationNow() {
     }
 	if(state.extSource==1){
 		condition_code = (state.is_day ? '' : 'nt_')
-		switch(wd.everything.forecast.icon.code.toInteger() ? wd.everything.forecast.icon.code.toInteger(): 99) {
+		switch(!wd.everything.forecast.icon.code ? 99 : wd.everything.forecast.icon.code.toInteger()) {
 			case 0: condition_code += 'sunny'; break;    
 			case 1: condition_code += 'clear'; break;        
 			case 2: condition_code += 'partlycloudy'; break;
