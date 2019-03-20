@@ -44,7 +44,7 @@
  *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
  *  for the specific language governing permissions and limitations under the License.
  *
- *  Last Update 03/19/2019
+ *  Last Update 03/20/2019
  * { Left room below to document version changes...}
  *
  *
@@ -55,7 +55,7 @@
  *
  *
  *
- *
+ *  V3.0.3 - Altered myTile to attempt to remain under to 1024 charater limit for Dashboard 2.0- 03/20/2019
  *  V3.0.2 - Instruction clarificatons and log improvements                                    - 03/19/2019
  *  V3.0.1 - Code tweaks and corrections.                                                      - 03/16/2019
  *  V3.0.0 - Major code optimization/reorganization - Removed WU option                        - 02/16/2019
@@ -207,7 +207,7 @@ metadata {
 def updated() {
     unschedule()
     logCheck()
-	state.driverVersion = "3.0.2"    // ************************* Update as required *************************************
+	state.driverVersion = "3.0.3"    // ************************* Update as required *************************************
 	state.driverNameSpace = "Matthew"
     
     state.extSource = (settings?.extSource ?: 1).toInteger()
@@ -970,12 +970,15 @@ def PollExternal(){
     Summary_vis = "Visibility is around " + String.format("%.1f" , vis) + (isDistanceMetric ? " kilometers." : " miles. ")
     SummaryMessage(state.summaryType, city, lstate, Summary_last_poll_date, Summary_last_poll_time, condition_text, "${humidity}"+'%', "${temperature}"+(isFahrenheit ? '°F. ' : '°C. '), Summary_forecastTemp, Summary_feelsLike, "${wind_string}", wind_gust, "${wind_direction}", Summary_precip, Summary_vis, alert)
 	iconClose = (((state.iconStore.toLowerCase().contains('://github.com/')) && (state.iconStore.toLowerCase().contains('/blob/master/'))) ? "?raw=true" : "")
-	def mytext ='<div style=\"text-align:center;display:inline;font-size:0.65em;line-height=65%;margin-top:0em;margin-bottom:0em;\">' + "${city}" + ', ' + "${lstate}<br></div>"
-		mytext+='<div style=\"text-align:center;display:inline;font-size:1em;line-height=100%;margin-top:0em;margin-bottom:0em;\">' + (!possAlert ?  '<span style=\"font-size:1em;line-height=100%;\">' : '<span style=\"font-size:0.65em;line-height=65%;\">')  + "${condition_text}" + (!possAlert ? '' : ' | <span style=\"font-style:italic;\">' + "${alert}</span>" ) + '</span><br></div>'
-		mytext+="${temperature}" + (isFahrenheit ? '&deg;F ' : '&deg;C ') + '<img style="height:1em" src=' + "${condition_icon_url}" + '>' + '<span style = \"font-size:.65em;\"> Feels like ' + "${Summary_feelsLike}" + '</span><br>'
-		mytext+='<div style=\"text-align:center;font-size:0.5em;line-height=50%;margin-top:0em;margin-bottom:0em;\">' + '<img style="height:2.0em;" src=' + state.iconStore + wind_bft_icon + iconClose + '>' + "${wind_direction} " + (Math.round(wind) == 0 ? 'calm' : "@ " + String.format("%.1f" , wind) + " " + (isDistanceMetric ? 'KPH' : 'MPH')) + ', gusts ' + (Math.round(wind_gust) == 0 ? 'calm' : "@ " + String.format("%.1f" , wind_gust) + (isDistanceMetric ? " KPH" : " MPH"))
-		mytext+='<br><img style="height:1em;" src=' + state.iconStore + 'wi-barometer.png' + iconClose + '>' + "${pressure}" + (isPressureMetric ? 'MB' : 'IN') + '  <img style="height:1em;" src=' + state.iconStore + 'wi-humidity.png' + iconClose + '>' + "${humidity}" + '%  ' + '<img style="height:1em;" src=' + state.iconStore + 'wi-umbrella.png' + iconClose + '>' + "${percentPrecip}" + '%' + (precip_today > 0 ? '  <img style="height:1em;" src=' + state.iconStore + 'wi-raindrops.png' + iconClose + '>' + "${precip_today}" + (isRainMetric ? ' mm' : ' inches') : '')
-		mytext+='<br><img style="height:1em;" src=' + state.iconStore + 'wi-sunrise.png' + iconClose + '>' + "${srDisp}" + '     <img style="height:1em;" src=' + state.iconStore + 'wi-sunset.png' + iconClose + '>' + "${ssDisp}" + '</div>'
+	alertStyleOpen = (!possAlert ?  '' : '<span style=\"font-size:0.65em;line-height=65%;\">')
+	alertStyleClose = (!possAlert ? '</span>' : ' | </span><span style=\"font-style:italic;\">' + "${alert}</span>" )
+	def mytext = '<div style=\"text-align:center;display:inline;margin-top:0em;margin-bottom:0em;font-size:0.65em;line-height=65%;\">' + "${city}" + ', ' + "${lstate}<br></div>"
+		mytext+= '<div style=\"font-size:1em;line-height=100%;\">' + "${alertStyleOpen}" + "${condition_text}" + "${alertStyleClose}" + '<br></div>'
+		mytext+= "${temperature}" + (isFahrenheit ? '&deg;F ' : '&deg;C ') + '<img style=\"height:2.0em\" src=' + "${condition_icon_url}" + '>' + '<span style = \"font-size:.65em;\"> Feels like ' + "${Summary_feelsLike}" + '</span><br>'
+		mytext+= '<div style=\"font-size:0.5em;line-height=50%;\">' + '<img style="height:2.0em;" src=' + state.iconStore + wind_bft_icon + iconClose + '>' + "${wind_direction} " + (Math.round(wind) == 0 ? 'calm' : "@ " + String.format("%.1f" , wind) + " " + (isDistanceMetric ? 'KPH' : 'MPH')) + ', gusts ' + (Math.round(wind_gust) == 0 ? 'calm' : "@ " + String.format("%.1f" , wind_gust) + (isDistanceMetric ? " KPH" : " MPH"))
+		mytext+= '<br><img src=' + state.iconStore + 'wi-barometer.png' + iconClose + '>' + "${pressure}" + (isPressureMetric ? 'MB' : 'IN') + '  <img src=' + state.iconStore + 'wi-humidity.png' + iconClose + '>' + "${humidity}" + '%  ' + '<img src=' + state.iconStore + 'wi-umbrella.png' + iconClose + '>' + "${percentPrecip}" + '%' + (precip_today > 0 ? '  <img src=' + state.iconStore + 'wi-raindrops.png' + iconClose + '>' + "${precip_today}" + (isRainMetric ? ' mm' : ' inches') : '')
+		mytext+= '<br><img src=' + state.iconStore + 'wi-sunrise.png' + iconClose + '>' + "${srDisp}" + '     <img src=' + state.iconStore + 'wi-sunset.png' + iconClose + '>' + "${ssDisp}" + '</div>'  //style="height:1em;" 
+	LOGINFO("myTile length: " + mytext.length())
 	sendEvent(name: "myTile", value: mytext, displayed: true)
 
 	return 
