@@ -44,9 +44,19 @@
  *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
  *  for the specific language governing permissions and limitations under the License.
  *
- *  Last Update 03/16/2019
+ *  Last Update 03/19/2019
  * { Left room below to document version changes...}
  *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *  V3.0.2 - Instruction clarificatons and log improvements                                    - 03/19/2019
  *  V3.0.1 - Code tweaks and corrections.                                                      - 03/16/2019
  *  V3.0.0 - Major code optimization/reorganization - Removed WU option                        - 02/16/2019
  *  V2.1.6 - Format cleanup; improved Dark Sky condition mapping                               - 01/21/2019
@@ -175,7 +185,7 @@ metadata {
             input "pollLocationStation", "text", required: true, title: "Station Data File Location:", defaultValue: "http://"
 			input "apiKey", "text", required: true, defaultValue: "Type API Key Here", title: "API Key"
 			input "pollIntervalForecast", "enum", title: "External Source Poll Interval", required: true, defaultValue: "3 Hours", options: ["Manual Poll Only", "5 Minutes", "10 Minutes", "15 Minutes", "30 Minutes", "1 Hour", "3 Hours"]
-			input "pollLocationForecast", "text", required: true, title: "ZIP Code or Location"
+			input "pollLocationForecast", "text", required: true, title: "Forecast location: ZIP Code (APIXU) or Latitude,longitude (DarkSky)"
 			input "sourceImg", "bool", required: true, defaultValue: false, title: "Icons from: On = Standard - Off = Alternative"
 			input "iconStore", "text", required: true, defaultValue: "https://github.com/Scottma61/WeatherIcons/blob/master/", title: "Alternative Icon Location:"
             input "iconType", "bool", title: "Condition Icon: On = Current - Off = Forecast", required: true, defaultValue: false
@@ -197,7 +207,7 @@ metadata {
 def updated() {
     unschedule()
     logCheck()
-	state.driverVersion = "3.0.1"    // ************************* Update as required *************************************
+	state.driverVersion = "3.0.2"    // ************************* Update as required *************************************
 	state.driverNameSpace = "Matthew"
     
     state.extSource = (settings?.extSource ?: 1).toInteger()
@@ -206,7 +216,7 @@ def updated() {
     state.stationLongHemi =  (settings?.stationLongHemi ?: "West")
     state.pollLocationStation = (settings?.pollLocationStation ?: "http://")
     state.pollIntervalForecast = (settings?.pollIntervalForecast ?: "3 Hours")
-    state.pollLocationForecast = (settings?.pollLocationForecast ?: "ZIP Code or Location")
+    state.pollLocationForecast = (settings?.pollLocationForecast ?: "ZIP Code (APIXU) or Latitude,longitude (DarkSky)")
     state.datetimeFormat = (settings?.datetimeFormat ?: 1).toInteger()
     state.distanceFormat = (settings?.distanceFormat ?: "Miles (mph)")
     state.pressureFormat = (settings?.pressureFormat ?: "Inches")
@@ -630,8 +640,13 @@ def PollExternal(){
     if(state.extSource == 3){
 // ***** refresh DarkSky data  *****
         log.info "Weather-Display Driver - INFO: DarkSky: Executing 'poll', location: ${location.name}"
+		if(state.pollLocationForecast.contains(',')==false) {
+			log.error "<<< Dark Sky requires 'latitude,longtitude' for forecast location >>>"
+		} else {
+			pollLocationForecastClean = state.pollLocationForecast.replace(" ", "")
+		}
         ds = [:]
-        paramsDS = [ uri: "https://api.darksky.net/forecast/${apiKey}/${pollLocationForecast}?units=us&exclude=minutely,hourly,flags" ]
+        paramsDS = [ uri: "https://api.darksky.net/forecast/${apiKey}/${pollLocationForecastClean}?units=us&exclude=minutely,hourly,flags" ]
         try {
             httpGet(paramsDS)		{ resp -> ds << resp.data }
         } catch (e) { log.error "Weather-Display Driver - ERROR: http call failed for DarkSky weather api: $e" }
@@ -691,14 +706,30 @@ def PollExternal(){
 	} else if (state.sourceastronomy == 3) {
 		state.riseTime = new Date(ds.daily.data[0].sunriseTime * 1000L).format(df, tZ)
 		state.setTime = new Date(ds.daily.data[0].sunsetTime * 1000L).format(df, tZ)
-	}
-	GetDateFormat("${state.riseTime}")
-	srDate = new Date().parse(df, "${state.riseTime}").format("yyyy-MM-dd", tZ)
-	ssDate = new Date().parse(df, "${state.setTime}").format("yyyy-MM-dd", tZ)	
-
-	if(!((cDate == srDate) && (cDate == ssDate)) && state.sourceIllumination==false) {
-		getSunriseAndSunset(latitude, longitude, sutime.format("yyyy-MM-dd", tZ))
-	}       
+	} else if (state.sourceastronomy == 4) {
+		cDate = new Date().format("yyyy-MM-dd", tZ)
+		GetDateFormat("${state.riseTime}")
+		srDate = new Date().parse(df, "${state.riseTime}").format("yyyy-MM-dd", tZ)
+		ssDate = new Date().parse(df, "${state.setTime}").format("yyyy-MM-dd", tZ)	
+		if(!((cDate == srDate) && (cDate == ssDate)) && state.sourceIllumination==false) {
+			getSunriseAndSunset(latitude, longitude, sutime.format("yyyy-MM-dd", tZ))      
+			state.riseTime = new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", "${sunriseAndSunset.results.sunrise}").format(df, tZ)
+			state.setTime = new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", "${sunriseAndSunset.results.sunset}").format(df, tZ)
+		}
+	}		
+	if(state.riseTime == null || state.setTime == null) {
+		state.is_day = 1
+	} else {
+		GetDateFormat("${state.riseTime}")
+		Date checkTime = new Date()
+		srTime = new Date().parse(df, "${state.riseTime}")
+		ssTime = new Date().parse(df, "${state.setTime}")
+		if(srTime <= checkTime && ssTime >= checkTime) {
+			state.is_day = 1
+		} else {
+			state.is_day = 0
+		}
+	}   
     if(state.extSource == 2){
 //  *****  stage APIXU.COM Variables  *****        
         fotime = new Date().parse("yyyy-MM-dd HH:mm", "${xu.current.last_updated}", tZ)
@@ -772,9 +803,6 @@ def PollExternal(){
     }
     if(state.extSource == 3){
 //  *****  stage DarkSky Variables  *****
-		if(state.pollLocationForecast.contains(',')==false) {
-			log.error "<<< Dark Sky requires 'latitude,longtitude' for forecast location >>>"
-		}
 		GetDateFormat("${state.riseTime}")
 		fotime = new Date(ds.currently.time * 1000L)
         futime = new Date()
