@@ -978,7 +978,10 @@ def PollExternal(){
 		mytext+= '<div style=\"font-size:0.5em;line-height=50%;\">' + '<img src=' + state.iconStore + wind_bft_icon + iconClose + '>' + "${wind_direction} " + (Math.round(wind) == 0 ? 'calm' : "@ " + String.format("%.1f" , wind) + " " + (isDistanceMetric ? 'KPH' : 'MPH')) + ', gusts ' + (Math.round(wind_gust) == 0 ? 'calm' : "@ " + String.format("%.1f" , wind_gust) + (isDistanceMetric ? " KPH" : " MPH"))  //style="height:2.0em;" 
 		mytext+= '<br><img src=' + state.iconStore + 'wb.png' + iconClose + '>' + "${pressure}" + (isPressureMetric ? 'MB' : 'IN') + '  <img src=' + state.iconStore + 'wh.png' + iconClose + '>' + "${humidity}" + '%  ' + '<img src=' + state.iconStore + 'wu.png' + iconClose + '>' + "${percentPrecip}" + '%' + (precip_today > 0 ? '  <img src=' + state.iconStore + 'wr.png' + iconClose + '>' + "${precip_today}" + (isRainMetric ? ' mm' : ' inches') : '')
 		mytext+= '<br><img src=' + state.iconStore + 'wsr.png' + iconClose + '>' + "${srDisp}" + '     <img src=' + state.iconStore + 'wss.png' + iconClose + '>' + "${ssDisp}" + '</div>'  //style="height:1em;" 
-	LOGINFO("myTile length: " + mytext.length())
+	if(mytext.length() >1024){
+		log.error "myTile length is too long at: " + mytext.length()
+		mytext = mytext.take(1024)
+	}
 	sendEvent(name: "myTile", value: mytext, displayed: true)
 
 	return 
