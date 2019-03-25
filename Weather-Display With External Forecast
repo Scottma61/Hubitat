@@ -972,18 +972,43 @@ def PollExternal(){
 	iconClose = (((state.iconStore.toLowerCase().contains('://github.com/')) && (state.iconStore.toLowerCase().contains('/blob/master/'))) ? "?raw=true" : "")
 	alertStyleOpen = (!possAlert ?  '' : '<span style=\"font-size:0.65em;line-height=65%;\">')
 	alertStyleClose = (!possAlert ? '</span>' : ' | </span><span style=\"font-style:italic;\">' + "${alert}</span>" )
-	def mytext = '<div style=\"text-align:center;display:inline;margin-top:0em;margin-bottom:0em;\">' + "${city}" + ', ' + "${lstate}<br></div>"
-		mytext+= "${alertStyleOpen}" + "${condition_text}" + "${alertStyleClose}" + '<br>'
-		mytext+= "${temperature}" + (isFahrenheit ? '&deg;F ' : '&deg;C ') + '<img style=\"height:2.0em\" src=' + "${condition_icon_url}" + '>' + '<span style = \"font-size:.65em;\"> Feels like ' + "${Summary_feelsLike}" + '</span><br>'
-		mytext+= '<div style=\"font-size:0.5em;line-height=50%;\">' + '<img src=' + state.iconStore + wind_bft_icon + iconClose + '>' + "${wind_direction} " + (Math.round(wind) == 0 ? 'calm' : "@ " + String.format("%.1f" , wind) + " " + (isDistanceMetric ? 'KPH' : 'MPH')) + ', gusts ' + (Math.round(wind_gust) == 0 ? 'calm' : "@ " + String.format("%.1f" , wind_gust) + (isDistanceMetric ? " KPH" : " MPH"))  //style="height:2.0em;" 
-		mytext+= '<br><img src=' + state.iconStore + 'wb.png' + iconClose + '>' + "${pressure}" + (isPressureMetric ? 'MB' : 'IN') + '  <img src=' + state.iconStore + 'wh.png' + iconClose + '>' + "${humidity}" + '%  ' + '<img src=' + state.iconStore + 'wu.png' + iconClose + '>' + "${percentPrecip}" + '%' + (precip_today > 0 ? '  <img src=' + state.iconStore + 'wr.png' + iconClose + '>' + "${precip_today}" + (isRainMetric ? ' mm' : ' inches') : '')
-		mytext+= '<br><img src=' + state.iconStore + 'wsr.png' + iconClose + '>' + "${srDisp}" + '     <img src=' + state.iconStore + 'wss.png' + iconClose + '>' + "${ssDisp}" + '</div>'  //style="height:1em;" 
-	if(mytext.length() >1024){
-		log.error "myTile length is too long at: " + mytext.length()
-		mytext = mytext.take(1024)
+	fileLength = (("${state.iconStore}" + "${iconClose}").length() + 10) * (precip_today > 0 ? 7 : 6)
+	myTileRawLength = ("${city}" + "${lstate}" + "${alertStyleOpen}"+ "${condition_text}" + "${alertStyleClose}" + "${temperature}" + "${condition_icon_url}" + "${Summary_feelsLike}"+  "${wind_bft_icon}" + "${wind_direction}" + "${pressure}" + "${humidity}").length()
+	precipLength = "${percentPrecip}".length() + (precip_today > 0 ? 18 : 0)
+	formatLength = 265
+	//82 first line formatting only; 4 second line; 63 thrird line; 48 fourth line; 31 fifth line; 35 sxith line  =~265
+	TotalLength = fileLength + myTileRawLength + precipLength + formatLength
+	LOGINFO("TotalLength: " + TotalLength)
+	log.error "TotalLength: " + TotalLength
+	if(TotalLength < 1024){
+		mytext = '<div style=\"text-align:center;display:inline;margin-top:0em;margin-bottom:0em;\">' + "${city}" + ', ' + "${lstate}</div><br>"
+			mytext+= "${alertStyleOpen}" + "${condition_text}" + "${alertStyleClose}" + '<br>'
+			mytext+= "${temperature}" + (isFahrenheit ? '&deg;F ' : '&deg;C ') + '<img style=\"height:2.0em\" src=' + "${condition_icon_url}" + '>' + '<span style= \"font-size:.65em;\"> Feels like ' + "${Summary_feelsLike}" + '</span><br>'
+			mytext+= '<div style=\"font-size:0.5em;line-height=50%;\">' + '<img src=' + state.iconStore + wind_bft_icon + iconClose + '>' + "${wind_direction} " + (Math.round(wind) == 0 ? 'calm' : "@ " + String.format("%.1f" , wind) + " " + (isDistanceMetric ? 'KPH' : 'MPH')) + ', gusts ' + (Math.round(wind_gust) == 0 ? 'calm' : "@ " + String.format("%.1f" , wind_gust) + (isDistanceMetric ? " KPH" : " MPH")) + '<br>'
+			mytext+= '<img src=' + state.iconStore + 'wb.png' + iconClose + '>' + "${pressure}" + (isPressureMetric ? 'MB' : 'IN') + '  <img src=' + state.iconStore + 'wh.png' + iconClose + '>' + "${humidity}" + '%  ' + '<img src=' + state.iconStore + 'wu.png' + iconClose + '>' + "${percentPrecip}" + '%' + (precip_today > 0 ? '  <img src=' + state.iconStore + 'wr.png' + iconClose + '>' + "${precip_today}" + (isRainMetric ? ' mm' : ' inches') : '') + '<br>'
+			mytext+= '<img src=' + state.iconStore + 'wsr.png' + iconClose + '>' + "${srDisp}" + '     <img src=' + state.iconStore + 'wss.png' + iconClose + '>' + "${ssDisp}" + '</div>'
+		LOGINFO("mytext: ${mytext}")
+		log.debug "mytext: ${mytext}"
+	} else {
+		alertStyleOpen = ''
+		alertStyleClose = (!possAlert ? '' : ' | ' + "${alert}" )
+		mytext = "${city}" + ', ' + "${lstate}" + "<br>"
+			mytext+= "${alertStyleOpen}" + "${condition_text}" + "${alertStyleClose}" + '<br>'
+			mytext+= "${temperature}" + (isFahrenheit ? '&deg;F ' : '&deg;C ') + '<img src=' + "${condition_icon_url}" + '>' + ' Feels like ' + "${Summary_feelsLike}" + '<br>'
+			mytext+= "${wind_direction} " + (Math.round(wind) == 0 ? 'calm' : "@ " + String.format("%.1f" , wind) + (isDistanceMetric ? ' KPH' : ' MPH')) + ', gusts ' + (Math.round(wind_gust) == 0 ? 'calm' : "@ " + String.format("%.1f" , wind_gust) + (isDistanceMetric ? " KPH" : " MPH")) + '<br>'
+			mytext+= "${pressure}" + (isPressureMetric ? 'MB' : 'IN') + "     ${humidity}" + '%  ' + "     ${percentPrecip}" + '%' + (precip_today > 0 ? "     ${precip_today}" + (isRainMetric ? ' mm' : ' inches') : '') + '<br>'
+			mytext+= 'rise ' + "${srDisp}" + '     set ' + "${ssDisp}"
+		log.debug "1004 mytext: ${mytext}"
+		log.debug "mytext length: " + "${mytext}".length()
+		if("${mytext}".length() > 1024){
+			log.error "myTile length is too long at: " + "${mytext}".length() + " and was truncated."
+			LOGINFO("myTile length: " + "${mytext}".length() + " was trucated.")
+			mytext = "${mytext}".take(1024)
+		}
+		log.debug "1011 mytext: ${mytext}"
+		LOGINFO("mytext: ${mytext}")
 	}
 	sendEvent(name: "myTile", value: mytext, displayed: true)
-
 	return 
 }
 
