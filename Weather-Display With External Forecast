@@ -979,7 +979,6 @@ def PollExternal(){
 	//82 first line formatting only; 4 second line; 63 thrird line; 48 fourth line; 31 fifth line; 35 sxith line  =~265
 	TotalLength = fileLength + myTileRawLength + precipLength + formatLength
 	LOGINFO("TotalLength: " + TotalLength)
-	log.error "TotalLength: " + TotalLength
 	if(TotalLength < 1024){
 		mytext = '<div style=\"text-align:center;display:inline;margin-top:0em;margin-bottom:0em;\">' + "${city}" + ', ' + "${lstate}</div><br>"
 			mytext+= "${alertStyleOpen}" + "${condition_text}" + "${alertStyleClose}" + '<br>'
@@ -988,7 +987,6 @@ def PollExternal(){
 			mytext+= '<img src=' + state.iconStore + 'wb.png' + iconClose + '>' + "${pressure}" + (isPressureMetric ? 'MB' : 'IN') + '  <img src=' + state.iconStore + 'wh.png' + iconClose + '>' + "${humidity}" + '%  ' + '<img src=' + state.iconStore + 'wu.png' + iconClose + '>' + "${percentPrecip}" + '%' + (precip_today > 0 ? '  <img src=' + state.iconStore + 'wr.png' + iconClose + '>' + "${precip_today}" + (isRainMetric ? ' mm' : ' inches') : '') + '<br>'
 			mytext+= '<img src=' + state.iconStore + 'wsr.png' + iconClose + '>' + "${srDisp}" + '     <img src=' + state.iconStore + 'wss.png' + iconClose + '>' + "${ssDisp}" + '</div>'
 		LOGINFO("mytext: ${mytext}")
-		log.debug "mytext: ${mytext}"
 	} else {
 		alertStyleOpen = ''
 		alertStyleClose = (!possAlert ? '' : ' | ' + "${alert}" )
@@ -998,14 +996,10 @@ def PollExternal(){
 			mytext+= "${wind_direction} " + (Math.round(wind) == 0 ? 'calm' : "@ " + String.format("%.1f" , wind) + (isDistanceMetric ? ' KPH' : ' MPH')) + ', gusts ' + (Math.round(wind_gust) == 0 ? 'calm' : "@ " + String.format("%.1f" , wind_gust) + (isDistanceMetric ? " KPH" : " MPH")) + '<br>'
 			mytext+= "${pressure}" + (isPressureMetric ? 'MB' : 'IN') + "     ${humidity}" + '%  ' + "     ${percentPrecip}" + '%' + (precip_today > 0 ? "     ${precip_today}" + (isRainMetric ? ' mm' : ' inches') : '') + '<br>'
 			mytext+= 'rise ' + "${srDisp}" + '     set ' + "${ssDisp}"
-		log.debug "1004 mytext: ${mytext}"
-		log.debug "mytext length: " + "${mytext}".length()
 		if("${mytext}".length() > 1024){
 			log.error "myTile length is too long at: " + "${mytext}".length() + " and was truncated."
-			LOGINFO("myTile length: " + "${mytext}".length() + " was trucated.")
 			mytext = "${mytext}".take(1024)
 		}
-		log.debug "1011 mytext: ${mytext}"
 		LOGINFO("mytext: ${mytext}")
 	}
 	sendEvent(name: "myTile", value: mytext, displayed: true)
