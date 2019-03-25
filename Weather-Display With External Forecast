@@ -44,7 +44,7 @@
  *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
  *  for the specific language governing permissions and limitations under the License.
  *
- *  Last Update 03/20/2019
+ *  Last Update 03/24/2019
  * { Left room below to document version changes...}
  *
  *
@@ -54,7 +54,7 @@
  *
  *
  *
- *
+ *  V3.0.4 - Further myTile character reduction.                                               - 03/24/2019
  *  V3.0.3 - Altered myTile to attempt to remain under to 1024 charater limit for Dashboard 2.0- 03/20/2019
  *  V3.0.2 - Instruction clarificatons and log improvements                                    - 03/19/2019
  *  V3.0.1 - Code tweaks and corrections.                                                      - 03/16/2019
@@ -207,7 +207,7 @@ metadata {
 def updated() {
     unschedule()
     logCheck()
-	state.driverVersion = "3.0.3"    // ************************* Update as required *************************************
+	state.driverVersion = "3.0.4"    // ************************* Update as required *************************************
 	state.driverNameSpace = "Matthew"
     
     state.extSource = (settings?.extSource ?: 1).toInteger()
@@ -441,7 +441,7 @@ def PollStationNow() {
         } 
     }
 
-	wind_bft_icon = 'wi-wind-beaufort-' + wd.everything.weather.wind.avg_speed.bft.toInteger().toString() + '.png'
+	wind_bft_icon = 'wb' + wd.everything.weather.wind.avg_speed.bft.toInteger().toString() + '.png'
     switch((wd.everything.weather.wind.avg_speed.bft).toInteger()){
 		case 0: wind_string_bft = "Calm"; break;
 		case 1: wind_string_bft = "Light air"; break;
@@ -972,12 +972,12 @@ def PollExternal(){
 	iconClose = (((state.iconStore.toLowerCase().contains('://github.com/')) && (state.iconStore.toLowerCase().contains('/blob/master/'))) ? "?raw=true" : "")
 	alertStyleOpen = (!possAlert ?  '' : '<span style=\"font-size:0.65em;line-height=65%;\">')
 	alertStyleClose = (!possAlert ? '</span>' : ' | </span><span style=\"font-style:italic;\">' + "${alert}</span>" )
-	def mytext = '<div style=\"text-align:center;display:inline;margin-top:0em;margin-bottom:0em;font-size:0.65em;line-height=65%;\">' + "${city}" + ', ' + "${lstate}<br></div>"
-		mytext+= '<div style=\"font-size:1em;line-height=100%;\">' + "${alertStyleOpen}" + "${condition_text}" + "${alertStyleClose}" + '<br></div>'
+	def mytext = '<div style=\"text-align:center;display:inline;margin-top:0em;margin-bottom:0em;\">' + "${city}" + ', ' + "${lstate}<br></div>"
+		mytext+= "${alertStyleOpen}" + "${condition_text}" + "${alertStyleClose}" + '<br>'
 		mytext+= "${temperature}" + (isFahrenheit ? '&deg;F ' : '&deg;C ') + '<img style=\"height:2.0em\" src=' + "${condition_icon_url}" + '>' + '<span style = \"font-size:.65em;\"> Feels like ' + "${Summary_feelsLike}" + '</span><br>'
-		mytext+= '<div style=\"font-size:0.5em;line-height=50%;\">' + '<img style="height:2.0em;" src=' + state.iconStore + wind_bft_icon + iconClose + '>' + "${wind_direction} " + (Math.round(wind) == 0 ? 'calm' : "@ " + String.format("%.1f" , wind) + " " + (isDistanceMetric ? 'KPH' : 'MPH')) + ', gusts ' + (Math.round(wind_gust) == 0 ? 'calm' : "@ " + String.format("%.1f" , wind_gust) + (isDistanceMetric ? " KPH" : " MPH"))
-		mytext+= '<br><img src=' + state.iconStore + 'wi-barometer.png' + iconClose + '>' + "${pressure}" + (isPressureMetric ? 'MB' : 'IN') + '  <img src=' + state.iconStore + 'wi-humidity.png' + iconClose + '>' + "${humidity}" + '%  ' + '<img src=' + state.iconStore + 'wi-umbrella.png' + iconClose + '>' + "${percentPrecip}" + '%' + (precip_today > 0 ? '  <img src=' + state.iconStore + 'wi-raindrops.png' + iconClose + '>' + "${precip_today}" + (isRainMetric ? ' mm' : ' inches') : '')
-		mytext+= '<br><img src=' + state.iconStore + 'wi-sunrise.png' + iconClose + '>' + "${srDisp}" + '     <img src=' + state.iconStore + 'wi-sunset.png' + iconClose + '>' + "${ssDisp}" + '</div>'  //style="height:1em;" 
+		mytext+= '<div style=\"font-size:0.5em;line-height=50%;\">' + '<img src=' + state.iconStore + wind_bft_icon + iconClose + '>' + "${wind_direction} " + (Math.round(wind) == 0 ? 'calm' : "@ " + String.format("%.1f" , wind) + " " + (isDistanceMetric ? 'KPH' : 'MPH')) + ', gusts ' + (Math.round(wind_gust) == 0 ? 'calm' : "@ " + String.format("%.1f" , wind_gust) + (isDistanceMetric ? " KPH" : " MPH"))  //style="height:2.0em;" 
+		mytext+= '<br><img src=' + state.iconStore + 'wb.png' + iconClose + '>' + "${pressure}" + (isPressureMetric ? 'MB' : 'IN') + '  <img src=' + state.iconStore + 'wh.png' + iconClose + '>' + "${humidity}" + '%  ' + '<img src=' + state.iconStore + 'wu.png' + iconClose + '>' + "${percentPrecip}" + '%' + (precip_today > 0 ? '  <img src=' + state.iconStore + 'wr.png' + iconClose + '>' + "${precip_today}" + (isRainMetric ? ' mm' : ' inches') : '')
+		mytext+= '<br><img src=' + state.iconStore + 'wsr.png' + iconClose + '>' + "${srDisp}" + '     <img src=' + state.iconStore + 'wss.png' + iconClose + '>' + "${ssDisp}" + '</div>'  //style="height:1em;" 
 	LOGINFO("myTile length: " + mytext.length())
 	sendEvent(name: "myTile", value: mytext, displayed: true)
 
