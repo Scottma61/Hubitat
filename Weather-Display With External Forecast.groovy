@@ -1,7 +1,103 @@
-import groovy.transform.Field
+/*
+   Weather-Display With External Forecast Driver
+   Import URL: "https://raw.githubusercontent.com/Scottma61/Hubitat/master/Weather-Display%20With%20External%20Forecast.groovy"
+   Copyright 2019 @Matthew (Scottma61)
+ 
+   Many people contributed to the creation of this driver.  Significant contributors include:
+   - @Cobra who adapted it from @mattw01's work and I thank them for that!
+   - @bangali for his original APIXU.COM base code that much of the early versions of this driver was 
+   adapted from. 
+   - @bangali for his the Sunrise-Sunset.org code used to calculate illuminance/lux  and the more
+   recent adaptations of that code from @csteele in hs continuation driver 'wx-ApiXU'.
+   - @csteele (and prior versions from @bangali) for the attribute selection code.
+   - @csteele for his examples on how to convert to asyncHttp call to reduce Hub resource utilization.
+   - @bangali also contributed the icon work from
+   - https://github.com/jebbett for new cooler 'Alternative' weather icons with icons courtesy
+   of https://www.deviantart.com/vclouds/art/VClouds-Weather-Icons-179152045.
+	- 'waynedgrant' for his json webservice that make the weather station data available to the driver.
+ 
+   In addition to all the cloned code from the Hubitat community, I have heavily modified/created new
+   code myself @Matthew (Scottma61) with lots of help from the Hubitat community.  If you believe you
+   should have been acknowledged or received attribution for a code contribution, I will happily do so.
+   While I compiled and orchestrated the driver, very little is actually original work of mine.
+
+   This driver is free to use.  I do not accept donations. Please feel free to contribute to those
+   mentioned here if you like this work, as it would not have been possible without them.
+ 
+   REQUIREMENTS:  You MUST have a Personal Weather Station (PWS) and use Weather-Display software to
+   capture that weather data on your network or a web server.  If you do not meet this requirement then
+   this driver will not work for you.  This uses the Weather-Display data files from a webserver you
+   specify in the driver preferences. I used waynedgrant's work to make those data files available in
+   JSON format on my webserver (https://github.com/waynedgrant/json-webservice-wdlive)
+   
+   This driver is intended to pull data from data files on a web server created by Weather-Display software
+   (http://www.weather-display.com).  It will also supplement forecast data from  your choice of
+   APIXU.com (XU) or Dark Sky (DS)(http://darksky.net), but not more than one simultaneouly. 
+   You will need your API keys for each of those external APIs to use the forecast from those sites,
+   but the driver it will work without an external forecast source too.
+ 
+   The driver uses the Weather-Display data as the primary current weather dataset.  There are a few options you can select
+   from like using your forecast source for illuminance/solar radiation/lux if you do not have those sensors.
+   You can also select to use a base set of condition icons from the forecast source, or an 'alternative'
+   (fancier) set.  The base set will be from WeatherUnderground if you choose either 'None' or Dark Sky
+   as your forecast source, or from APIXU.com if you choose APIXU as your forecast source.  You may choose the
+   fancier 'Alternative' icon set if you have a forecast source other than 'None'.
+
+   *** PLEASE NOTE: You should download and store these 'Alternative' icons on your own server and
+   change the reference to that location in the driver. There is no assurance that those icon files will
+   remain in my github repository.    ***
+ 
+   The driver exposes both metric and imperial measurements for you to select from.
+ 
+   Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+   in compliance with the License. You may obtain a copy of the License at:
+ 
+       http://www.apache.org/licenses/LICENSE-2.0
+ 
+   Unless required by applicable law or agreed to in writing, software distributed under the License is distributed
+   on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
+   for the specific language governing permissions and limitations under the License.
+ 
+   Last Update 09/11/2019
+  { Left room below to document version changes...}
+ 
+ 
+ 
+ 
+ 
+ 
+   V4.0.1 - Bug fix on attributes so they show on dashboards                                  - 09/11/2019
+   V4.0.0 - Complete re-write: asyncHttp calls, selectable attributes, many corrections       - 09/09/2019
+   V3.0.4 - Further myTile character reduction.                                               - 03/24/2019
+   V3.0.3 - Altered myTile to attempt to remain under to 1024 charater limit for Dashboard 2.0- 03/20/2019
+   V3.0.2 - Instruction clarificatons and log improvements                                    - 03/19/2019
+   V3.0.1 - Code tweaks and corrections.                                                      - 03/16/2019
+   V3.0.0 - Major code optimization/reorganization - Removed WU option                        - 02/16/2019
+   V2.1.6 - Format cleanup; improved Dark Sky condition mapping                               - 01/21/2019
+   V2.1.5 - myTile redo - added icons, Pressure, Chance of rain, Precipitation                - 01/12/2019
+   V2.1.4 - Bug fix for Dark Sky condition_code/text/icon values; Added alerts to myTile      - 01/06/2019
+   V2.1.3 - Code cleanup/correction - no functionality changes                                - 01/05/2019
+   V2.1.2 - Added DarkSky as an external forecast source                                      - 01/04/2019
+   V2.1.1 - Added Apparent temp ('Feels Like') to myTile                                      - 12/31/2018
+   V2.1.0 - Tweaked myTile attribute. Removed "isStateChange:true" from sendEvents            - 12/30/2018
+   V2.0.9 - Added a variation of @arnb's myTile attribute                                     - 12/9/2018
+   V2.0.8 - Declared attributes: alert, twilight_begin, twilight_end, weatherSummary          - 11/3/2018
+   V2.0.7 - Changed sunrise-sunset.org api from https: to http:                               - 9/21/2018
+   V2.0.6 - More cleanup of table lookups/translations.                                       - 9/03/2018
+   V2.0.5 - Consolidated table lookups (transform.field), cleaned up forecast translations    - 8/20/2016
+   V2.0.4 - Translated forecastIcon for APIXU to WU equivalent                                - 8/16/2018
+   V2.0.3 - Added forecastIcon attribute for SharpTools.io, various code cleanups.            - 8/16/2018
+   V2.0.2 - Added hemisphere selectors for correct Lon/Lat on station.  Removed '?raw=true'   - 8/12/2018
+            suffix from alternative icon file location if not on 'github.com'.
+   V2.0.1 - Code cleanup; Added 'Observation' times; Changed 'Update' time to 'Poll' time     - 8/11/2018
+            corrected display of some options variables (Illuminance/UV/FeelsLike) when no forecast source selected.
+   V2.0.0 - New version completely rebuilt 08/10/2018
+ 
+ */
+ import groovy.transform.Field
 
 metadata {
-    definition (name: "WD With External Forecast Driver-Attribute Test", namespace: "Matthew", author: "Scottma61") {
+    definition (name: "Weather-Display With External Forecast Driver", namespace: "Matthew", author: "Scottma61", importURL: "https://raw.githubusercontent.com/Scottma61/Hubitat/master/Weather-Display%20With%20External%20Forecast.groovy") {
         capability "Actuator"
         capability "Sensor"
         capability "Temperature Measurement"
@@ -12,7 +108,7 @@ metadata {
 	
 		attributesMap.each
 		{
-			k, v -> if (("${k}Publish") == true && v.typeof) attribute "${k}", "${v.typeof}"
+			k, v -> if (v.typeof) attribute "${k}", "${v.typeof}"
 		}
 
     // some attributes are 'doubled' due to some dashboard requirements (SmartTiles & SharpTools)
@@ -639,7 +735,7 @@ def PostPoll() {
         SummaryMessage(summaryType, Summary_last_poll_date, Summary_last_poll_time, Summary_forecastTemp, Summary_precip, Summary_vis)
     }
 //  <<<<<<<<<< Begin Built mytext >>>>>>>>>> 
-    if(mytilePublish){ // don't bother setting these values if it's not enabled
+    if(myTilePublish){ // don't bother setting these values if it's not enabled
     	iconClose = (((getDataValue("iconLocation").toLowerCase().contains('://github.com/')) && (getDataValue("iconLocation").toLowerCase().contains('/blob/master/'))) ? "?raw=true" : "")
         alertStyleOpen = (!possAlert ?  '' : '<span style=\"font-size:0.65em;line-height=65%;\">')
         alertStyleClose = (!possAlert ? '</span>' : ' | </span><span style=\"font-style:italic;\">' + getDataValue("alert") + "</span>" )
@@ -1273,7 +1369,7 @@ def sendEventPublish(evt)	{
 	"lat":				        [title: "Latitude and Longitude", descr: "Display both Latitude and Longitude?", typeof: false, default: "false"],
 	"localSunrise":			    [title: "Local SunRise and SunSet", descr: "Display the Group of 'Time of Local Sunrise and Sunset,' with and without Dashboard text?", typeof: false, default: "true"],
 	"location":				    [title: "Location name with region", descr: "", typeof: "string", default: "false"],
-	"mytile":				    [title: "Mytile for dashboard", descr: "Display 'mytile'?", typeof: "string", default: "false"],
+	"myTile":				    [title: "myTile for dashboard", descr: "Display 'mytile'?", typeof: "string", default: "false"],
 	"moonPhase":			    [title: "Moon Phase", descr: "Display 'moonPhase'?", typeof: "string", default: "false"],    
 	"percentPrecip":			[title: "Percent precipitation", descr: "Display the Chance of Rain, in percent?", typeof: "number", default: "true"],
     "solarradiation":			[title: "Solar Radiation", descr: "Display 'solarradiation'?", typeof: "string", default: "false"],
