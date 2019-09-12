@@ -1,6 +1,6 @@
 /*
    Weather-Display With DarkSky Forecast Driver
-   Import URL: 
+   Import URL: https://raw.githubusercontent.com/Scottma61/Hubitat/master/Weather-Display%20With%20DarkSky.net%20Forecast%20Driver.groovy
    Copyright 2019 @Matthew (Scottma61)
  
    Many people contributed to the creation of this driver.  Significant contributors include:
@@ -98,7 +98,7 @@
 import groovy.transform.Field
 
 metadata {
-    definition (name: "Weather-Display With DarkSky.net Forecast Driver", namespace: "Matthew", author: "Scottma61", importUrl: "https://raw.githubusercontent.com/Scottma61/Hubitat/master/Weather-Display%20With%20External%20Forecast.groovy") {
+    definition (name: "Weather-Display With DarkSky.net Forecast Driver", namespace: "Matthew", author: "Scottma61", importUrl: "https://raw.githubusercontent.com/Scottma61/Hubitat/master/Weather-Display%20With%20DarkSky.net%20Forecast%20Driver.groovy") {
         capability "Actuator"
         capability "Sensor"
         capability "Temperature Measurement"
