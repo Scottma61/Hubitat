@@ -1,6 +1,6 @@
 /*
    DarkSky.net Weather Driver
-   Import URL: 
+   Import URL: https://github.com/Scottma61/Hubitat/blob/master/DarkSky.net%20Weather%20Driver.groovy
    Copyright 2019 @Matthew (Scottma61)
  
    Many people contributed to the creation of this driver.  Significant contributors include:
@@ -66,7 +66,7 @@
 import groovy.transform.Field
 
 metadata {
-    definition (name: "DarkSky.net Weather Driver", namespace: "Matthew", author: "Scottma61", importUrl: "") {
+    definition (name: "DarkSky.net Weather Driver", namespace: "Matthew", author: "Scottma61", importUrl: "https://github.com/Scottma61/Hubitat/blob/master/DarkSky.net%20Weather%20Driver.groovy") {
         capability "Actuator"
         capability "Sensor"
         capability "Temperature Measurement"
