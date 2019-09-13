@@ -231,7 +231,7 @@ def doPollDS() {
     }
 	updateDataValue("wind_string_bft", w_string_bft)
     updateDataValue("wind_bft_icon", w_bft_icon)
-    updateDataValue("wind", (isDistanceMetric ? (Math.round(ds.currently.windSpeed.toBigDecimal() * 1.609344 * 10) / 10) : (Math.round(ds.currently.windSpeed.toBigDecimal() * 10) / 10).toString()))
+    updateDataValue("wind", (isDistanceMetric ? (Math.round(ds.currently.windSpeed.toBigDecimal() * 1.609344 * 10) / 10) : (Math.round(ds.currently.windSpeed.toBigDecimal() * 10) / 10)).toString())
     updateDataValue("wind_gust", (isDistanceMetric ? (Math.round(ds.currently.windGust.toBigDecimal() * 1.609344 * 10) / 10) : (Math.round(ds.currently.windGust.toBigDecimal() * 10) / 10)).toString())
     updateDataValue("wind_degree", ds.currently.windBearing.toInteger().toString())	
     if(ds.currently.windBearing.toBigDecimal() < 11.25) {
@@ -309,7 +309,7 @@ def doPollDS() {
             s_cardinal = 'N'; s_direction = 'North'
         }
     }    
-    updateDataValue("nearestStormBearing", !ds.currently.nearestStormBearing ? "0" : (Math.round(ds.currently.nearestStormBearing.toBigDecimal() * 10) / 10).toString())    
+    updateDataValue("nearestStormBearing", (!ds.currently.nearestStormBearing ? "0" : ((Math.round(ds.currently.nearestStormBearing.toBigDecimal() * 10) / 10).toString())))    
     updateDataValue("nearestStormCardinal", !s_cardinal ? "U" : s_cardinal)
     updateDataValue("nearestStormDirection", !s_direction ? "Unknown" : s_direction)
     updateDataValue("nearestStormDistance", !ds.currently.nearestStormDistance ? "9999" : (isDistanceMetric ? (Math.round(ds.currently.nearestStormDistance.toBigDecimal() * 1.609344 * 10) / 10) : (Math.round(ds.currently.nearestStormDistance.toBigDecimal() * 10) / 10).toString()))
@@ -469,7 +469,7 @@ def PostPoll() {
     sendEventPublish(name: "wind_direction", value: getDataValue("wind_direction"))    
     sendEventPublish(name: "wind_gust", value: getDataValue("wind_gust").toBigDecimal(), unit: (isDistanceMetric ? 'KPH' : 'MPH'))
     sendEventPublish(name: "wind_string", value: getDataValue("wind_string"))
-    sendEventPublish(name: "nearestStormBearing", value: getDataValue("nearestStormBearing").toInteger(), unit: "DEGREE")
+    sendEventPublish(name: "nearestStormBearing", value: getDataValue("nearestStormBearing"), unit: "DEGREE")
     sendEventPublish(name: "nearestStormCardinal", value: getDataValue("nearestStormCardinal"))    
     sendEventPublish(name: "nearestStormDirection", value: getDataValue("nearestStormDirection"))    	
     sendEventPublish(name: "nearestStormDistance", value: getDataValue("nearestStormDistance").toBigDecimal(), unit: (isDistanceMetric ? "kilometers" : "miles"))	
