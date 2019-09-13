@@ -504,8 +504,8 @@ def doPollDS() {
     }
     updateDataValue("forecast_code", f_code)
     updateDataValue("forecast_text", ds.daily.data[0].summary)
-    updateDataValue("forecastHigh", (isFahrenheit ? ds.daily.data[0].temperatureHigh.toBigDecimal() : (ds.daily.data[0].temperatureHigh.toBigDecimal() * (9/5) + 32)).toString())
-    updateDataValue("forecastLow", (isFahrenheit ? ds.daily.data[0].temperatureLow.toBigDecimal() : (ds.daily.data[0].temperatureLow.toBigDecimal() * (9/5) + 32)).toString())
+    updateDataValue("forecastHigh", (isFahrenheit ? Math.round(ds.daily.data[0].temperatureHigh.toBigDecimal() * 10) / 10 : Math.round((ds.daily.data[0].temperatureHigh.toBigDecimal() * (9/5) + 32) * 10) / 10).toString())
+    updateDataValue("forecastLow", (isFahrenheit ? Math.round(ds.daily.data[0].temperatureLow.toBigDecimal() * 10) / 10 : Math.round((ds.daily.data[0].temperatureLow.toBigDecimal() * (9/5) + 32) * 10) / 10).toString())
     if(precipExtendedPublish){
         updateDataValue("rainTomorrow", (ds.daily.data[1].precipProbability.toBigDecimal() * 100).toInteger().toString())
         updateDataValue("rainDayAfterTomorrow", (ds.daily.data[2].precipProbability.toBigDecimal() * 100).toInteger().toString())
