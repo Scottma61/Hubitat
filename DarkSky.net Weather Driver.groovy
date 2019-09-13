@@ -308,7 +308,7 @@ def doPollDS() {
         }else if(ds.currently.nearestStormBearing.toBigDecimal() >= 348.75) {
             s_cardinal = 'N'; s_direction = 'North'
         }
-	    updateDataValue("nearestStormBearing", (Math.round(ds.currently.nearestStormBearing.toBigDecimal() * 10) / 10).toString())
+	    updateDataValue("nearestStormBearing", !ds.currently.nearestStormBearing ? "0" : (Math.round(ds.currently.nearestStormBearing.toBigDecimal() * 10) / 10).toString())
     }        
     if(nearestStormCardinalPublish) { updateDataValue("nearestStormCardinal", !s_cardinal ? "U" : s_cardinal)	}
     if(nearestStormDirectionPublish) { updateDataValue("nearestStormDirection", !s_direction ? "Unknown" : s_direction)}
