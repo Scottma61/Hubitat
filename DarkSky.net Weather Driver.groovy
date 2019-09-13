@@ -272,47 +272,53 @@ def doPollDS() {
     updateDataValue("wind_direction", w_direction)
     updateDataValue("wind_cardinal", w_cardinal)	
     updateDataValue("wind_string", w_string_bft + " from the " + getDataValue("wind_direction") + (getDataValue("wind").toBigDecimal() < 1.0 ? '': " at " + getDataValue("wind") + (isDistanceMetric ? " KPH" : " MPH")))
-    if(ds.currently.nearestStormBearing && nearestStormBearingPublish){
-        if(ds.currently.nearestStormBearing.toInteger() < 11.25) {
-            s_cardinal = 'N'; s_direction = 'North'
-        }else if(ds.currently.nearestStormBearing.toBigDecimal() < 33.75) {
-            s_cardinal = 'NNE'; s_direction = 'North-Northeast'
-        }else if(ds.currently.nearestStormBearing.toBigDecimal() < 56.25) {
-            s_cardinal = 'NE';  s_direction = 'Northeast'
-        }else if(ds.currently.nearestStormBearing.toBigDecimal() < 78.75) {
-            s_cardinal = 'ENE'; s_direction = 'East-Northeast'
-        }else if(ds.currently.nearestStormBearing.toBigDecimal() < 101.25) {
-            s_cardinal = 'E'; s_direction = 'East'
-        }else if(ds.currently.nearestStormBearing.toBigDecimal() < 123.75) {
-            s_cardinal = 'ESE'; s_direction = 'East-Southeast'
-        }else if(ds.currently.nearestStormBearing.toBigDecimal() < 146.25) {
-            s_cardinal = 'SE'; s_direction = 'Southeast'
-        }else if(ds.currently.nearestStormBearing.toBigDecimal() < 168.75) {
-            s_cardinal = 'SSE'; s_direction = 'South-Southeast'
-        }else if(ds.currently.nearestStormBearing.toBigDecimal() < 191.25) {
-            s_cardinal = 'S'; s_direction = 'South'
-        }else if(ds.currently.nearestStormBearing.toBigDecimal() < 213.75) {
-            s_cardinal = 'SSW'; s_direction = 'South-Southwest'
-        }else if(ds.currently.nearestStormBearing.toBigDecimal() < 236.25) {
-            s_cardinal = 'SW'; s_direction = 'Southwest'
-        }else if(ds.currently.nearestStormBearing.toBigDecimal() < 258.75) {
-            s_cardinal = 'WSW'; s_direction = 'West-Southwest'
-        }else if(ds.currently.nearestStormBearing.toBigDecimal() < 281.25) {
-            s_cardinal = 'W'; s_direction = 'West'
-        }else if(ds.currently.nearestStormBearing.toBigDecimal() < 303.75) {
-            s_cardinal = 'WNW'; s_direction = 'West-Northwest'
-        }else if(ds.currently.nearestStormBearing.toBigDecimal() < 326.26) {
-            s_cardinal = 'NW'; s_direction = 'Northwest'
-        }else if(ds.currently.nearestStormBearing.toBigDecimal() < 348.75) {
-            s_cardinal = 'NNW'; s_direction = 'North-Northwest'
-        }else if(ds.currently.nearestStormBearing.toBigDecimal() >= 348.75) {
-            s_cardinal = 'N'; s_direction = 'North'
-        }
-    }    
-    updateDataValue("nearestStormBearing", (!ds.currently.nearestStormBearing ? "360" : ((Math.round(ds.currently.nearestStormBearing.toBigDecimal() * 10) / 10).toString())))    
-    updateDataValue("nearestStormCardinal", (!s_cardinal ? "U" : s_cardinal))
-    updateDataValue("nearestStormDirection", (!s_direction ? "Unknown" : s_direction))
-    updateDataValue("nearestStormDistance", (!ds.currently.nearestStormDistance ? "9999.9" : (isDistanceMetric ? (Math.round(ds.currently.nearestStormDistance.toBigDecimal() * 1.609344 * 10) / 10) : (Math.round(ds.currently.nearestStormDistance.toBigDecimal() * 10) / 10)).toString()))
+    if(nearestStormPublish) {
+        if(!ds.currently.nearestStormBearing){
+            updateDataValue("nearestStormBearing", "360")
+            s_cardinal = 'U'
+            s_direction = 'Unknown'        
+        }else{
+            updateDataValue("nearestStormBearing", (Math.round(ds.currently.nearestStormBearing * 10) / 10).toString())
+            if(ds.currently.nearestStormBearing.toInteger() < 11.25) {
+                s_cardinal = 'N'; s_direction = 'North'
+            }else if(ds.currently.nearestStormBearing.toBigDecimal() < 33.75) {
+                s_cardinal = 'NNE'; s_direction = 'North-Northeast'
+            }else if(ds.currently.nearestStormBearing.toBigDecimal() < 56.25) {
+                s_cardinal = 'NE';  s_direction = 'Northeast'
+            }else if(ds.currently.nearestStormBearing.toBigDecimal() < 78.75) {
+                s_cardinal = 'ENE'; s_direction = 'East-Northeast'
+            }else if(ds.currently.nearestStormBearing.toBigDecimal() < 101.25) {
+                s_cardinal = 'E'; s_direction = 'East'
+            }else if(ds.currently.nearestStormBearing.toBigDecimal() < 123.75) {
+                s_cardinal = 'ESE'; s_direction = 'East-Southeast'
+            }else if(ds.currently.nearestStormBearing.toBigDecimal() < 146.25) {
+                s_cardinal = 'SE'; s_direction = 'Southeast'
+            }else if(ds.currently.nearestStormBearing.toBigDecimal() < 168.75) {
+                s_cardinal = 'SSE'; s_direction = 'South-Southeast'
+            }else if(ds.currently.nearestStormBearing.toBigDecimal() < 191.25) {
+                s_cardinal = 'S'; s_direction = 'South'
+            }else if(ds.currently.nearestStormBearing.toBigDecimal() < 213.75) {
+                s_cardinal = 'SSW'; s_direction = 'South-Southwest'
+            }else if(ds.currently.nearestStormBearing.toBigDecimal() < 236.25) {
+                s_cardinal = 'SW'; s_direction = 'Southwest'
+            }else if(ds.currently.nearestStormBearing.toBigDecimal() < 258.75) {
+                s_cardinal = 'WSW'; s_direction = 'West-Southwest'
+            }else if(ds.currently.nearestStormBearing.toBigDecimal() < 281.25) {
+                s_cardinal = 'W'; s_direction = 'West'
+            }else if(ds.currently.nearestStormBearing.toBigDecimal() < 303.75) {
+                s_cardinal = 'WNW'; s_direction = 'West-Northwest'
+            }else if(ds.currently.nearestStormBearing.toBigDecimal() < 326.26) {
+                s_cardinal = 'NW'; s_direction = 'Northwest'
+            }else if(ds.currently.nearestStormBearing.toBigDecimal() < 348.75) {
+                s_cardinal = 'NNW'; s_direction = 'North-Northwest'
+            }else if(ds.currently.nearestStormBearing.toBigDecimal() >= 348.75) {
+                s_cardinal = 'N'; s_direction = 'North'
+            }
+        }    
+        updateDataValue("nearestStormCardinal", s_cardinal)
+        updateDataValue("nearestStormDirection", s_direction)
+        updateDataValue("nearestStormDistance", (!ds.currently.nearestStormDistance ? "9999.9" : (isDistanceMetric ? (Math.round(ds.currently.nearestStormDistance.toBigDecimal() * 1.609344 * 10) / 10) : (Math.round(ds.currently.nearestStormDistance.toBigDecimal() * 10) / 10)).toString()))
+    }
 	updateDataValue("ozone", (Math.round(ds.currently.ozone.toBigDecimal() * 10 ) / 10).toString())
 
     if(moonPhasePublish){
@@ -469,10 +475,12 @@ def PostPoll() {
     sendEventPublish(name: "wind_direction", value: getDataValue("wind_direction"))    
     sendEventPublish(name: "wind_gust", value: getDataValue("wind_gust").toBigDecimal(), unit: (isDistanceMetric ? 'KPH' : 'MPH'))
     sendEventPublish(name: "wind_string", value: getDataValue("wind_string"))
-    sendEventPublish(name: "nearestStormBearing", value: getDataValue("nearestStormBearing"), unit: "DEGREE")
-    sendEventPublish(name: "nearestStormCardinal", value: getDataValue("nearestStormCardinal"))    
-    sendEventPublish(name: "nearestStormDirection", value: getDataValue("nearestStormDirection"))    	
-    sendEventPublish(name: "nearestStormDistance", value: getDataValue("nearestStormDistance").toBigDecimal(), unit: (isDistanceMetric ? "kilometers" : "miles"))	
+    if(nearestStormPublish) {
+        sendEvent(name: "nearestStormBearing", value: getDataValue("nearestStormBearing"), unit: "DEGREE")
+        sendEvent(name: "nearestStormCardinal", value: getDataValue("nearestStormCardinal"))    
+        sendEvent(name: "nearestStormDirection", value: getDataValue("nearestStormDirection"))    	
+        sendEvent(name: "nearestStormDistance", value: String.format("%,5.1f", getDataValue("nearestStormDistance").toBigDecimal()), unit: (isDistanceMetric ? "kilometers" : "miles"))	
+    }
 	
 //  <<<<<<<<<< Begin Built Weather Summary text >>>>>>>>>> 
     if(summarymessagePublish){ // don't bother setting these values if it's not enabled
@@ -810,10 +818,7 @@ def sendEventPublish(evt)	{
 	"localSunrise":			    [title: "Local SunRise and SunSet", descr: "Display the Group of 'Time of Local Sunrise and Sunset,' with and without Dashboard text?", typeof: false, default: "false"],
 	"myTile":				    [title: "myTile for dashboard", descr: "Display 'mytile'?", typeof: "string", default: "false"],
 	"moonPhase":			    [title: "Moon Phase", descr: "Display 'moonPhase'?", typeof: "string", default: "false"],    
-	"nearestStormBearing":  	[title: "Nearest Storm Bearing", descr: "Display 'nearestStormBearing'?", typeof: "number", default: "false"],
-	"nearestStormCardinal":		[title: "Nearest Storm Cardinal", descr: "Display 'nearestStormCardinal'?", typeof: "string", default: "false"],    	
-	"nearestStormDirection":	[title: "Nearest Storm Direction", descr: "Display 'nearestStormDirection'?", typeof: "string", default: "false"],    		
-	"nearestStormDistance":    	[title: "Nearest Storm Distance", descr: "Display 'nearestStormDistance'?", typeof: "number", default: "false"],    		
+	"nearestStorm":          	[title: "Nearest Storm Info", descr: "Display nearest storm data'?", typeof: false, default: "false"],
 	"ozone":			    	[title: "Ozone", descr: "Display 'ozone'?", typeof: "number", default: "false"],    	
 	"percentPrecip":			[title: "Percent Precipitation", descr: "Display the Chance of Rain, in percent?", typeof: "number", default: "false"],
     "summarymessage":			[title: "Weather Summary Message", descr: "Display the Weather Summary?", typeof: false, default: "false"],
