@@ -309,10 +309,10 @@ def doPollDS() {
             s_cardinal = 'N'; s_direction = 'North'
         }
     }    
-    updateDataValue("nearestStormBearing", (!ds.currently.nearestStormBearing ? "0" : ((Math.round(ds.currently.nearestStormBearing.toBigDecimal() * 10) / 10).toString())))    
-    updateDataValue("nearestStormCardinal", !s_cardinal ? "U" : s_cardinal)
-    updateDataValue("nearestStormDirection", !s_direction ? "Unknown" : s_direction)
-    updateDataValue("nearestStormDistance", !ds.currently.nearestStormDistance ? "9999" : (isDistanceMetric ? (Math.round(ds.currently.nearestStormDistance.toBigDecimal() * 1.609344 * 10) / 10) : (Math.round(ds.currently.nearestStormDistance.toBigDecimal() * 10) / 10).toString()))
+    updateDataValue("nearestStormBearing", (!ds.currently.nearestStormBearing ? "360" : ((Math.round(ds.currently.nearestStormBearing.toBigDecimal() * 10) / 10).toString())))    
+    updateDataValue("nearestStormCardinal", (!s_cardinal ? "U" : s_cardinal))
+    updateDataValue("nearestStormDirection", (!s_direction ? "Unknown" : s_direction))
+    updateDataValue("nearestStormDistance", (!ds.currently.nearestStormDistance ? "9999.9" : (isDistanceMetric ? (Math.round(ds.currently.nearestStormDistance.toBigDecimal() * 1.609344 * 10) / 10) : (Math.round(ds.currently.nearestStormDistance.toBigDecimal() * 10) / 10)).toString()))
 	updateDataValue("ozone", (Math.round(ds.currently.ozone.toBigDecimal() * 10 ) / 10).toString())
 
     if(moonPhasePublish){
