@@ -59,7 +59,7 @@
  
  
  
- 
+   V1.0.1 - Bug fixes.                                                                        - 09/13/2019  
    V1.0.0 - Initial release of driver with ApiXU.com completely removed.                      - 09/13/2019 
  =========================================================================================================
  */
@@ -200,7 +200,7 @@ def doPollDS() {
 // <<<<<<<<<< Begin Process Standard Weather-Station Variables (Regardless of Forecast Selection)  >>>>>>>>>>    
     updateDataValue("dewpoint", (isFahrenheit ? (Math.round(ds.currently.dewPoint.toBigDecimal() * 10) / 10) : (Math.round((ds.currently.dewPoint.toBigDecimal() - 32) / 1.8 * 10) / 10)).toString())
     updateDataValue("humidity", (Math.round(ds.currently.humidity.toBigDecimal() * 1000) / 10).toString())
-    updateDataValue("pressure", (isPressureMetric ? (Math.round(Math.round(ds.currently.pressure.toBigDecimal() * 0.00029529980164712) * 10) / 10) : (Math.round(ds.currently.pressure.toBigDecimal() * 10) / 10)).toString())
+    updateDataValue("pressure", (isPressureMetric ? (Math.round(ds.currently.pressure.toBigDecimal() * 10) / 10) : (Math.round(ds.currently.pressure.toBigDecimal() * 0.029529983071445 * 100) / 100)).toString())
     updateDataValue("temperature", (isFahrenheit ? (Math.round(ds.currently.temperature.toBigDecimal() * 10) / 10) : (Math.round((ds.currently.temperature.toBigDecimal() - 32) / 1.8 * 10) / 10)).toString())
     if(ds.currently.windSpeed.toBigDecimal() < 1.0) {
         w_string_bft = "Calm"; w_bft_icon = 'wb0.png'
@@ -310,9 +310,9 @@ def doPollDS() {
         }
 	    updateDataValue("nearestStormBearing", !ds.currently.nearestStormBearing ? "0" : (Math.round(ds.currently.nearestStormBearing.toBigDecimal() * 10) / 10).toString())
     }        
-    if(nearestStormCardinalPublish) { updateDataValue("nearestStormCardinal", !s_cardinal ? "U" : s_cardinal)	}
-    if(nearestStormDirectionPublish) { updateDataValue("nearestStormDirection", !s_direction ? "Unknown" : s_direction)}
-    if(nearestStormDistancePublish) { updateDataValue("nearestStormDistance", !ds.currently.nearestStormDistance ? "9,999" : (isDistanceMetric ? (Math.round(ds.currently.nearestStormDistance.toBigDecimal() * 1.609344 * 10) / 10) : (Math.round(ds.currently.nearestStormDistance.toBigDecimal() * 10) / 10).toString()))}
+    updateDataValue("nearestStormCardinal", !s_cardinal ? "U" : s_cardinal)
+    updateDataValue("nearestStormDirection", !s_direction ? "Unknown" : s_direction)
+    updateDataValue("nearestStormDistance", !ds.currently.nearestStormDistance ? "9999" : (isDistanceMetric ? (Math.round(ds.currently.nearestStormDistance.toBigDecimal() * 1.609344 * 10) / 10) : (Math.round(ds.currently.nearestStormDistance.toBigDecimal() * 10) / 10).toString()))
 	updateDataValue("ozone", (Math.round(ds.currently.ozone.toBigDecimal() * 10 ) / 10).toString())
 
     if(moonPhasePublish){
@@ -429,7 +429,7 @@ def PostPoll() {
 /*  Weather-Display & 'Required for Dashboards' Data Elements */
 	sendEvent(name: "humidity", value: getDataValue("humidity").toBigDecimal(), unit: '%')
     sendEvent(name: "illuminance", value: getDataValue("illuminance").toInteger(), unit: 'lx')
-	sendEvent(name: "pressure", value: String.format("%,4.1f", getDataValue("pressure").toBigDecimal()), unit: (isPressureMetric ? 'mbar' : 'inHg'))
+	sendEvent(name: "pressure", value: isPressureMetric ? String.format("%,4.1f", getDataValue("pressure").toBigDecimal()) : String.format("%2.2f", getDataValue("pressure").toBigDecimal()), unit: (isPressureMetric ? 'mbar' : 'inHg'))
 	sendEvent(name: "temperature", value: String.format("%3.1f", getDataValue("temperature").toBigDecimal()), unit: (isFahrenheit ? '°F' : '°C'))
     sendEvent(name: "ultravioletIndex", value: getDataValue("ultravioletIndex").toBigDecimal(), unit: 'uvi')
     sendEvent(name: "city", value: getDataValue("city"))
@@ -502,7 +502,7 @@ def PostPoll() {
         mytext+= '<div style=\"font-size:0.75em;line-height=50%;\">' + '<img src=' + getDataValue("iconLocation") + getDataValue("wind_bft_icon") + iconClose + '>' + getDataValue("wind_direction") + " "
         mytext+= getDataValue("wind").toBigDecimal() < 1.0 ? 'calm' : "@ " + getDataValue("wind") + (isDistanceMetric ? ' KPH' : ' MPH')
         mytext+= ', gusts ' + ((wgust < 1.0) ? 'calm' :  "@ " + wgust.toString() + (isDistanceMetric ? ' KPH' : ' MPH')) + '<br>'
-        mytext+= '<img src=' + getDataValue("iconLocation") + 'wb.png' + iconClose + '>' + String.format("%,4.1f", getDataValue("pressure").toBigDecimal()) + (isPressureMetric ? ' mbar' : ' inHg') + '  <img src=' + getDataValue("iconLocation") + 'wh.png' + iconClose + '>'
+        mytext+= '<img src=' + getDataValue("iconLocation") + 'wb.png' + iconClose + '>' + (isPressureMetric ? String.format("%,4.1f", getDataValue("pressure").toBigDecimal()) : String.format("%2.2f", getDataValue("pressure").toBigDecimal())) + (isPressureMetric ? ' mbar' : ' inHg') + '  <img src=' + getDataValue("iconLocation") + 'wh.png' + iconClose + '>'
         mytext+= getDataValue("humidity") + '%  ' + '<img src=' + getDataValue("iconLocation") + 'wu.png' + iconClose + '>' + mtprecip + '<br>'
         mytext+= '<img src=' + getDataValue("iconLocation") + 'wsr.png' + iconClose + '>' + getDataValue("localSunrise") + '     <img src=' + getDataValue("iconLocation") + 'wss.png' + iconClose + '>' + getDataValue("localSunset") + '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Updated:&nbsp;' + Summary_last_poll_time + '</div>'
         LOGINFO("mytext: ${mytext}")
@@ -522,7 +522,7 @@ def initialize() {
     state.clear()
     unschedule()
 	state.driverName = "DarkSky.net Weather Driver"
-    state.driverVersion = "1.0.0"    // ************************* Update as required *************************************
+    state.driverVersion = "1.0.1"    // ************************* Update as required *************************************
 	state.driverNameSpace = "Matthew"
     logSet = (settings?.logSet ?: false)
     city = (settings?.city ?: "")
