@@ -198,10 +198,10 @@ def doPollDS() {
     updateDataValue("futime", futime.toString())
 	
 // <<<<<<<<<< Begin Process Standard Weather-Station Variables (Regardless of Forecast Selection)  >>>>>>>>>>    
-    updateDataValue("dewpoint", (isFahrenheit ? (Math.round(ds.currently.dewPoint.toBigDecimal() * 10) / 10) : (Math.round((ds.currently.dewPoint.toBigDecimal() * (9/5) + 32) * 10) / 10)).toString())
-    updateDataValue("humidity", (isFahrenheit ? (Math.round(ds.currently.humidity.toBigDecimal() * 1000) / 10) : (Math.round((ds.currently.humidity.toBigDecimal() * (9/5) + 32) * 1000) / 10)).toString())
+    updateDataValue("dewpoint", (isFahrenheit ? (Math.round(ds.currently.dewPoint.toBigDecimal() * 10) / 10) : (Math.round((ds.currently.dewPoint.toBigDecimal() - 32) / 1.8 * 10) / 10)).toString())
+    updateDataValue("humidity", (Math.round(ds.currently.humidity.toBigDecimal() * 1000) / 10).toString())
     updateDataValue("pressure", (isPressureMetric ? (Math.round(Math.round(ds.currently.pressure.toBigDecimal() * 0.00029529980164712) * 10) / 10) : (Math.round(ds.currently.pressure.toBigDecimal() * 10) / 10)).toString())
-    updateDataValue("temperature", (isFahrenheit ? (Math.round(ds.currently.temperature.toBigDecimal()) * 10) / 10 : ((Math.round(ds.currently.temperature.toBigDecimal() * (9/5) + 32) * 10) / 10)).toString())
+    updateDataValue("temperature", (isFahrenheit ? (Math.round(ds.currently.temperature.toBigDecimal() * 10) / 10) : (Math.round((ds.currently.temperature.toBigDecimal() - 32) / 1.8 * 10) / 10)).toString())
     if(ds.currently.windSpeed.toBigDecimal() < 1.0) {
         w_string_bft = "Calm"; w_bft_icon = 'wb0.png'
     }else if(ds.currently.windSpeed.toBigDecimal() < 4.0) {
@@ -310,9 +310,9 @@ def doPollDS() {
         }
 	    updateDataValue("nearestStormBearing", (Math.round(ds.currently.nearestStormBearing.toBigDecimal() * 10) / 10).toString())
     }        
-    if(nearestStormCardinalPublish) { updateDataValue("nearestStormCardinal", s_cardinal)	}
-    if(nearestStormDirectionPublish) { updateDataValue("nearestStormDirection", s_direction)}
-    if(nearestStormDistancePublish) { updateDataValue("nearestStormDistance", (isDistanceMetric ? (Math.round(ds.currently.nearestStormDistance.toBigDecimal() * 1.609344 * 10) / 10) : (Math.round(ds.currently.nearestStormDistance.toBigDecimal() * 10) / 10).toString()))}
+    if(nearestStormCardinalPublish) { updateDataValue("nearestStormCardinal", !s_cardinal ? "U" : s_cardinal)	}
+    if(nearestStormDirectionPublish) { updateDataValue("nearestStormDirection", !s_direction ? "Unknown" : s_direction)}
+    if(nearestStormDistancePublish) { updateDataValue("nearestStormDistance", !ds.currently.nearestStormDistance ? "9,999" : (isDistanceMetric ? (Math.round(ds.currently.nearestStormDistance.toBigDecimal() * 1.609344 * 10) / 10) : (Math.round(ds.currently.nearestStormDistance.toBigDecimal() * 10) / 10).toString()))}
 	updateDataValue("ozone", (Math.round(ds.currently.ozone.toBigDecimal() * 10 ) / 10).toString())
 
     if(moonPhasePublish){
@@ -374,8 +374,8 @@ def doPollDS() {
     }
     updateDataValue("forecast_code", f_code)
     updateDataValue("forecast_text", ds.daily.data[0].summary)
-    updateDataValue("forecastHigh", (isFahrenheit ? Math.round(ds.daily.data[0].temperatureHigh.toBigDecimal() * 10) / 10 : Math.round((ds.daily.data[0].temperatureHigh.toBigDecimal() * (9/5) + 32) * 10) / 10).toString())
-    updateDataValue("forecastLow", (isFahrenheit ? Math.round(ds.daily.data[0].temperatureLow.toBigDecimal() * 10) / 10 : Math.round((ds.daily.data[0].temperatureLow.toBigDecimal() * (9/5) + 32) * 10) / 10).toString())
+    updateDataValue("forecastHigh", (isFahrenheit ? (Math.round(ds.daily.data[0].temperatureHigh.toBigDecimal() * 10) / 10) : (Math.round((ds.daily.data[0].temperatureHigh.toBigDecimal() - 32) / 1.8 * 10) / 10)).toString())
+    updateDataValue("forecastLow", (isFahrenheit ? (Math.round(ds.daily.data[0].temperatureLow.toBigDecimal() * 10) / 10) : (Math.round((ds.daily.data[0].temperatureLow.toBigDecimal() - 32) / 1.8 * 10) / 10)).toString())
     if(precipExtendedPublish){
         updateDataValue("rainTomorrow", (ds.daily.data[1].precipProbability.toBigDecimal() * 100).toInteger().toString())
         updateDataValue("rainDayAfterTomorrow", (ds.daily.data[2].precipProbability.toBigDecimal() * 100).toInteger().toString())
@@ -385,7 +385,7 @@ def doPollDS() {
 	updateDataValue("illuminance", lux.toString())
 	updateDataValue("illuminated", String.format("%,4d", lux).toString())
 	updateDataValue("ultravioletIndex", ds.currently.uvIndex.toBigDecimal().toString())
-	updateDataValue("feelsLike", (isFahrenheit ? (Math.round(ds.currently.apparentTemperature.toBigDecimal() * 10) / 10) : (Math.round((ds.currently.apparentTemperature.toBigDecimal() * (9/5) + 32) * 10) / 10)).toString())
+	updateDataValue("feelsLike", (isFahrenheit ? (Math.round(ds.currently.apparentTemperature.toBigDecimal() * 10) / 10) : (Math.round((ds.currently.apparentTemperature.toBigDecimal() - 32) / 1.8 * 10) / 10)).toString())
 // >>>>>>>>>> End Setup Forecast Variables <<<<<<<<<<
 
 	// <<<<<<<<<< Begin Icon Processing  >>>>>>>>>>    
