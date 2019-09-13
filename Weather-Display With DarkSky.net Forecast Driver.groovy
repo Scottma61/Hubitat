@@ -1,5 +1,5 @@
 /*
-   Weather-Display With DarkSky Forecast Driver
+  Weather-Display With DarkSky.net Forecast Driver
    Import URL: https://raw.githubusercontent.com/Scottma61/Hubitat/master/Weather-Display%20With%20DarkSky.net%20Forecast%20Driver.groovy
    Copyright 2019 @Matthew (Scottma61)
  
@@ -65,7 +65,7 @@
  
  
  
- 
+   V4.1.1 - bug fixes                                                                         - 09/13/2019
    V4.1.0 - Initial release of driver with ApiXU.com completely removed.                      - 09/12/2019 
 ----------------------------------------------------------------------------------------------------------
    V4.0.0 - Complete re-write: asyncHttp calls, selectable attributes, many corrections       - 09/09/2019
@@ -504,12 +504,60 @@ def doPollDS() {
     }
     updateDataValue("forecast_code", f_code)
     updateDataValue("forecast_text", ds.daily.data[0].summary)
-    updateDataValue("forecastHigh", (isFahrenheit ? Math.round(ds.daily.data[0].temperatureHigh.toBigDecimal() * 10) / 10 : Math.round((ds.daily.data[0].temperatureHigh.toBigDecimal() * (9/5) + 32) * 10) / 10).toString())
-    updateDataValue("forecastLow", (isFahrenheit ? Math.round(ds.daily.data[0].temperatureLow.toBigDecimal() * 10) / 10 : Math.round((ds.daily.data[0].temperatureLow.toBigDecimal() * (9/5) + 32) * 10) / 10).toString())
+    updateDataValue("forecastHigh", (isFahrenheit ? (Math.round(ds.daily.data[0].temperatureHigh.toBigDecimal() * 10) / 10) : (Math.round((ds.daily.data[0].temperatureHigh.toBigDecimal() - 32) / 1.8 * 10) / 10)).toString())
+    updateDataValue("forecastLow", (isFahrenheit ? (Math.round(ds.daily.data[0].temperatureLow.toBigDecimal() * 10) / 10) : (Math.round((ds.daily.data[0].temperatureLow.toBigDecimal() - 32) / 1.8 * 10) / 10)).toString())
     if(precipExtendedPublish){
         updateDataValue("rainTomorrow", (ds.daily.data[1].precipProbability.toBigDecimal() * 100).toInteger().toString())
         updateDataValue("rainDayAfterTomorrow", (ds.daily.data[2].precipProbability.toBigDecimal() * 100).toInteger().toString())
     }
+    if(nearestStormPublish) {
+        if(!ds.currently.nearestStormBearing){
+            updateDataValue("nearestStormBearing", "360")
+            s_cardinal = 'U'
+            s_direction = 'Unknown'        
+        }else{
+            updateDataValue("nearestStormBearing", (Math.round(ds.currently.nearestStormBearing * 10) / 10).toString())
+            if(ds.currently.nearestStormBearing.toInteger() < 11.25) {
+                s_cardinal = 'N'; s_direction = 'North'
+            }else if(ds.currently.nearestStormBearing.toBigDecimal() < 33.75) {
+                s_cardinal = 'NNE'; s_direction = 'North-Northeast'
+            }else if(ds.currently.nearestStormBearing.toBigDecimal() < 56.25) {
+                s_cardinal = 'NE';  s_direction = 'Northeast'
+            }else if(ds.currently.nearestStormBearing.toBigDecimal() < 78.75) {
+                s_cardinal = 'ENE'; s_direction = 'East-Northeast'
+            }else if(ds.currently.nearestStormBearing.toBigDecimal() < 101.25) {
+                s_cardinal = 'E'; s_direction = 'East'
+            }else if(ds.currently.nearestStormBearing.toBigDecimal() < 123.75) {
+                s_cardinal = 'ESE'; s_direction = 'East-Southeast'
+            }else if(ds.currently.nearestStormBearing.toBigDecimal() < 146.25) {
+                s_cardinal = 'SE'; s_direction = 'Southeast'
+            }else if(ds.currently.nearestStormBearing.toBigDecimal() < 168.75) {
+                s_cardinal = 'SSE'; s_direction = 'South-Southeast'
+            }else if(ds.currently.nearestStormBearing.toBigDecimal() < 191.25) {
+                s_cardinal = 'S'; s_direction = 'South'
+            }else if(ds.currently.nearestStormBearing.toBigDecimal() < 213.75) {
+                s_cardinal = 'SSW'; s_direction = 'South-Southwest'
+            }else if(ds.currently.nearestStormBearing.toBigDecimal() < 236.25) {
+                s_cardinal = 'SW'; s_direction = 'Southwest'
+            }else if(ds.currently.nearestStormBearing.toBigDecimal() < 258.75) {
+                s_cardinal = 'WSW'; s_direction = 'West-Southwest'
+            }else if(ds.currently.nearestStormBearing.toBigDecimal() < 281.25) {
+                s_cardinal = 'W'; s_direction = 'West'
+            }else if(ds.currently.nearestStormBearing.toBigDecimal() < 303.75) {
+                s_cardinal = 'WNW'; s_direction = 'West-Northwest'
+            }else if(ds.currently.nearestStormBearing.toBigDecimal() < 326.26) {
+                s_cardinal = 'NW'; s_direction = 'Northwest'
+            }else if(ds.currently.nearestStormBearing.toBigDecimal() < 348.75) {
+                s_cardinal = 'NNW'; s_direction = 'North-Northwest'
+            }else if(ds.currently.nearestStormBearing.toBigDecimal() >= 348.75) {
+                s_cardinal = 'N'; s_direction = 'North'
+            }
+        }    
+        updateDataValue("nearestStormCardinal", s_cardinal)
+        updateDataValue("nearestStormDirection", s_direction)
+        updateDataValue("nearestStormDistance", (!ds.currently.nearestStormDistance ? "9999.9" : (isDistanceMetric ? (Math.round(ds.currently.nearestStormDistance.toBigDecimal() * 1.609344 * 10) / 10) : (Math.round(ds.currently.nearestStormDistance.toBigDecimal() * 10) / 10)).toString()))
+    }
+	updateDataValue("ozone", (Math.round(ds.currently.ozone.toBigDecimal() * 10 ) / 10).toString())
 // >>>>>>>>>> End Setup Forecast Variables <<<<<<<<<<
 
 // <<<<<<<<<< Begin Process Only If Illumination from WD Is NOT Selected  >>>>>>>>>>
@@ -529,7 +577,7 @@ def doPollDS() {
     
 // <<<<<<<<<< Begin Process Only If feelsLike Index from WD Is NOT Selected  >>>>>>>>>>                        
     if(sourcefeelsLike==false){
-        updateDataValue("feelsLike", (isFahrenheit ? ds.currently.apparentTemperature.toBigDecimal() : (ds.currently.apparentTemperature.toBigDecimal() * (9/5) + 32)).toString())
+        updateDataValue("feelsLike",  (isFahrenheit ? (Math.round(ds.currently.apparentTemperature.toBigDecimal() * 10) / 10) : (Math.round((ds.currently.apparentTemperature.toBigDecimal() - 32) / 1.8 * 10) / 10)).toString())
     }    
 // >>>>>>>>>> End Process Only If feelsLike from WD Is NOT Selected  <<<<<<<<<<    
 
@@ -575,7 +623,7 @@ def PostPoll() {
 	sendEvent(name: "humidity", value: getDataValue("humidity").toBigDecimal(), unit: '%')
     sendEvent(name: "illuminance", value: getDataValue("illuminance").toInteger(), unit: 'lx')
 	sendEvent(name: "pressure", value: String.format("%,4.1f", getDataValue("pressure").toBigDecimal()), unit: (isPressureMetric ? 'mbar' : 'inHg'))
-	sendEvent(name: "temperature", value: getDataValue("temperature").toBigDecimal(), unit: (isFahrenheit ? '°F' : '°C'))
+	sendEvent(name: "temperature", value: String.format("%3.1f", getDataValue("temperature").toBigDecimal()), unit: (isFahrenheit ? '°F' : '°C'))
     sendEvent(name: "ultravioletIndex", value: getDataValue("ultravioletIndex").toBigDecimal(), unit: 'uvi')
     sendEvent(name: "city", value: getDataValue("city"))
     sendEvent(name: "feelsLike", value: getDataValue("feelsLike").toBigDecimal(), unit: (isFahrenheit ? '°F' : '°C'))
@@ -596,8 +644,8 @@ def PostPoll() {
     sendEventPublish(name: "forecast_code", value: getDataValue("forecast_code"))
     sendEventPublish(name: "forecast_text", value: getDataValue("forecast_text"))
     if(fcstHighLowPublish && extSource.toInteger() == 2){ // don't bother setting these values if it's not enabled
-        sendEvent(name: "forecastHigh", value: getDataValue("forecastHigh").toBigDecimal(), unit: (isFahrenheit ? '°F' : '°C'))
-    	sendEvent(name: "forecastLow", value: getDataValue("forecastLow").toBigDecimal(), unit: (isFahrenheit ? '°F' : '°C'))
+        sendEvent(name: "forecastHigh", value: String.format("%3.1f", getDataValue("forecastHigh").toBigDecimal()), unit: (isFahrenheit ? '°F' : '°C'))
+    	sendEvent(name: "forecastLow", value: String.format("%3.1f", getDataValue("forecastLow").toBigDecimal()), unit: (isFahrenheit ? '°F' : '°C'))
     }
     sendEventPublish(name: "illuminated", value: getDataValue("illuminated") + ' lx')
     sendEventPublish(name: "is_day", value: getDataValue("is_day"))
@@ -624,16 +672,23 @@ def PostPoll() {
     sendEventPublish(name: "wind_direction", value: getDataValue("wind_direction"))    
     sendEventPublish(name: "wind_gust", value: getDataValue("wind_gust").toBigDecimal(), unit: (isDistanceMetric ? 'KPH' : 'MPH'))
     sendEventPublish(name: "wind_string", value: getDataValue("wind_string"))
+    if(nearestStormPublish) {
+        sendEvent(name: "nearestStormBearing", value: getDataValue("nearestStormBearing"), unit: "DEGREE")
+        sendEvent(name: "nearestStormCardinal", value: getDataValue("nearestStormCardinal"))    
+        sendEvent(name: "nearestStormDirection", value: getDataValue("nearestStormDirection"))    	
+        sendEvent(name: "nearestStormDistance", value: String.format("%,5.1f", getDataValue("nearestStormDistance").toBigDecimal()), unit: (isDistanceMetric ? "kilometers" : "miles"))	
+    }
+
 //  <<<<<<<<<< Begin Built Weather Summary text >>>>>>>>>> 
     if(summarymessagePublish){ // don't bother setting these values if it's not enabled
         Summary_last_poll_time = (sutime > futime ? new Date().parse("EEE MMM dd HH:mm:ss z yyyy", "${sutime}").format(timeFormat, TimeZone.getDefault()) : new Date().parse("EEE MMM dd HH:mm:ss z yyyy", "${futime}").format(timeFormat, TimeZone.getDefault()))
         Summary_last_poll_date = (sutime > futime ? new Date().parse("EEE MMM dd HH:mm:ss z yyyy", "${sutime}").format(dateFormat, TimeZone.getDefault()) : new Date().parse("EEE MMM dd HH:mm:ss z yyyy", "${futime}").format(dateFormat, TimeZone.getDefault()))
 	
         if(extSource.toInteger() == 2){
-			Summary_forecastTemp = " with a high of " + getDataValue("forecastHigh") + (isFahrenheit ? '°F' : '°C') + " and a low of " + getDataValue("forecastLow") + (isFahrenheit ? '°F. ' : '°C. ')
+			Summary_forecastTemp = " with a high of " + String.format("%3.1f", getDataValue("forecastHigh").toBigDecimal()) + (isFahrenheit ? '°F' : '°C') + " and a low of " + String.format("%3.1f", getDataValue("forecastLow").toBigDecimal()) + (isFahrenheit ? '°F. ' : '°C. ')
 			Summary_precip = "There is a " + getDataValue("percentPrecip") + "% chance of precipitation. "
             mtprecip = getDataValue("percentPrecip") + '%' 
-			Summary_vis = "Visibility is around " + Math.round(getDataValue("vis").toBigDecimal() *10) / 10 + (isDistanceMetric ? " kilometers." : " miles. ")
+			Summary_vis = "Visibility is around " + String.format("%3.1f", getDataValue("vis").toBigDecimal()) + (isDistanceMetric ? " kilometers." : " miles. ")
         }else{
 			Summary_forecastTemp = ""
 			Summary_precip = ""
@@ -680,7 +735,8 @@ def updated()   {
 def initialize() {
     state.clear()
     unschedule()
-    state.driverVersion = "4.1.0"    // ************************* Update as required *************************************
+    state.driverName = "Weather-Display With DarkSky.net Forecast Driver"
+    state.driverVersion = "4.1.1"    // ************************* Update as required *************************************
 	state.driverNameSpace = "Matthew"
     logSet = (settings?.logSet ?: false)
 	extSource = (settings?.extSource ?: 2).toInteger()
@@ -878,8 +934,8 @@ public SummaryMessage(SType, Slast_poll_date, Slast_poll_time, SforecastTemp, Sp
         wSum = "Weather summary for " + getDataValue("city") + ", " + getDataValue("state") + " updated at ${Slast_poll_time} on ${Slast_poll_date}. "
         wSum+= getDataValue("condition_text")
         wSum+= (!SforecastTemp || SforecastTemp=="") ? ". " : "${SforecastTemp}"
-        wSum+= "Humidity is " + getDataValue("humidity") + "% and the temperature is " + getDataValue("temperature") +  (isFahrenheit ? '°F. ' : '°C. ')
-        wSum+= "The temperature feels like it is " + getDataValue("feelsLike") + (isFahrenheit ? '°F. ' : '°C. ')
+        wSum+= "Humidity is " + getDataValue("humidity") + "% and the temperature is " + String.format("%3.1f", getDataValue("temperature").toBigDecimal()) +  (isFahrenheit ? '°F. ' : '°C. ')
+        wSum+= "The temperature feels like it is " + String.format("%3.1f", getDataValue("feelsLike").toBigDecimal()) + (isFahrenheit ? '°F. ' : '°C. ')
         wSum+= "Wind: " + getDataValue("wind_string") + ", gusts: " + ((wgust < 1.00) ? "calm. " : "up to " + wgust.toString() + (isDistanceMetric ? ' KPH. ' : ' MPH. '))
         wSum+= Sprecip
         wSum+= Svis
@@ -888,7 +944,7 @@ public SummaryMessage(SType, Slast_poll_date, Slast_poll_time, SforecastTemp, Sp
     } else {
         wSum = getDataValue("condition_text") + " "
         wSum+= ((!SforecastTemp || SforecastTemp=="") ? ". " : "${SforecastTemp}")
-        wSum+= " Humidity: " + getDataValue("humidity") + "%. Temperature: " + getDataValue("temperature") + (isFahrenheit ? '°F. ' : '°C. ')
+        wSum+= " Humidity: " + getDataValue("humidity") + "%. Temperature: " + String.format("%3.1f", getDataValue("temperature").toBigDecimal()) + (isFahrenheit ? '°F. ' : '°C. ')
         wSum+= getDataValue("wind_string") + ", gusts: " + ((wgust == 0.00) ? "calm. " : "up to " + wgust + (isDistanceMetric ? ' KPH. ' : ' MPH. '))
 		sendEvent(name: "weatherSummary", value: wSum)
 	}
@@ -990,6 +1046,7 @@ def sendEventPublish(evt)	{
 	"localSunrise":			    [title: "Local SunRise and SunSet", descr: "Display the Group of 'Time of Local Sunrise and Sunset,' with and without Dashboard text?", typeof: false, default: "false"],
 	"myTile":				    [title: "myTile for dashboard", descr: "Display 'mytile'?", typeof: "string", default: "false"],
 	"moonPhase":			    [title: "Moon Phase", descr: "Display 'moonPhase'?", typeof: "string", default: "false"],    
+	"nearestStorm":          	[title: "Nearest Storm Info", descr: "Display nearest storm data'?", typeof: false, default: "false"],    
 	"percentPrecip":			[title: "Percent Precipitation", descr: "Display the Chance of Rain, in percent?", typeof: "number", default: "false"],
     "solarradiation":			[title: "Solar Radiation", descr: "Display 'solarradiation'?", typeof: "string", default: "false"],
     "summarymessage":			[title: "Weather Summary Message", descr: "Display the Weather Summary?", typeof: false, default: "false"],
