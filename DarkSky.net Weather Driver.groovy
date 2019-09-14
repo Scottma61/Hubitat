@@ -1,6 +1,6 @@
 /*
    DarkSky.net Weather Driver
-   Import URL: https://raw.githubusercontent.com/Scottma61/Hubitat/master/DarkSky.net%20Weather%20Driver.groovy
+   Import URL: https://github.com/Scottma61/Hubitat/blob/master/DarkSky.net%20Weather%20Driver.groovy
    Copyright 2019 @Matthew (Scottma61)
  
    Many people contributed to the creation of this driver.  Significant contributors include:
@@ -57,7 +57,7 @@
  
  
  
- 
+   V1.0.3 - Added windSpeed and windDirection, required for some dashboards.                  - 09/14/2019
    V1.0.2 - Attribute now dislplayed for dashboards ** Read caution below **                  - 09/14/2019 
    V1.0.1 - Bug fixes.                                                                        - 09/13/2019  
    V1.0.0 - Initial release of driver with ApiXU.com completely removed.                      - 09/13/2019 
@@ -72,13 +72,13 @@ The way the 'optional' attributes work:
    POLLS**.  This means what is shown on the 'Current States' and dashboard tiles for de-selected attributes
    may not be current valid data.
  - To my knowledge, the only way to remove the de-selected attribute from 'Current States' and not show it as
-   available in the dashboard is to delete the driver and create a new one AND DO NOT SELECT the attribute you
-   do not want to show.
+   available in the dashboard is to delete the virtual device and create a new one AND DO NOT SELECT the
+   attribute you do not want to show.
 */
 import groovy.transform.Field
 
 metadata {
-    definition (name: "DarkSky.net Weather Driver", namespace: "Matthew", author: "Scottma61", importUrl: "https://raw.githubusercontent.com/Scottma61/Hubitat/master/DarkSky.net%20Weather%20Driver.groovy") {
+    definition (name: "DarkSky.net Weather Driver", namespace: "Matthew", author: "Scottma61", importUrl: "https://github.com/Scottma61/Hubitat/blob/master/DarkSky.net%20Weather%20Driver.groovy") {
         capability "Actuator"
         capability "Sensor"
         capability "Temperature Measurement"
@@ -103,6 +103,9 @@ metadata {
         attribute "weather", "string"           //SharpTool.io  SmartTiles
         attribute "weatherIcon", "string"       //SharpTool.io  SmartTiles
         attribute "wind", "number"              //SharpTool.io
+        attribute "windDirection", "number"     //Hubitat  OpenWeather
+        attribute "windSpeed", "number"         //Hubitat  OpenWeather
+        
 
         command "pollData"         
     }
@@ -457,9 +460,11 @@ def PostPoll() {
     sendEvent(name: "feelsLike", value: getDataValue("feelsLike").toBigDecimal(), unit: (isFahrenheit ? '°F' : '°C'))
     sendEvent(name: "forecastIcon", value: getDataValue("condition_text"))
     sendEvent(name: "percentPrecip", value: getDataValue("percentPrecip"))
-    sendEvent(name: "weather", value: getDataValue("condition_text"))
+    sendEvent(name: "weather", value: getDataValue("condition_code"))
     sendEvent(name: "weatherIcon", value: getDataValue("condition_code"))
-    sendEvent(name: "wind", value: getDataValue("wind").toBigDecimal(), unit: (isDistanceMetric ? 'KPH' : 'MPH'))
+    sendEvent(name: "wind", value: getDataValue("wind"), unit: (isDistanceMetric ? 'KPH' : 'MPH'))
+    sendEvent(name: "windSpeed", value: getDataValue("wind").toBigDecimal(), unit: (isDistanceMetric ? 'KPH' : 'MPH'))
+    sendEvent(name: "windDirection", value: getDataValue("wind_degree").toInteger(), unit: "DEGREE")    
 
 /*  Selected optional Data Elements */   
     sendEventPublish(name: "alert", value: getDataValue("alert"))
@@ -546,7 +551,7 @@ def initialize() {
     state.clear()
     unschedule()
 	state.driverName = "DarkSky.net Weather Driver"
-    state.driverVersion = "1.0.2"    // ************************* Update as required *************************************
+    state.driverVersion = "1.0.3"    // ************************* Update as required *************************************
 	state.driverNameSpace = "Matthew"
     logSet = (settings?.logSet ?: false)
     city = (settings?.city ?: "")
