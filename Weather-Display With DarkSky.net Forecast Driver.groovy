@@ -58,13 +58,13 @@
    on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
    for the specific language governing permissions and limitations under the License.
  
-   Last Update 09/12/2019
+   Last Update 09/14/2019
   { Left room below to document version changes...}
  
  
  
  
- 
+   V4.1.2   Attribute now dislplayed for dashboards ** Read caution below **                  - 09/14/2019  
    V4.1.1 - bug fixes                                                                         - 09/13/2019
    V4.1.0 - Initial release of driver with ApiXU.com completely removed.                      - 09/12/2019 
 ----------------------------------------------------------------------------------------------------------
@@ -93,7 +93,22 @@
    V2.0.1 - Code cleanup; Added 'Observation' times; Changed 'Update' time to 'Poll' time     - 8/11/2018
             corrected display of some options variables (Illuminance/UV/FeelsLike) when no forecast source selected.
    V2.0.0 - New version completely rebuilt 08/10/2018
- 
+
+- Made changes to Attributes.  Attributes should now be available for dashboards.  *CAUTION - READ BELOW*
+
+**ATTRIBUTES CAUTION**
+The way the 'optional' attributes work:
+ - Initially, only the optional attributes selected will show under 'Current States' and will be available in
+   dashboards.
+ - Once an attribute has been selected it too will show under 'Current States' and be available in dashboards.
+    <*** HOWEVER ***> If you ever de-select the optional attribute, it will still show under 'Current States'
+    and will still show as an attribute for dashboards **BUT IT'S DATA WILL NO LONGER BE REFRESHED WITH DATA
+    POLLS**.  This means what is shown on the 'Current States' and dashboard tiles for de-selected attributes
+    may not be current valid data.
+ - To my knowledge, the only way to remove the de-selected attribute from 'Current States' and not show it as
+   available in the dashboard is to delete the driver and create a new one AND DO NOT SELECT the attribute you
+   do not want to show.
+
  */
 import groovy.transform.Field
 
@@ -109,7 +124,8 @@ metadata {
 	
 		attributesMap.each
 		{
-            k, v -> if (("${k}Publish") == true && v.typeof) attribute "${k}", "${v.typeof}"
+//            k, v -> if (("${k}Publish") == true && v.typeof) attribute "${k}", "${v.typeof}"
+            k, v -> if (v.typeof) attribute "\"${k}\"", "\"${v.typeof}\""
 		}
 //    The following attributes may be needed for dashboards that require these attributes,
 //    so they are listed here and shown by default.
@@ -656,6 +672,7 @@ def PostPoll() {
     	sendEvent(name: "last_poll_Forecast", value: new Date().parse("EEE MMM dd HH:mm:ss z yyyy", getDataValue("futime")).format(dateFormat, TimeZone.getDefault()) + ", " + new Date().parse("EEE MMM dd HH:mm:ss z yyyy", getDataValue("futime")).format(timeFormat, TimeZone.getDefault()))
         sendEvent(name: "last_observation_Forecast", value: new Date().parse("EEE MMM dd HH:mm:ss z yyyy", getDataValue("fotime")).format(dateFormat, TimeZone.getDefault()) + ", " + new Date().parse("EEE MMM dd HH:mm:ss z yyyy", getDataValue("fotime")).format(timeFormat, TimeZone.getDefault()))
     }
+    sendEventPublish(name: "ozone", value: Math.round(getDataValue("ozone").toBigDecimal() * 10) / 10)
     sendEventPublish(name: "precip_today", value: getDataValue("precip_today").toBigDecimal(), unit: (isRainMetric ? 'mm' : 'inches'))
     if(precipExtendedPublish && extSource.toInteger() == 2){ // don't bother setting these values if it's not enabled
         sendEvent(name: "rainDayAfterTomorrow", value: getDataValue("rainDayAfterTomorrow").toBigDecimal(), unit: '%')	
@@ -680,7 +697,7 @@ def PostPoll() {
     }
 
 //  <<<<<<<<<< Begin Built Weather Summary text >>>>>>>>>> 
-    if(summarymessagePublish){ // don't bother setting these values if it's not enabled
+    if(weatherSummaryPublish){ // don't bother setting these values if it's not enabled
         Summary_last_poll_time = (sutime > futime ? new Date().parse("EEE MMM dd HH:mm:ss z yyyy", "${sutime}").format(timeFormat, TimeZone.getDefault()) : new Date().parse("EEE MMM dd HH:mm:ss z yyyy", "${futime}").format(timeFormat, TimeZone.getDefault()))
         Summary_last_poll_date = (sutime > futime ? new Date().parse("EEE MMM dd HH:mm:ss z yyyy", "${sutime}").format(dateFormat, TimeZone.getDefault()) : new Date().parse("EEE MMM dd HH:mm:ss z yyyy", "${futime}").format(dateFormat, TimeZone.getDefault()))
 	
@@ -736,7 +753,7 @@ def initialize() {
     state.clear()
     unschedule()
     state.driverName = "Weather-Display With DarkSky.net Forecast Driver"
-    state.driverVersion = "4.1.1"    // ************************* Update as required *************************************
+    state.driverVersion = "4.1.2"    // ************************* Update as required *************************************
 	state.driverNameSpace = "Matthew"
     logSet = (settings?.logSet ?: false)
 	extSource = (settings?.extSource ?: 2).toInteger()
@@ -1049,12 +1066,12 @@ def sendEventPublish(evt)	{
 	"nearestStorm":          	[title: "Nearest Storm Info", descr: "Display nearest storm data'?", typeof: false, default: "false"],    
 	"percentPrecip":			[title: "Percent Precipitation", descr: "Display the Chance of Rain, in percent?", typeof: "number", default: "false"],
     "solarradiation":			[title: "Solar Radiation", descr: "Display 'solarradiation'?", typeof: "string", default: "false"],
-    "summarymessage":			[title: "Weather Summary Message", descr: "Display the Weather Summary?", typeof: false, default: "false"],
 	"precipExtended":			[title: "Precipitation Forecast", descr: "Display precipitation forecast?", typeof: false, default: "false"],
     "obspoll":			        [title: "Observation time", descr: "Display Observation and Poll times?", typeof: false, default: "false"], 
     "precip_today":			    [title: "Precipitation today (in default unit)", descr: "Display precipitation today?", typeof: "number", default: "false"],
 	"state":				    [title: "State", descr: "Display 'state'?", typeof: "string", default: "false"],    
 	"vis":				        [title: "Visibility (in default unit)", descr: "Display visibility distance?", typeof: "number", default: "false"],
+    "weatherSummary":			[title: "Weather Summary Message", descr: "Display the Weather Summary?", typeof: "string", default: "false"],    
 	"wind_degree":			    [title: "Wind Degree", descr: "Display the Wind Direction (number)?", typeof: "number", default: "false"],
 	"wind_direction":			[title: "Wind direction", descr: "Display the Wind Direction?", typeof: "string", default: "false"],
 	"wind_gust":				[title: "Wind gust (in default unit)", descr: "Display the Wind Gust?", typeof: "number", default: "false"],
