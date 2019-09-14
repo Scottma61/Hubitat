@@ -45,7 +45,7 @@
    on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
    for the specific language governing permissions and limitations under the License.
  
-   Last Update 09/13/2019
+   Last Update 09/14/2019
   { Left room below to document version changes...}
  
  
@@ -62,15 +62,18 @@
    V1.0.1 - Bug fixes.                                                                        - 09/13/2019  
    V1.0.0 - Initial release of driver with ApiXU.com completely removed.                      - 09/13/2019 
  =========================================================================================================
-*** ATTRIBUTES CAUTION ***
+**ATTRIBUTES CAUTION**
 The way the 'optional' attributes work:
- - Initially only the optional attributes selected will show under 'Current States' and will be available in dashboards.
- - Once an attribute has been selected it too will show under 'Current States' and be available in dashbaords.
-    <*** HOWEVER ***> If you ever de-select the optional attribute, it will still show under 'Current States' and
-    will still show as an attribute for dashboards BUT IT'S DATA WEILL NO LONGER BE REFRESHED WITH DATA POLLS.
- - To my knowledgfe the only way to remove the de-selected attribute from 'Current States' and not show it as
-   available in dashboard is to delete the driver and create a new one AND DO NOT SELECT the attribute you do not
-   want to show.
+ - Initially, only the optional attributes selected will show under 'Current States' and will be available
+   in dashboards.
+ - Once an attribute has been selected it too will show under 'Current States' and be available in dashboards.
+   <*** HOWEVER ***> If you ever de-select the optional attribute, it will still show under 'Current States' 
+   and will still show as an attribute for dashboards **BUT IT'S DATA WEILL NO LONGER BE REFRESHED WITH DATA
+   POLLS**.  This means what is shown on the 'Current States' and dashboard tiles for de-selected attributes
+   may not be current valid data.
+ - To my knowledge, the only way to remove the de-selected attribute from 'Current States' and not show it as
+   available in the dashboard is to delete the driver and create a new one AND DO NOT SELECT the attribute you
+   do not want to show.
 */
 import groovy.transform.Field
 
