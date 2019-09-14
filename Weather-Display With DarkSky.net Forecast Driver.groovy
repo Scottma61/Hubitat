@@ -63,7 +63,7 @@
  
  
  
- 
+   V4.1.3   Added windSpeed and windDirection, required for some dashboards.                  - 09/14/2019
    V4.1.2   Attribute now dislplayed for dashboards ** Read caution below **                  - 09/14/2019  
    V4.1.1 - bug fixes                                                                         - 09/13/2019
    V4.1.0 - Initial release of driver with ApiXU.com completely removed.                      - 09/12/2019 
@@ -106,9 +106,8 @@ The way the 'optional' attributes work:
     POLLS**.  This means what is shown on the 'Current States' and dashboard tiles for de-selected attributes
     may not be current valid data.
  - To my knowledge, the only way to remove the de-selected attribute from 'Current States' and not show it as
-   available in the dashboard is to delete the driver and create a new one AND DO NOT SELECT the attribute you
-   do not want to show.
-
+   available in the dashboard is to delete the virtual device and create a new one AND DO NOT SELECT the
+   attribute you do not want to show.
  */
 import groovy.transform.Field
 
@@ -138,6 +137,8 @@ metadata {
         attribute "weather", "string"           //SharpTool.io  SmartTiles
         attribute "weatherIcon", "string"       //SharpTool.io  SmartTiles
         attribute "wind", "number"              //SharpTool.io
+        attribute "windDirection", "number"     //Hubitat  OpenWeather
+        attribute "windSpeed", "number"         //Hubitat  OpenWeather
 
         command "pollData"         
     }
@@ -645,9 +646,11 @@ def PostPoll() {
     sendEvent(name: "feelsLike", value: getDataValue("feelsLike").toBigDecimal(), unit: (isFahrenheit ? '°F' : '°C'))
     sendEvent(name: "forecastIcon", value: getDataValue("condition_text"))
     sendEvent(name: "percentPrecip", value: getDataValue("percentPrecip"))
-    sendEvent(name: "weather", value: getDataValue("condition_text"))
+    sendEvent(name: "weather", value: getDataValue("condition_code"))
     sendEvent(name: "weatherIcon", value: getDataValue("condition_code"))
     sendEvent(name: "wind", value: getDataValue("wind").toBigDecimal(), unit: (isDistanceMetric ? 'KPH' : 'MPH'))
+    sendEvent(name: "windSpeed", value: getDataValue("wind").toBigDecimal(), unit: (isDistanceMetric ? 'KPH' : 'MPH'))
+    sendEvent(name: "windDirection", value: getDataValue("wind_degree").toInteger(), unit: "DEGREE")
 
 /*  Selected optional Data Elements */   
     sendEventPublish(name: "alert", value: getDataValue("alert"))
@@ -753,7 +756,7 @@ def initialize() {
     state.clear()
     unschedule()
     state.driverName = "Weather-Display With DarkSky.net Forecast Driver"
-    state.driverVersion = "4.1.2"    // ************************* Update as required *************************************
+    state.driverVersion = "4.1.3"    // ************************* Update as required *************************************
 	state.driverNameSpace = "Matthew"
     logSet = (settings?.logSet ?: false)
 	extSource = (settings?.extSource ?: 2).toInteger()
