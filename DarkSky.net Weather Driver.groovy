@@ -58,11 +58,20 @@
  
  
  
- 
+   V1.0.2 - Attribute now dislplayed for dashboards ** Read caution below **                  - 09/14/2019 
    V1.0.1 - Bug fixes.                                                                        - 09/13/2019  
    V1.0.0 - Initial release of driver with ApiXU.com completely removed.                      - 09/13/2019 
  =========================================================================================================
- */
+*** ATTRIBUTES CAUTION ***
+The way the 'optional' attributes work:
+ - Initially only the optional attributes selected will show under 'Current States' and will be available in dashboards.
+ - Once an attribute has been selected it too will show under 'Current States' and be available in dashbaords.
+    <*** HOWEVER ***> If you ever de-select the optional attribute, it will still show under 'Current States' and
+    will still show as an attribute for dashboards BUT IT'S DATA WEILL NO LONGER BE REFRESHED WITH DATA POLLS.
+ - To my knowledgfe the only way to remove the de-selected attribute from 'Current States' and not show it as
+   available in dashboard is to delete the driver and create a new one AND DO NOT SELECT the attribute you do not
+   want to show.
+*/
 import groovy.transform.Field
 
 metadata {
@@ -77,7 +86,8 @@ metadata {
 	
 		attributesMap.each
 		{
-            k, v -> if (("${k}Publish") == true && v.typeof) attribute "${k}", "${v.typeof}"
+//            k, v -> if (("${k}Publish") == true && v.typeof) {
+            k, v -> if (v.typeof)        attribute "${k}" , "${v.typeof}"
 		}
 //    The following attributes may be needed for dashboards that require these attributes,
 //    so they are listed here and shown by default.
@@ -94,7 +104,7 @@ metadata {
         command "pollData"         
     }
     def settingDescr = settingEnable ? "<br><i>Hide many of the Preferences to reduce the clutter, if needed, by turning OFF this toggle.</i><br>" : "<br><i>Many Preferences are available to you, if needed, by turning ON this toggle.</i><br>"
-    
+
     preferences() {
 		section("Query Inputs"){
 			input "city", "text", required: true, defaultValue: "City or Location name forecast area", title: "City name"
@@ -119,6 +129,8 @@ metadata {
 	    	}
         }
     }
+
+    
 }
 
 // <<<<<<<<<< Begin Sunrise-Sunset Poll Routines >>>>>>>>>>
@@ -466,6 +478,7 @@ def PostPoll() {
     	sendEvent(name: "last_poll_Forecast", value: new Date().parse("EEE MMM dd HH:mm:ss z yyyy", getDataValue("futime")).format(dateFormat, TimeZone.getDefault()) + ", " + new Date().parse("EEE MMM dd HH:mm:ss z yyyy", getDataValue("futime")).format(timeFormat, TimeZone.getDefault()))
         sendEvent(name: "last_observation_Forecast", value: new Date().parse("EEE MMM dd HH:mm:ss z yyyy", getDataValue("fotime")).format(dateFormat, TimeZone.getDefault()) + ", " + new Date().parse("EEE MMM dd HH:mm:ss z yyyy", getDataValue("fotime")).format(timeFormat, TimeZone.getDefault()))
     }
+    sendEventPublish(name: "ozone", value: Math.round(getDataValue("ozone").toBigDecimal() * 10) / 10)
     if(precipExtendedPublish){ // don't bother setting these values if it's not enabled
         sendEvent(name: "rainDayAfterTomorrow", value: getDataValue("rainDayAfterTomorrow").toBigDecimal(), unit: '%')	
     	sendEvent(name: "rainTomorrow", value: getDataValue("rainTomorrow").toBigDecimal(), unit: '%')
@@ -483,7 +496,7 @@ def PostPoll() {
     }
 	
 //  <<<<<<<<<< Begin Built Weather Summary text >>>>>>>>>> 
-    if(summarymessagePublish){ // don't bother setting these values if it's not enabled
+    if(weatherSummaryPublish){ // don't bother setting these values if it's not enabled
         Summary_last_poll_time = new Date().parse("EEE MMM dd HH:mm:ss z yyyy", "${futime}").format(timeFormat, TimeZone.getDefault())
         Summary_last_poll_date = new Date().parse("EEE MMM dd HH:mm:ss z yyyy", "${futime}").format(dateFormat, TimeZone.getDefault())
 		Summary_forecastTemp = " with a high of " + String.format("%3.1f", getDataValue("forecastHigh").toBigDecimal()) + (isFahrenheit ? '°F' : '°C') + " and a low of " + String.format("%3.1f", getDataValue("forecastLow").toBigDecimal()) + (isFahrenheit ? '°F. ' : '°C. ')
@@ -530,7 +543,7 @@ def initialize() {
     state.clear()
     unschedule()
 	state.driverName = "DarkSky.net Weather Driver"
-    state.driverVersion = "1.0.1"    // ************************* Update as required *************************************
+    state.driverVersion = "1.0.2"    // ************************* Update as required *************************************
 	state.driverNameSpace = "Matthew"
     logSet = (settings?.logSet ?: false)
     city = (settings?.city ?: "")
@@ -713,14 +726,13 @@ public SummaryMessage(SType, Slast_poll_date, Slast_poll_time, SforecastTemp, Sp
         wSum+= Sprecip
         wSum+= Svis
         wSum+= (!getDataValue("alert") || getDataValue("alert")==null) ? "" : getDataValue("alert") + '.'
-        sendEvent(name: "weatherSummary", value: wSum)
     } else {
         wSum = getDataValue("condition_text") + " "
         wSum+= ((!SforecastTemp || SforecastTemp=="") ? ". " : "${SforecastTemp}")
         wSum+= " Humidity: " + getDataValue("humidity") + "%. Temperature: " + String.format("%3.1f", getDataValue("temperature").toBigDecimal()) + (isFahrenheit ? '°F. ' : '°C. ')
         wSum+= getDataValue("wind_string") + ", gusts: " + ((wgust == 0.00) ? "calm. " : "up to " + wgust + (isDistanceMetric ? ' KPH. ' : ' MPH. '))
-		sendEvent(name: "weatherSummary", value: wSum)
 	}
+    sendEvent(name: "weatherSummary", value: wSum)    
 	return
 }
 
@@ -821,10 +833,10 @@ def sendEventPublish(evt)	{
 	"nearestStorm":          	[title: "Nearest Storm Info", descr: "Display nearest storm data'?", typeof: false, default: "false"],
 	"ozone":			    	[title: "Ozone", descr: "Display 'ozone'?", typeof: "number", default: "false"],    	
 	"percentPrecip":			[title: "Percent Precipitation", descr: "Display the Chance of Rain, in percent?", typeof: "number", default: "false"],
-    "summarymessage":			[title: "Weather Summary Message", descr: "Display the Weather Summary?", typeof: false, default: "false"],
 	"precipExtended":			[title: "Precipitation Forecast", descr: "Display precipitation forecast?", typeof: false, default: "false"],
     "obspoll":			        [title: "Observation time", descr: "Display Observation and Poll times?", typeof: false, default: "false"], 
 	"vis":				        [title: "Visibility (in default unit)", descr: "Display visibility distance?", typeof: "number", default: "false"],
+    "weatherSummary":			[title: "Weather Summary Message", descr: "Display the Weather Summary?", typeof: "string", default: "false"],    
 	"wind_cardinal":		    [title: "Wind Cardinal", descr: "Display the Wind Direction (text initials)?", typeof: "number", default: "false"],	
 	"wind_degree":			    [title: "Wind Degree", descr: "Display the Wind Direction (number)?", typeof: "number", default: "false"],
 	"wind_direction":			[title: "Wind direction", descr: "Display the Wind Direction (text words)?", typeof: "string", default: "false"],
