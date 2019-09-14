@@ -62,7 +62,7 @@
   { Left room below to document version changes...}
  
  
- 
+   V4.1.4   Added 'weatherIcons' used for OWM icons/dashboard                                 - 09/14/2019
    V4.1.3   Added windSpeed and windDirection, required for some dashboards.                  - 09/14/2019
    V4.1.2   Attribute now dislplayed for dashboards ** Read caution below **                  - 09/14/2019  
    V4.1.1 - bug fixes                                                                         - 09/13/2019
@@ -136,6 +136,7 @@ metadata {
         attribute "percentPrecip", "number"     //SharpTool.io  SmartTiles
         attribute "weather", "string"           //SharpTool.io  SmartTiles
         attribute "weatherIcon", "string"       //SharpTool.io  SmartTiles
+        attribute "weatherIcons", "string"      //Hubitat  OpenWeather
         attribute "wind", "number"              //SharpTool.io
         attribute "windDirection", "number"     //Hubitat  OpenWeather
         attribute "windSpeed", "number"         //Hubitat  OpenWeather
@@ -648,9 +649,11 @@ def PostPoll() {
     sendEvent(name: "percentPrecip", value: getDataValue("percentPrecip"))
     sendEvent(name: "weather", value: getDataValue("condition_code"))
     sendEvent(name: "weatherIcon", value: getDataValue("condition_code"))
+    sendEvent(name: "weatherIcons", value: getDataValue("condition_code"))    
     sendEvent(name: "wind", value: getDataValue("wind").toBigDecimal(), unit: (isDistanceMetric ? 'KPH' : 'MPH'))
     sendEvent(name: "windSpeed", value: getDataValue("wind").toBigDecimal(), unit: (isDistanceMetric ? 'KPH' : 'MPH'))
     sendEvent(name: "windDirection", value: getDataValue("wind_degree").toInteger(), unit: "DEGREE")
+    sendEvent(name: "weatherIcons", value: getowmImgName(getDataValue("condition_code")))
 
 /*  Selected optional Data Elements */   
     sendEventPublish(name: "alert", value: getDataValue("alert"))
@@ -700,9 +703,9 @@ def PostPoll() {
     }
 
 //  <<<<<<<<<< Begin Built Weather Summary text >>>>>>>>>> 
+    Summary_last_poll_time = (sutime > futime ? new Date().parse("EEE MMM dd HH:mm:ss z yyyy", "${sutime}").format(timeFormat, TimeZone.getDefault()) : new Date().parse("EEE MMM dd HH:mm:ss z yyyy", "${futime}").format(timeFormat, TimeZone.getDefault()))
+    Summary_last_poll_date = (sutime > futime ? new Date().parse("EEE MMM dd HH:mm:ss z yyyy", "${sutime}").format(dateFormat, TimeZone.getDefault()) : new Date().parse("EEE MMM dd HH:mm:ss z yyyy", "${futime}").format(dateFormat, TimeZone.getDefault()))
     if(weatherSummaryPublish){ // don't bother setting these values if it's not enabled
-        Summary_last_poll_time = (sutime > futime ? new Date().parse("EEE MMM dd HH:mm:ss z yyyy", "${sutime}").format(timeFormat, TimeZone.getDefault()) : new Date().parse("EEE MMM dd HH:mm:ss z yyyy", "${futime}").format(timeFormat, TimeZone.getDefault()))
-        Summary_last_poll_date = (sutime > futime ? new Date().parse("EEE MMM dd HH:mm:ss z yyyy", "${sutime}").format(dateFormat, TimeZone.getDefault()) : new Date().parse("EEE MMM dd HH:mm:ss z yyyy", "${futime}").format(dateFormat, TimeZone.getDefault()))
 	
         if(extSource.toInteger() == 2){
 			Summary_forecastTemp = " with a high of " + String.format("%3.1f", getDataValue("forecastHigh").toBigDecimal()) + (isFahrenheit ? '°F' : '°C') + " and a low of " + String.format("%3.1f", getDataValue("forecastLow").toBigDecimal()) + (isFahrenheit ? '°F. ' : '°C. ')
@@ -756,7 +759,7 @@ def initialize() {
     state.clear()
     unschedule()
     state.driverName = "Weather-Display With DarkSky.net Forecast Driver"
-    state.driverVersion = "4.1.3"    // ************************* Update as required *************************************
+    state.driverVersion = "4.1.4"    // ************************* Update as required *************************************
 	state.driverNameSpace = "Matthew"
     logSet = (settings?.logSet ?: false)
 	extSource = (settings?.extSource ?: 2).toInteger()
@@ -978,6 +981,12 @@ public getImgName(wCode){
     return (getDataValue("iconLocation") + (LUitem ? LUitem.img : 'na.png') + (((getDataValue("iconLocation").toLowerCase().contains('://github.com/')) && (getDataValue("iconLocation").toLowerCase().contains('/blob/master/'))) ? "?raw=true" : ""))    
 }
 
+public getowmImgName(wCode){
+    LOGINFO("getImgName Input: wCode: " + wCode + "  state.is_day: " + getDataValue("is_day") + " iconLocation: " + getDataValue("iconLocation"))
+    LUitem = LUTable.find{ it.wucode == wCode && it.day.toString() == getDataValue("is_day") }    
+	LOGINFO("getImgName Result: image url: " + getDataValue("iconLocation") + (LUitem ? LUitem.img : 'na.png') + "?raw=true")
+    return (LUitem ? LUitem.owm : '')   
+}
 def logCheck(){
     if(logSet == true){
         log.info "Weather-Display Driver - INFO:  All Logging Enabled"
@@ -1019,31 +1028,31 @@ def sendEventPublish(evt)	{
 }
 
 @Field final List    LUTable =     [
-	[wucode: 'breezy', day: 1, img: '23.png', luxpercent: 1],
-	[wucode: 'chancesnow', day: 1, img: '41.png', luxpercent: 0.3],
-	[wucode: 'chancetstorms', day: 1, img: '37.png', luxpercent: 0.2],
-	[wucode: 'clear', day: 1, img: '32.png', luxpercent: 1],
-	[wucode: 'cloudy', day: 1, img: '28.png', luxpercent: 0.6],
-	[wucode: 'fog', day: 1, img: '19.png', luxpercent: 0.2],
-	[wucode: 'hazy', day: 1, img: '20.png', luxpercent: 0.2],
-	[wucode: 'partlycloudy', day: 1, img: '30.png', luxpercent: 0.8],
-	[wucode: 'rain', day: 1, img: '39.png', luxpercent: 0.5],
-	[wucode: 'sleet', day: 1, img: '8.png', luxpercent: 0.4],
-	[wucode: 'snow', day: 1, img: '16.png', luxpercent: 0.3],
-	[wucode: 'sunny', day: 1, img: '36.png', luxpercent: 1],
-	[wucode: 'tstorms', day: 1, img: '3.png', luxpercent: 0.3],
-	[wucode: 'nt_breezy', day: 0, img: '24.png', luxpercent: 0],
-	[wucode: 'nt_chancesnow', day: 0, img: '46.png', luxpercent: 0],
-	[wucode: 'nt_chancetstorms', day: 0, img: '47.png', luxpercent: 0],
-	[wucode: 'nt_clear', day: 0, img: '31.png', luxpercent: 0],
-	[wucode: 'nt_cloudy', day: 0, img: '27.png', luxpercent: 0],
-	[wucode: 'nt_fog', day: 0, img: '22.png', luxpercent: 0],
-	[wucode: 'nt_hazy', day: 0, img: '21.png', luxpercent: 0],
-	[wucode: 'nt_partlycloudy', day: 0, img: '29.png', luxpercent: 0],
-	[wucode: 'nt_rain', day: 0, img: '45.png', luxpercent: 0],
-	[wucode: 'nt_sleet', day: 0, img: '18.png', luxpercent: 0],
-	[wucode: 'nt_snow', day: 0, img: '7.png', luxpercent: 0],
-	[wucode: 'nt_tstorms', day: 0, img: '38.png', luxpercent: 0]  
+[wucode: 'breezy', day: 1, img: '23.png', luxpercent: 1, owm: '03d'],
+[wucode: 'chancesnow', day: 1, img: '41.png', luxpercent: 0.3, owm: '13d'],
+[wucode: 'chancetstorms', day: 1, img: '37.png', luxpercent: 0.2, owm: '11d'],
+[wucode: 'clear', day: 1, img: '32.png', luxpercent: 1, owm: '01d'],
+[wucode: 'cloudy', day: 1, img: '28.png', luxpercent: 0.6, owm: '04d'],
+[wucode: 'fog', day: 1, img: '19.png', luxpercent: 0.2, owm: '50d'],
+[wucode: 'hazy', day: 1, img: '20.png', luxpercent: 0.2, owm: '50d'],
+[wucode: 'partlycloudy', day: 1, img: '30.png', luxpercent: 0.8, owm: '03d'],
+[wucode: 'rain', day: 1, img: '39.png', luxpercent: 0.5, owm: '10d'],
+[wucode: 'sleet', day: 1, img: '8.png', luxpercent: 0.4, owm: '10d'],
+[wucode: 'snow', day: 1, img: '16.png', luxpercent: 0.3, owm: '13d'],
+[wucode: 'sunny', day: 1, img: '36.png', luxpercent: 1, owm: '01d'],
+[wucode: 'tstorms', day: 1, img: '3.png', luxpercent: 0.3, owm: '11d'],
+[wucode: 'nt_breezy', day: 0, img: '24.png', luxpercent: 0, owm: '03n'],
+[wucode: 'nt_chancesnow', day: 0, img: '46.png', luxpercent: 0, owm: '13n'],
+[wucode: 'nt_chancetstorms', day: 0, img: '47.png', luxpercent: 0, owm: '11n'],
+[wucode: 'nt_clear', day: 0, img: '31.png', luxpercent: 0, owm: '01n'],
+[wucode: 'nt_cloudy', day: 0, img: '27.png', luxpercent: 0, owm: '04n'],
+[wucode: 'nt_fog', day: 0, img: '22.png', luxpercent: 0, owm: '50n'],
+[wucode: 'nt_hazy', day: 0, img: '21.png', luxpercent: 0, owm: '50n'],
+[wucode: 'nt_partlycloudy', day: 0, img: '29.png', luxpercent: 0, owm: '03n'],
+[wucode: 'nt_rain', day: 0, img: '45.png', luxpercent: 0, owm: '10n'],
+[wucode: 'nt_sleet', day: 0, img: '18.png', luxpercent: 0, owm: '10n'],
+[wucode: 'nt_snow', day: 0, img: '7.png', luxpercent: 0, owm: '13n'],
+[wucode: 'nt_tstorms', day: 0, img: '38.png', luxpercent: 0, owm: '11n']
 ]    
 
 @Field static attributesMap = [
