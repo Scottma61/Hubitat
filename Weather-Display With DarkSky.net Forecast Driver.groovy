@@ -60,7 +60,7 @@
  
    Last Update 09/14/2019
   { Left room below to document version changes...}
- 
+   V4.1.6   Another optional attribute bug fix.                                               - 09/15/2019 
    V4.1.5   Tweaking and bug fixes.                                                           - 09/14/2019
    V4.1.4   Added 'weatherIcons' used for OWM icons/dashboard                                 - 09/14/2019
    V4.1.3   Added windSpeed and windDirection, required for some dashboards.                  - 09/14/2019
@@ -124,7 +124,7 @@ metadata {
 		attributesMap.each
 		{
 //            k, v -> if (("${k}Publish") == true && v.typeof) attribute "${k}", "${v.typeof}"
-            k, v -> if (v.typeof) attribute "\"${k}\"", "\"${v.typeof}\""
+            k, v -> if (v.typeof) attribute "${k}", "${v.typeof}"
 		}
 //    The following attributes may be needed for dashboards that require these attributes,
 //    so they are listed here and shown by default.
