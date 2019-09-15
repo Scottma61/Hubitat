@@ -61,7 +61,7 @@
    Last Update 09/14/2019
   { Left room below to document version changes...}
  
- 
+   V4.1.5   Tweaking and bug fixes.                                                           - 09/14/2019
    V4.1.4   Added 'weatherIcons' used for OWM icons/dashboard                                 - 09/14/2019
    V4.1.3   Added windSpeed and windDirection, required for some dashboards.                  - 09/14/2019
    V4.1.2   Attribute now dislplayed for dashboards ** Read caution below **                  - 09/14/2019  
@@ -645,16 +645,14 @@ def PostPoll() {
     sendEvent(name: "ultravioletIndex", value: getDataValue("ultravioletIndex").toBigDecimal(), unit: 'uvi')
     sendEvent(name: "city", value: getDataValue("city"))
     sendEvent(name: "feelsLike", value: getDataValue("feelsLike").toBigDecimal(), unit: (isFahrenheit ? '°F' : '°C'))
-    sendEvent(name: "forecastIcon", value: getDataValue("condition_text"))
+    sendEvent(name: "forecastIcon", value: getDataValue("condition_code"))
     sendEvent(name: "percentPrecip", value: getDataValue("percentPrecip"))
-    sendEvent(name: "weather", value: getDataValue("condition_code"))
+    sendEvent(name: "weather", value: getDataValue("condition_text"))
     sendEvent(name: "weatherIcon", value: getDataValue("condition_code"))
-    sendEvent(name: "weatherIcons", value: getDataValue("condition_code"))    
+    sendEvent(name: "weatherIcons", value: getowmImgName(getDataValue("condition_code")))  
     sendEvent(name: "wind", value: getDataValue("wind").toBigDecimal(), unit: (isDistanceMetric ? 'KPH' : 'MPH'))
     sendEvent(name: "windSpeed", value: getDataValue("wind").toBigDecimal(), unit: (isDistanceMetric ? 'KPH' : 'MPH'))
     sendEvent(name: "windDirection", value: getDataValue("wind_degree").toInteger(), unit: "DEGREE")
-    sendEvent(name: "weatherIcons", value: getowmImgName(getDataValue("condition_code")))
-
 /*  Selected optional Data Elements */   
     sendEventPublish(name: "alert", value: getDataValue("alert"))
     sendEventPublish(name: "betwixt", value: getDataValue("bwn"))
@@ -739,7 +737,7 @@ def PostPoll() {
         mytext+= getDataValue("wind").toBigDecimal() < 1.0 ? 'calm' : "@ " + getDataValue("wind") + (isDistanceMetric ? ' KPH' : ' MPH')
         mytext+= ', gusts ' + ((wgust < 1.0) ? 'calm' :  "@ " + wgust.toString() + (isDistanceMetric ? ' KPH' : ' MPH')) + '<br>'
         mytext+= '<img src=' + getDataValue("iconLocation") + 'wb.png' + iconClose + '>' + String.format("%,4.1f", getDataValue("pressure").toBigDecimal()) + (isPressureMetric ? ' mbar' : ' inHg') + '  <img src=' + getDataValue("iconLocation") + 'wh.png' + iconClose + '>'
-        mytext+= getDataValue("humidity") + '%  ' + '<img src=' + getDataValue("iconLocation") + 'wu.png' + iconClose + '>' + mtprecip
+        mytext+= getDataValue("humidity") + '%  ' + '<img src=' + getDataValue("iconLocation") + 'wu.png' + iconClose + '>' + getDataValue("percentPrecip") + '%'
         mytext+= (getDataValue("precip_today").toBigDecimal() > 0.0 ? '  <img src=' + getDataValue("iconLocation") + 'wr.png' + iconClose + '>' + getDataValue("precip_today") + (isRainMetric ? ' mm' : ' inches') : '') + '<br>'
         mytext+= '<img src=' + getDataValue("iconLocation") + 'wsr.png' + iconClose + '>' + getDataValue("localSunrise") + '     <img src=' + getDataValue("iconLocation") + 'wss.png' + iconClose + '>' + getDataValue("localSunset") + '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Updated:&nbsp;' + Summary_last_poll_time + '</div>'
         LOGINFO("mytext: ${mytext}")
@@ -759,7 +757,7 @@ def initialize() {
     state.clear()
     unschedule()
     state.driverName = "Weather-Display With DarkSky.net Forecast Driver"
-    state.driverVersion = "4.1.4"    // ************************* Update as required *************************************
+    state.driverVersion = "4.1.5"    // ************************* Update as required *************************************
 	state.driverNameSpace = "Matthew"
     logSet = (settings?.logSet ?: false)
 	extSource = (settings?.extSource ?: 2).toInteger()
@@ -976,14 +974,14 @@ public SummaryMessage(SType, Slast_poll_date, Slast_poll_time, SforecastTemp, Sp
 
 public getImgName(wCode){
     LOGINFO("getImgName Input: wCode: " + wCode + "  state.is_day: " + getDataValue("is_day") + " iconLocation: " + getDataValue("iconLocation"))
-    LUitem = LUTable.find{ it.wucode == wCode && it.day.toString() == getDataValue("is_day") }    
+    LUitem = LUTable.find{ it.wucode == wCode } //&& it.day.toString() == getDataValue("is_day") }    
 	LOGINFO("getImgName Result: image url: " + getDataValue("iconLocation") + (LUitem ? LUitem.img : 'na.png') + "?raw=true")
     return (getDataValue("iconLocation") + (LUitem ? LUitem.img : 'na.png') + (((getDataValue("iconLocation").toLowerCase().contains('://github.com/')) && (getDataValue("iconLocation").toLowerCase().contains('/blob/master/'))) ? "?raw=true" : ""))    
 }
 
 public getowmImgName(wCode){
     LOGINFO("getImgName Input: wCode: " + wCode + "  state.is_day: " + getDataValue("is_day") + " iconLocation: " + getDataValue("iconLocation"))
-    LUitem = LUTable.find{ it.wucode == wCode && it.day.toString() == getDataValue("is_day") }    
+    LUitem = LUTable.find{ it.wucode == wCode } // && it.day.toString() == getDataValue("is_day") }    
 	LOGINFO("getImgName Result: image url: " + getDataValue("iconLocation") + (LUitem ? LUitem.img : 'na.png') + "?raw=true")
     return (LUitem ? LUitem.owm : '')   
 }
@@ -1037,7 +1035,7 @@ def sendEventPublish(evt)	{
 [wucode: 'hazy', day: 1, img: '20.png', luxpercent: 0.2, owm: '50d'],
 [wucode: 'partlycloudy', day: 1, img: '30.png', luxpercent: 0.8, owm: '03d'],
 [wucode: 'rain', day: 1, img: '39.png', luxpercent: 0.5, owm: '10d'],
-[wucode: 'sleet', day: 1, img: '8.png', luxpercent: 0.4, owm: '10d'],
+[wucode: 'sleet', day: 1, img: '8.png', luxpercent: 0.4, owm: '13d'],
 [wucode: 'snow', day: 1, img: '16.png', luxpercent: 0.3, owm: '13d'],
 [wucode: 'sunny', day: 1, img: '36.png', luxpercent: 1, owm: '01d'],
 [wucode: 'tstorms', day: 1, img: '3.png', luxpercent: 0.3, owm: '11d'],
@@ -1050,7 +1048,7 @@ def sendEventPublish(evt)	{
 [wucode: 'nt_hazy', day: 0, img: '21.png', luxpercent: 0, owm: '50n'],
 [wucode: 'nt_partlycloudy', day: 0, img: '29.png', luxpercent: 0, owm: '03n'],
 [wucode: 'nt_rain', day: 0, img: '45.png', luxpercent: 0, owm: '10n'],
-[wucode: 'nt_sleet', day: 0, img: '18.png', luxpercent: 0, owm: '10n'],
+[wucode: 'nt_sleet', day: 0, img: '18.png', luxpercent: 0, owm: '13n'],
 [wucode: 'nt_snow', day: 0, img: '7.png', luxpercent: 0, owm: '13n'],
 [wucode: 'nt_tstorms', day: 0, img: '38.png', luxpercent: 0, owm: '11n']
 ]    
