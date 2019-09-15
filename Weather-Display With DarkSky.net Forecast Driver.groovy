@@ -757,7 +757,7 @@ def initialize() {
     state.clear()
     unschedule()
     state.driverName = "Weather-Display With DarkSky.net Forecast Driver"
-    state.driverVersion = "4.1.5"    // ************************* Update as required *************************************
+    state.driverVersion = "4.1.6"    // ************************* Update as required *************************************
 	state.driverNameSpace = "Matthew"
     logSet = (settings?.logSet ?: false)
 	extSource = (settings?.extSource ?: 2).toInteger()
