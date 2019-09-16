@@ -1,0 +1,11 @@
+{
+	"author": "Matthew (scottma61)",
+ 	"comment": "",
+	"copyright": " &#9400; 2019 Matthew (scottma61)",
+	"application": {
+	},
+ 	"driver": {
+		"DarkSky.net Weather Driver":  {"ver": "1.0.8", "updated": "16/09/2019"},
+		"Weather-Display With DarkSky.net Forecast Driver":  {"ver": "4.1.8", "updated": "16/09/2019"}
+	}
+}
