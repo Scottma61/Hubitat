@@ -1,4 +1,9 @@
 # Hubitat
+
+
+Nothing to see here.  This is my private github and most of the code here is deprecated and no longer updated or supported.  The only drivers I support are now on the Hubitat Community github (https://github.com/HubitatCommunity)  If you are using anything from here .... it may not remain here for long.  I plan to reorganize/move/delete extensively in the future.  Copy whatever you like .... but do it now.   09/16/2019
+=====================================================================================================================================
+
 MyDrivers
 Just my collection of Hubitat drivers that I have collected from others and altered for my own use.
 The vast majority of this was not my work.  I just started with someone else's great beginnings and made minor alterations.
