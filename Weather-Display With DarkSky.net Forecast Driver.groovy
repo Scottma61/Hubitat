@@ -1,6 +1,6 @@
 /*
   Weather-Display With DarkSky.net Forecast Driver
-   Import URL: https://raw.githubusercontent.com/Scottma61/Hubitat/master/Weather-Display%20With%20DarkSky.net%20Forecast%20Driver.groovy
+   Import URL: https://raw.githubusercontent.com/HubitatCommunity/Weather-Display-With-DarkSky.net-Forecast-Driver/master/Weather-Display%20With%20DarkSky.net%20Forecast%20Driver.groovy
    Copyright 2019 @Matthew (Scottma61)
  
    Many people contributed to the creation of this driver.  Significant contributors include:
@@ -43,11 +43,7 @@
    (fancier) set.  The base 'Standard' icon set will be from WeatherUnderground.  You may choose the
    fancier 'Alternative' icon set if you use the Dark Sky.
 
-   *** PLEASE NOTE: You should download and store these 'Alternative' icons on your own server and
-   change the reference to that location in the driver. There is no assurance that those icon files will
-   remain in my github repository.    ***
- 
-   The driver exposes both metric and imperial measurements for you to select from.
+The driver exposes both metric and imperial measurements for you to select from.
  
    Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
    in compliance with the License. You may obtain a copy of the License at:
@@ -58,8 +54,20 @@
    on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
    for the specific language governing permissions and limitations under the License.
  
-   Last Update 09/14/2019
+   Last Update 09/16/2019
   { Left room below to document version changes...}
+
+
+
+
+
+
+
+
+
+   V4.1.8 - Changed icon location to prevent duplication - Please update icon file location   - 09/16/2019
+   V4.1.7 - Moved driver to the HubitatCommunity github, added 'Nighttime' schedule option    - 09/16/2019
+            added upDateCheck() to show if driver is current (thanks @csteele)
    V4.1.6   Another optional attribute bug fix.                                               - 09/15/2019 
    V4.1.5   Tweaking and bug fixes.                                                           - 09/14/2019
    V4.1.4   Added 'weatherIcons' used for OWM icons/dashboard                                 - 09/14/2019
@@ -109,10 +117,11 @@ The way the 'optional' attributes work:
    available in the dashboard is to delete the virtual device and create a new one AND DO NOT SELECT the
    attribute you do not want to show.
  */
+public static String version()      {  return "4.1.8"  }
 import groovy.transform.Field
 
 metadata {
-    definition (name: "Weather-Display With DarkSky.net Forecast Driver", namespace: "Matthew", author: "Scottma61", importUrl: "https://raw.githubusercontent.com/Scottma61/Hubitat/master/Weather-Display%20With%20DarkSky.net%20Forecast%20Driver.groovy") {
+    definition (name: "Weather-Display With DarkSky.net Forecast Driver", namespace: "Matthew", author: "Scottma61", importUrl: "https://raw.githubusercontent.com/HubitatCommunity/Weather-Display-With-DarkSky.net-Forecast-Driver/master/Weather-Display%20With%20DarkSky.net%20Forecast%20Driver.groovy") {
         capability "Actuator"
         capability "Sensor"
         capability "Temperature Measurement"
@@ -123,7 +132,6 @@ metadata {
 	
 		attributesMap.each
 		{
-//            k, v -> if (("${k}Publish") == true && v.typeof) attribute "${k}", "${v.typeof}"
             k, v -> if (v.typeof) attribute "${k}", "${v.typeof}"
 		}
 //    The following attributes may be needed for dashboards that require these attributes,
@@ -151,9 +159,10 @@ metadata {
             input "pollIntervalStation", "enum", title: "Station Poll Interval", required: true, defaultValue: "3 Hours", options: ["Manual Poll Only", "1 Minute", "5 Minutes", "10 Minutes", "15 Minutes", "30 Minutes", "1 Hour", "3 Hours"]
             input "pollLocationStation", "text", required: true, title: "Station Data File Location:", defaultValue: "http://"
 			input "apiKey", "text", required: true, defaultValue: "Type DarkSky.net API Key Here", title: "API Key"
-			input "pollIntervalForecast", "enum", title: "External Source Poll Interval", required: true, defaultValue: "3 Hours", options: ["Manual Poll Only", "5 Minutes", "10 Minutes", "15 Minutes", "30 Minutes", "1 Hour", "3 Hours"]
+			input "pollIntervalForecast", "enum", title: "External Source Poll Interval (daylight)", required: true, defaultValue: "3 Hours", options: ["Manual Poll Only", "2 Minutes", "5 Minutes", "10 Minutes", "15 Minutes", "30 Minutes", "1 Hour", "3 Hours"]
+            input "pollIntervalForecastnight", "enum", title: "External Source Poll Interval (nighttime)", required: true, defaultValue: "3 Hours", options: ["Manual Poll Only", "2 Minutes", "5 Minutes", "10 Minutes", "15 Minutes", "30 Minutes", "1 Hour", "3 Hours"]
 			input "sourceImg", "bool", required: true, defaultValue: false, title: "Icons from: On = Standard - Off = Alternative"
-			input "iconLocation", "text", required: true, defaultValue: "https://raw.githubusercontent.com/Scottma61/WeatherIcons/master/", title: "Alternative Icon Location:"
+			input "iconLocation", "text", required: true, defaultValue: "https://raw.githubusercontent.com/HubitatCommunity/WeatherIcons/master/", title: "Alternative Icon Location:"
             input "iconType", "bool", title: "Condition Icon: On = Current - Off = Forecast", required: true, defaultValue: false
 	    	input "tempFormat", "enum", required: true, defaultValue: "Fahrenheit (°F)", title: "Display Unit - Temperature: Fahrenheit (°F) or Celsius (°C)",  options: ["Fahrenheit (°F)", "Celsius (°C)"]
             input "datetimeFormat", "enum", required: true, defaultValue: "m/d/yyyy 12 hour (am|pm)", title: "Display Unit - Date-Time Format",  options: [1:"m/d/yyyy 12 hour (am|pm)", 2:"m/d/yyyy 24 hour", 3:"mm/dd/yyyy 12 hour (am|pm)", 4:"mm/dd/yyyy 24 hour", 5:"d/m/yyyy 12 hour (am|pm)", 6:"d/m/yyyy 24 hour", 7:"dd/mm/yyyy 12 hour (am|pm)", 8:"dd/mm/yyyy 24 hour", 9:"yyyy/mm/dd 24 hour"]
@@ -207,6 +216,11 @@ def sunRiseSetHandler(resp, data) {
         } else {
             updateDataValue("is_day", "0")
         }
+        if(getDataValue("currTime") < getDataValue("tw_begin") || getDataValue("currTime") > getDataValue("tw_end")) {
+        	updateDataValue("is_light", "0")
+        } else {
+        	updateDataValue("is_light", "1")
+        }
     } else {
 		log.warn "Sunrise-Sunset api did not return data"
 	}
@@ -244,6 +258,14 @@ def doPollWD() {
         updateDataValue("is_day", "1")
     } else {
         updateDataValue("is_day", "0")
+    }
+    if(getDataValue("currTime") < getDataValue("tw_begin") || getDataValue("currTime") > getDataValue("tw_end")) {
+        updateDataValue("is_light", "0")
+    } else {
+        updateDataValue("is_light", "1")
+    }
+    if(getDataValue("is_light") != getDataValue("is_lightOld")) {
+        initialize()
     }
 // >>>>>>>>>> End Setup Global Variables <<<<<<<<<<  
 
@@ -582,8 +604,8 @@ def doPollDS() {
     if(sourceIllumination==false) {
         def (lux, bwn) = estimateLux(getDataValue("condition_code"), getDataValue("cloud"))
         updateDataValue("bwn", bwn)
-        updateDataValue("illuminance", lux.toString())
-        updateDataValue("illuminated", String.format("%,4d", lux).toString())
+        updateDataValue("illuminance", !lux ? "0" : lux.toString())
+        updateDataValue("illuminated", String.format("%,4d", !lux ? 0 : lux).toString())
     }
 // >>>>>>>>>> End Process Only If Illumination from WD Is NOT Selected  <<<<<<<<<<
     
@@ -704,7 +726,6 @@ def PostPoll() {
     Summary_last_poll_time = (sutime > futime ? new Date().parse("EEE MMM dd HH:mm:ss z yyyy", "${sutime}").format(timeFormat, TimeZone.getDefault()) : new Date().parse("EEE MMM dd HH:mm:ss z yyyy", "${futime}").format(timeFormat, TimeZone.getDefault()))
     Summary_last_poll_date = (sutime > futime ? new Date().parse("EEE MMM dd HH:mm:ss z yyyy", "${sutime}").format(dateFormat, TimeZone.getDefault()) : new Date().parse("EEE MMM dd HH:mm:ss z yyyy", "${futime}").format(dateFormat, TimeZone.getDefault()))
     if(weatherSummaryPublish){ // don't bother setting these values if it's not enabled
-	
         if(extSource.toInteger() == 2){
 			Summary_forecastTemp = " with a high of " + String.format("%3.1f", getDataValue("forecastHigh").toBigDecimal()) + (isFahrenheit ? '°F' : '°C') + " and a low of " + String.format("%3.1f", getDataValue("forecastLow").toBigDecimal()) + (isFahrenheit ? '°F. ' : '°C. ')
 			Summary_precip = "There is a " + getDataValue("percentPrecip") + "% chance of precipitation. "
@@ -752,18 +773,18 @@ def updated()   {
     updateDataValue("forecastPoll", "false")
     if (settingEnable) runIn(2100,settingsOff)  // "roll up" (hide) the condition selectors after 35 min
     runIn(5, pollWD)
+    updateCheck()
+    schedule("0 0 8 ? * FRI *", updateCheck)
 }
 def initialize() {
     state.clear()
     unschedule()
-    state.driverName = "Weather-Display With DarkSky.net Forecast Driver"
-    state.driverVersion = "4.1.6"    // ************************* Update as required *************************************
-	state.driverNameSpace = "Matthew"
     logSet = (settings?.logSet ?: false)
 	extSource = (settings?.extSource ?: 2).toInteger()
     pollIntervalStation = (settings?.pollIntervalStation ?: "3 Hours")
     pollLocationStation = (settings?.pollLocationStation ?: "http://")
     pollIntervalForecast = (settings?.pollIntervalForecast ?: "3 Hours")
+    pollIntervalForecastnight = (settings?.pollIntervalForecastnight ?: "3 Hours")
     datetimeFormat = (settings?.datetimeFormat ?: 1).toInteger()
     distanceFormat = (settings?.distanceFormat ?: "Miles (mph)")
     pressureFormat = (settings?.pressureFormat ?: "Inches")
@@ -776,32 +797,95 @@ def initialize() {
     sourceImg = (settings?.sourceImg ?: false)
     sourceUV = (settings?.sourceUV ?: false)
     summaryType = (settings?.summaryType ?: false)
-    iconLocation = (settings?.iconLocation ?: "https://raw.githubusercontent.com/Scottma61/WeatherIcons/master/")
+    iconLocation = (settings?.iconLocation ?: "https://raw.githubusercontent.com/HubitatCommunity/WeatherIcons/master/")
     updateDataValue("iconLocation", iconLocation)
 
     setDateTimeFormats(datetimeFormat)
     setMeasurementMetrics(distanceFormat, pressureFormat, rainFormat, tempFormat)
     pollSunRiseSet()
-	schedule("11 20 0/8 ? * * *", pollSunRiseSet)
+    Random rand = new Random(now())
+    ssseconds = rand.nextInt(60)
+    if(ssseconds < 52 ){
+        wdseconds = ssseconds + 4
+        dsseconds = wdseconds + 4
+    }else if(ssseconds < 56 ){
+        wdseconds = ssseconds + 4
+        dsseconds = wdseconds - 60 + 4
+    }else{
+        wdseconds = ssseconds - 60 + 4
+        dsseconds = wdseconds + 4
+    }   
+    schedule("${ssseconds} 20 0/8 ? * * *", pollSunRiseSet)
     if(pollIntervalStation == "Manual Poll Only"){
         LOGINFO("MANUAL STATION POLLING ONLY")
     } else {
         pollIntervalStation = (settings?.pollIntervalStation ?: "3 Hours").replace(" ", "")
-        if(pollIntervalStation != pollIntervalForecast){
-            "runEvery${pollIntervalStation}"(pollWD)
-            LOGINFO("pollIntervalStation: $pollIntervalStation")
+        if(pollIntervalStation=='1Minute'){
+            schedule("${wdseconds} * * * * ? *", pollWD)
+        }else if(pollIntervalStation=='2Minutes'){
+            schedule("${wdseconds} 1/2 * * * ? *", pollWD)                
+        }else if(pollIntervalStation=='5Minutes'){
+            schedule("${wdseconds} 2/5 * * * ? *", pollWD)                
+        }else if(pollIntervalStation=='10Minutes'){
+            schedule("${wdseconds} 3/10 * * * ? *", pollWD)                
+        }else if(pollIntervalStation=='15Minutes'){
+            schedule("${wdseconds} 4/15 * * * ? *", pollWD)                
+        }else if(pollIntervalStation=='30Minutes'){
+            schedule("${wdseconds} 5/30 * * * ? *", pollWD)                
+        }else if(pollIntervalStation=='1Hour'){
+            schedule("${wdseconds} 6 * * * ? *", pollWD)                
+        }else if(pollIntervalStation=='3Hours'){
+            schedule("${wdseconds} 7 0/3 * * ? *", pollWD)                
         }
     }
-	if(pollIntervalForecast == "Manual Poll Only"){
-		LOGINFO("MANUAL FORECAST POLLING ONLY")
-	} else {
-        pollIntervalForecast = (settings?.pollIntervalForecast ?: "3 Hours").replace(" ", "")
-        if (extSource.toInteger() == 1) {
-            "runEvery${pollIntervalForecast}"(pollWD)
-        } else if (extSource.toInteger() == 2) {
-            "runEvery${pollIntervalForecast}"(pollDS)
-        }
+	if(getDataValue("is_light")=="1") {
+		if(pollIntervalForecast == "Manual Poll Only"){
+			LOGINFO("MANUAL FORECAST POLLING ONLY")
+		} else {
+			pollIntervalForecast = (settings?.pollIntervalForecast ?: "3 Hours").replace(" ", "")
+			if (extSource.toInteger() == 2) {
+				if(pollIntervalForecast=='2Minutes'){
+					schedule("${dsseconds} 1/2 * * * ? *", pollDS)
+				}else if(pollIntervalForecast=='5Minutes'){
+    				schedule("${dsseconds} 2/5 * * * ? *", pollDS)                
+				}else if(pollIntervalForecast=='10Minutes'){
+					schedule("${dsseconds} 3/10 * * * ? *", pollDS)                
+				}else if(pollIntervalForecast=='15Minutes'){
+					schedule("${dsseconds} 4/15 * * * ? *", pollDS)                
+				}else if(pollIntervalForecast=='30Minutes'){
+					schedule("${dsseconds} 5/30 * * * ? *", pollDS)                
+				}else if(pollIntervalForecast=='1Hour'){
+					schedule("${dsseconds} 6 * * * ? *", pollDS)                
+				}else if(pollIntervalForecast=='3Hours'){
+					schedule("${dsseconds} 7 0/3 * * ? *", pollDS)                
+				}
+			}
+		}
+	}else{
+		if(pollIntervalForecastnight == "Manual Poll Only"){
+			LOGINFO("MANUAL FORECAST POLLING ONLY")
+		} else {
+			pollIntervalForecastnight = (settings?.pollIntervalForecastnight ?: "3 Hours").replace(" ", "")
+			if (extSource.toInteger() == 2) {
+				if(pollIntervalForecastnight=='2Minutes'){
+					schedule("${dsseconds} 1/2 * * * ? *", pollDS)
+				}else if(pollIntervalForecastnight=='5Minutes'){
+				    schedule("${dsseconds} 2/5 * * * ? *", pollDS)                
+				}else if(pollIntervalForecastnight=='10Minutes'){
+					schedule("${dsseconds} 3/10 * * * ? *", pollDS)                
+				}else if(pollIntervalForecastnight=='15Minutes'){
+					schedule("${dsseconds} 4/15 * * * ? *", pollDS)                
+				}else if(pollIntervalForecastnight=='30Minutes'){
+					schedule("${dsseconds} 5/30 * * * ? *", pollDS)                
+				}else if(pollIntervalForecastnight=='1Hour'){
+					schedule("${dsseconds} 6 * * * ? *", pollDS)                
+				}else if(pollIntervalForecastnight=='3Hours'){
+					schedule("${dsseconds} 7 0/3 * * ? *", pollDS)                
+				}
+			}
+		}
 	}
+	updateDataValue("is_lightOld", getDataValue("is_light"))
     return
 }
 
@@ -1026,27 +1110,27 @@ def sendEventPublish(evt)	{
 }
 
 @Field final List    LUTable =     [
-[wucode: 'breezy', day: 1, img: '23.png', luxpercent: 1, owm: '03d'],
+[wucode: 'breezy', day: 1, img: '23.png', luxpercent: 1, owm: '02d'],
 [wucode: 'chancesnow', day: 1, img: '41.png', luxpercent: 0.3, owm: '13d'],
 [wucode: 'chancetstorms', day: 1, img: '37.png', luxpercent: 0.2, owm: '11d'],
 [wucode: 'clear', day: 1, img: '32.png', luxpercent: 1, owm: '01d'],
 [wucode: 'cloudy', day: 1, img: '28.png', luxpercent: 0.6, owm: '04d'],
 [wucode: 'fog', day: 1, img: '19.png', luxpercent: 0.2, owm: '50d'],
 [wucode: 'hazy', day: 1, img: '20.png', luxpercent: 0.2, owm: '50d'],
-[wucode: 'partlycloudy', day: 1, img: '30.png', luxpercent: 0.8, owm: '03d'],
+[wucode: 'partlycloudy', day: 1, img: '30.png', luxpercent: 0.8, owm: '02d'],
 [wucode: 'rain', day: 1, img: '39.png', luxpercent: 0.5, owm: '10d'],
 [wucode: 'sleet', day: 1, img: '8.png', luxpercent: 0.4, owm: '13d'],
 [wucode: 'snow', day: 1, img: '16.png', luxpercent: 0.3, owm: '13d'],
 [wucode: 'sunny', day: 1, img: '36.png', luxpercent: 1, owm: '01d'],
 [wucode: 'tstorms', day: 1, img: '3.png', luxpercent: 0.3, owm: '11d'],
-[wucode: 'nt_breezy', day: 0, img: '24.png', luxpercent: 0, owm: '03n'],
+[wucode: 'nt_breezy', day: 0, img: '24.png', luxpercent: 0, owm: '02n'],
 [wucode: 'nt_chancesnow', day: 0, img: '46.png', luxpercent: 0, owm: '13n'],
 [wucode: 'nt_chancetstorms', day: 0, img: '47.png', luxpercent: 0, owm: '11n'],
 [wucode: 'nt_clear', day: 0, img: '31.png', luxpercent: 0, owm: '01n'],
 [wucode: 'nt_cloudy', day: 0, img: '27.png', luxpercent: 0, owm: '04n'],
 [wucode: 'nt_fog', day: 0, img: '22.png', luxpercent: 0, owm: '50n'],
 [wucode: 'nt_hazy', day: 0, img: '21.png', luxpercent: 0, owm: '50n'],
-[wucode: 'nt_partlycloudy', day: 0, img: '29.png', luxpercent: 0, owm: '03n'],
+[wucode: 'nt_partlycloudy', day: 0, img: '29.png', luxpercent: 0, owm: '02n'],
 [wucode: 'nt_rain', day: 0, img: '45.png', luxpercent: 0, owm: '10n'],
 [wucode: 'nt_sleet', day: 0, img: '18.png', luxpercent: 0, owm: '13n'],
 [wucode: 'nt_snow', day: 0, img: '7.png', luxpercent: 0, owm: '13n'],
@@ -1071,7 +1155,7 @@ def sendEventPublish(evt)	{
 	"illuminated":			    [title: "Illuminated", descr: "Display 'illuminated' (with 'lux' added for use on a Dashboard)?", typeof: "string", default: "false"],
 	"is_day":				    [title: "Is daytime", descr: "Display 'is_day'?", typeof: "number", default: "false"],
 	"localSunrise":			    [title: "Local SunRise and SunSet", descr: "Display the Group of 'Time of Local Sunrise and Sunset,' with and without Dashboard text?", typeof: false, default: "false"],
-	"myTile":				    [title: "myTile for dashboard", descr: "Display 'mytile'?", typeof: "string", default: "false"],
+	"myTile":				    [title: "myTile for dashboard", descr: "Display 'myTile'?", typeof: "string", default: "false"],
 	"moonPhase":			    [title: "Moon Phase", descr: "Display 'moonPhase'?", typeof: "string", default: "false"],    
 	"nearestStorm":          	[title: "Nearest Storm Info", descr: "Display nearest storm data'?", typeof: false, default: "false"],    
 	"percentPrecip":			[title: "Percent Precipitation", descr: "Display the Chance of Rain, in percent?", typeof: "number", default: "false"],
@@ -1085,5 +1169,70 @@ def sendEventPublish(evt)	{
 	"wind_degree":			    [title: "Wind Degree", descr: "Display the Wind Direction (number)?", typeof: "number", default: "false"],
 	"wind_direction":			[title: "Wind direction", descr: "Display the Wind Direction?", typeof: "string", default: "false"],
 	"wind_gust":				[title: "Wind gust (in default unit)", descr: "Display the Wind Gust?", typeof: "number", default: "false"],
-	"wind_string":			    [title: "Wind string", descr: "Display the wind string?", typeof: "string", default: "false"],
+	"wind_string":			    [title: "Wind string", descr: "Display the wind string?", typeof: "string", default: "false"]
 ]
+
+// Check Version   ***** with great thanks and acknowledgment to Cobra (CobraVmax) for his original code ****
+def updateCheck()
+{    
+	def paramsUD = [uri: "https://raw.githubusercontent.com/Scottma61/Hubitat/master/docs/version2.json"] //https://hubitatcommunity.github.io/???/version2.json"]
+	
+ 	asynchttpGet("updateCheckHandler", paramsUD) 
+}
+
+def updateCheckHandler(resp, data) {
+
+	state.InternalName = "Weather-Display With DarkSky.net Forecast Driver"
+
+	if (resp.getStatus() == 200 || resp.getStatus() == 207) {
+		respUD = parseJson(resp.data)
+		// log.warn " Version Checking - Response Data: $respUD"   // Troubleshooting Debug Code - Uncommenting this line should show the JSON response from your webserver 
+		state.Copyright = "${thisCopyright}"
+		// uses reformattted 'version2.json' 
+		def newVer = padVer(respUD.driver.(state.InternalName).ver)
+		def currentVer = padVer(version())               
+		state.UpdateInfo = (respUD.driver.(state.InternalName).updated)
+            // log.debug "updateCheck: ${respUD.driver.(state.InternalName).ver}, $state.UpdateInfo, ${respUD.author}"
+
+		switch(newVer) {
+			case { it == "NLS"}:
+			      state.Status = "<b>** This Driver is no longer supported by ${respUD.author}  **</b>"       
+			      if (descTextEnable) log.warn "** This Driver is no longer supported by ${respUD.author} **"      
+				break
+			case { it > currentVer}:
+			      state.Status = "<b>New Version Available (Version: ${respUD.driver.(state.InternalName).ver})</b>"
+			      if (descTextEnable) log.warn "** There is a newer version of this Driver available  (Version: ${respUD.driver.(state.InternalName).ver}) **"
+			      if (descTextEnable) log.warn "** $state.UpdateInfo **"
+				break
+			case { it < currentVer}:
+			      state.Status = "<b>You are using a Test version of this Driver (Expecting: ${respUD.driver.(state.InternalName).ver})</b>"
+			      if (descTextEnable) log.warn "You are using a Test version of this Driver (Expecting: ${respUD.driver.(state.InternalName).ver})"
+				break
+			default:
+				state.Status = "Current"
+				if (descTextEnable) log.info "You are using the current version of this driver"
+				break
+		}
+
+ 	sendEvent(name: "verUpdate", value: state.UpdateInfo)
+	sendEvent(name: "verStatus", value: state.Status)
+      }
+      else
+      {
+           log.error "Something went wrong: CHECK THE JSON FILE AND IT'S URI"
+      }
+}
+
+/*
+	padVer
+
+	Version progression of 1.4.9 to 1.4.10 would mis-compare unless each duple is padded first.
+
+*/ 
+def padVer(ver) {
+	def pad = ""
+	ver.replaceAll( "[vV]", "" ).split( /\./ ).each { pad += it.padLeft( 2, '0' ) }
+	return pad
+}
+
+def getThisCopyright(){"&copy; 2019 Matthew (scottma61) "}
