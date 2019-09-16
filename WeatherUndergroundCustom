@@ -1,0 +1,235 @@
+/**
+ *  WeatherUndergroundCustom
+ *
+ *  Copyright 2018 mattw01
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ *  in compliance with the License. You may obtain a copy of the License at:
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software distributed under the License is distributed
+ *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
+ *  for the specific language governing permissions and limitations under the License.
+ *
+ *  - Last Update 25/04/2018
+ *  
+ *  V1.6.1 - Changed Temp, Lux & Humidity to lower case @Scottma61 04/25/2018
+ *  V1.6.0 - Added to @Cobra's version Temp, Lux and Humidity capabilities - @Scottma61 04/25/2018
+ *  V1.5.0 - Added 'Station ID' so you can confirm you are using correct WU station
+ *  V1.4.0 - Added ability to choose 'Pressure', 'Distance/Speed' & 'Precipitation' units & switchable logging- @Cobra 25/04/2018
+ *  V1.3.0 - Added wind gust - removed some capabilities and added attributes - @Cobra 24/04/2018
+ *  V1.2.0 - Added wind direction - @Cobra 23/04/2018
+ *  V1.1.0 - Added ability to choose between "Fahrenheit" and "Celsius" - @Cobra 23/03/2018
+ *  V1.0.0 - Original @mattw01 version
+ *
+ */
+
+metadata {
+    definition (name: "WeatherUndergroundCustom", namespace: "Scottma61", author: "mattw01/Cobra") {
+        capability "Actuator"
+        capability "Sensor"
+        capability "Temperature Measurement"
+        capability "Illuminance Measurement"
+        capability "Relative Humidity Measurement"
+        command "poll"
+        command "forcePoll"
+        attribute "Solar_Radiation", "number"
+        attribute "Observation_Time", "string"
+        attribute "Weather", "string"
+        attribute "Temperature_Feels_Like", "number"
+        attribute "Precip_Last_Hour", "number"
+        attribute "Precip_Today", "number"
+        attribute "Wind_Speed", "number"
+        attribute "Wind_String", "string"
+        attribute "Pressure", "number"
+        attribute "Dewpoint", "number"
+        attribute "UV", "number"
+        attribute "Visibility", "number"
+        attribute "Forecast_High", "number"
+        attribute "Forecast_Low", "number"
+        attribute "Forecast_Conditions", "string"
+        attribute "Display_Unit_Temperature", "string"
+        attribute "Display_Unit_Distance", "string"
+        attribute "Display_Unit_Pressure", "string"
+        attribute "Wind_Direction", "string"
+        attribute "Wind_Gust", "string"
+        attribute "temperature", "string"
+        attribute "illuminance", "string"
+        attribute "humidity", "string"
+        attribute "Alert", "string"
+        attribute "Driver_Version", "string"
+        attribute "Driver_NameSpace", "string"
+        attribute "Driver_Station_ID", "string"
+   //     attribute "Weather_Report", "string"
+        
+         
+    }
+    preferences() {
+        section("Query Inputs"){
+            input "apiKey", "text", required: true, title: "API Key"
+            input "pollLocation", "text", required: true, title: "ZIP Code or Location"
+            input "tempFormat", "enum", required: true, title: "Display Unit - Temperature: Fahrenheit or Celsius",  options: ["Fahrenheit", "Celsius"]
+            input "distanceFormat", "enum", required: true, title: "Display Unit - Distance/Speed: Miles or Kilometres",  options: ["Miles (mph)", "Kilometres (kph)"]
+            input "pressureFormat", "enum", required: true, title: "Display Unit - Pressure: Inches or Millibar",  options: ["Inches", "Millibar"]
+            input "rainFormat", "enum", required: true, title: "Display Unit - Precipitation: Inches or Millimetres",  options: ["Inches", "Millimetres"]
+            input "pollIntervalLimit", "number", title: "Poll Interval Limit:", required: true
+            input "autoPoll", "bool", required: false, title: "Enable Auto Poll"
+            input "pollInterval", "enum", title: "Auto Poll Interval:", required: false, defaultValue: "5 Minutes",
+                   options: ["5 Minutes", "10 Minutes", "15 Minutes", "30 Minutes", "1 Hour", "3 Hours"]
+            input "logSet", "bool", title: "Log All WU Response Data", required: true, defaultValue: false
+			
+        }
+    }
+}
+
+def updated() {
+    log.debug "updated called"
+    state.version = "1.6.1"    // ************************* Update as required *************************************
+    unschedule()
+    forcePoll()
+    def pollIntervalCmd = (settings?.pollInterval ?: "5 Minutes").replace(" ", "")
+    if(autoPoll)
+        "runEvery${pollIntervalCmd}"(pollSchedule)
+}
+def pollSchedule()
+{
+    forcePoll()
+}
+              
+def parse(String description) {
+}
+
+def poll()
+{
+    if(now() - state.lastPoll > (pollIntervalLimit * 60000))
+        forcePoll()
+    else
+        log.debug "poll called before interval threshold was reached"
+}
+
+def forcePoll()
+{
+    log.debug "WU: forcePoll called"
+    def params1 = [
+        uri: "http://api.wunderground.com/api/${apiKey}/conditions/forecast/q/${pollLocation}.json"
+    ]
+    
+     def params2 = [
+        uri: "http://api.wunderground.com/api/${apiKey}/alerts/q/${pollLocation}.json"
+    ]
+    
+    
+    log.debug "params1: ${params1}"
+    log.debug "params2: ${params2}"
+    try {
+        httpGet(params1) { resp1 ->
+            resp1.headers.each {
+            log.debug "Response1: ${it.name} : ${it.value}"
+        }
+            if(logSet == true){  
+            log.debug "params1: ${params1}"
+            
+ 		    log.debug "response contentType: ${resp1.contentType}"
+ 		    log.debug "response data: ${resp1.data}"
+            } 
+            if(logSet == false){ 
+            log.info "Further WU data logging disabled (params1)"    
+            }    
+            
+            sendEvent(name: "Driver_NameSpace", value: "Scottma61")
+            sendEvent(name: "Driver_Version", value: state.version)
+            sendEvent(name: "Driver_Station_ID", value: resp1.data.current_observation.station_id)
+          
+               
+               
+            sendEvent(name: "illuminance", value: resp1.data.current_observation.solarradiation, unit: "lux")  
+            sendEvent(name: "Observation_Time", value: resp1.data.current_observation.observation_time)
+            sendEvent(name: "Weather", value: resp1.data.current_observation.weather)
+            sendEvent(name: "Wind_String", value: resp1.data.current_observation.wind_string)
+            sendEvent(name: "Solar_Radiation", value: resp1.data.current_observation.solarradiation, unit: "W")
+            sendEvent(name: "humidity", value: resp1.data.current_observation.relative_humidity, unit: "%")
+            sendEvent(name: "UV", value: resp1.data.current_observation.UV)
+            sendEvent(name: "Forecast_Conditions", value: resp1.data.forecast.simpleforecast.forecastday[0].conditions)
+            sendEvent(name: "Wind_Direction", value: resp1.data.current_observation.wind_dir)
+            
+            
+            if(rainFormat == "Inches"){
+            sendEvent(name: "Precip_Last_Hour", value: resp1.data.current_observation.precip_1hr_in, unit: "IN")
+            sendEvent(name: "Precip_Today", value: resp1.data.current_observation.precip_today_in, unit: "IN")
+            }
+            if(rainFormat == "Millimetres"){   
+            sendEvent(name: "Precip_Today", value: resp1.data.current_observation.precip_today_metric, unit: "MM")
+            sendEvent(name: "Precip_Last_Hour", value: resp1.data.current_observation.precip_1hr_metric, unit: "MM")
+            }
+            
+            if(tempFormat == "Celsius"){
+            sendEvent(name: "temperature", value: resp1.data.current_observation.temp_c, unit: "C")
+            sendEvent(name: "Temperature_Feels_Like", value: resp1.data.current_observation.feelslike_c, unit: "C")
+            sendEvent(name: "Dewpoint", value: resp1.data.current_observation.dewpoint_c, unit: "C")
+            sendEvent(name: "Forecast_High", value: resp1.data.forecast.simpleforecast.forecastday[0].high.celsius, unit: "C")
+            sendEvent(name: "Forecast_Low", value: resp1.data.forecast.simpleforecast.forecastday[0].low.celsius, unit: "C")
+            sendEvent(name: "Display_Unit_Temperature", value: "Celsius")
+            	
+        }
+           if(tempFormat == "Fahrenheit"){ 
+           sendEvent(name: "temperature", value: resp1.data.current_observation.temp_f, unit: "F")
+           sendEvent(name: "Temperature_Feels_Like", value: resp1.data.current_observation.feelslike_f, unit: "F")
+           sendEvent(name: "Dewpoint", value: resp1.data.current_observation.dewpoint_f, unit: "F")
+           sendEvent(name: "Forecast_High", value: resp1.data.forecast.simpleforecast.forecastday[0].high.fahrenheit, unit: "F")
+           sendEvent(name: "Forecast_Low", value: resp1.data.forecast.simpleforecast.forecastday[0].low.fahrenheit, unit: "F")
+           sendEvent(name: "Display_Unit_Temperature", value: "Fahrenheit")
+            	
+           }  
+            
+          if(distanceFormat == "Miles (mph)"){  
+            sendEvent(name: "Visibility", value: resp1.data.current_observation.visibility_mi, unit: "mi")
+            sendEvent(name: "Wind_Speed", value: resp1.data.current_observation.wind_mph, unit: "MPH")
+            sendEvent(name: "Wind_Gust", value: resp1.data.current_observation.wind_gust_mph)  
+            sendEvent(name: "Display_Unit_Distance", value: "Miles (mph)")  
+          }  
+            
+          if(distanceFormat == "Kilometres (kph)"){
+           sendEvent(name: "Visibility", value: resp1.data.current_observation.visibility_km, unit: "km")
+           sendEvent(name: "Wind_Speed", value: resp1.data.current_observation.wind_kph, unit: "KPH")  
+           sendEvent(name: "Wind_Gust", value: resp1.data.current_observation.wind_gust_kph)  
+           sendEvent(name: "Display_Unit_Distance", value: "Kilometres (kph)")  
+          }
+                      
+            if(pressureFormat == "Inches"){
+            sendEvent(name: "Pressure", value: resp1.data.current_observation.pressure_in, unit: "mi")
+            sendEvent(name: "Display_Unit_Pressure", value: "Inches")  
+            }
+            
+            if(pressureFormat == "Millibar"){
+            sendEvent(name: "Pressure", value: resp1.data.current_observation.pressure_mb, unit: "mb")
+            sendEvent(name: "Display_Unit_Pressure", value: "Millibar")  
+            }
+            
+         state.lastPoll = now()   
+           httpGet(params2) { resp2 ->
+            resp2.headers.each {
+            log.debug "Response2: ${it.name} : ${it.value}"
+        }
+            if(logSet == true){  
+            log.debug "params2: ${params2}"
+            
+ 		    log.debug "response2 contentType: ${resp2.contentType}"
+ 		    log.debug "response2 data: ${resp2.data}"
+            } 
+            if(logSet == false){ 
+            log.info "Further WU data logging disabled (params2)"    
+            }     
+               
+            sendEvent(name: "Alert", value: resp2.data.alerts.level_meteoalarm_description)   
+               
+               
+            
+        }
+        } 
+        
+    } catch (e) {
+        log.error "something went wrong: $e"
+    }
+    
+}
