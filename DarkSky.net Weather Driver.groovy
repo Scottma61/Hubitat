@@ -218,6 +218,11 @@ def doPollDS() {
         updateDataValue("is_light", "1")
     }
     if(getDataValue("is_light") != getDataValue("is_lightOld")) {
+        if(getDataValue("is_light")=="1") {
+            log.info("DarkSky.net Weather Driver - INFO: Switching to Daytime schedule.")
+        }else{
+            log.info("DarkSky.net Weather Driver - INFO: Switching to Nighttime schedule.")
+        }
         initialize()
     }    
 // >>>>>>>>>> End Setup Global Variables <<<<<<<<<<  
@@ -560,9 +565,6 @@ def updated()   {
     updateDataValue("forecastPoll", "false")
     if (settingEnable) runIn(2100,settingsOff)  // "roll up" (hide) the condition selectors after 35 min
     runIn(5, pollDS)
-    updateCheck()
-    schedule("0 0 8 ? * FRI *", updateCheck)
-
 }
 def initialize() {
     state.clear()
@@ -586,6 +588,8 @@ def initialize() {
 
     setDateTimeFormats(datetimeFormat)
     setMeasurementMetrics(distanceFormat, pressureFormat, rainFormat, tempFormat)
+    updateCheck()
+    schedule("0 0 8 ? * FRI *", updateCheck)
     pollSunRiseSet()
     Random rand = new Random(now())
     ssseconds = rand.nextInt(60)
