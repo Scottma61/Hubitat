@@ -64,7 +64,7 @@ The driver exposes both metric and imperial measurements for you to select from.
 
 
 
-
+   V4.1.9 - Default to 'TinyURL' for icon location, added log when changeing schedule         - 09/16/2019
    V4.1.8 - Changed icon location to prevent duplication - Please update icon file location   - 09/16/2019
    V4.1.7 - Moved driver to the HubitatCommunity github, added 'Nighttime' schedule option    - 09/16/2019
             added upDateCheck() to show if driver is current (thanks @csteele)
@@ -117,7 +117,7 @@ The way the 'optional' attributes work:
    available in the dashboard is to delete the virtual device and create a new one AND DO NOT SELECT the
    attribute you do not want to show.
  */
-public static String version()      {  return "4.1.8"  }
+public static String version()      {  return "4.1.9"  }
 import groovy.transform.Field
 
 metadata {
