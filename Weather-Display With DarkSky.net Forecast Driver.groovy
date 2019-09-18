@@ -63,7 +63,7 @@ The driver exposes both metric and imperial measurements for you to select from.
 
 
 
-   V4.1.0 - Randomized schedule start times, Added 'Powered by DarkSky' attribution           - 09/18/2019
+   V4.2.0 - Randomized schedule start times, Added 'Powered by DarkSky' attribution           - 09/18/2019
    V4.1.9 - Default to 'TinyURL' for icon location, added log when changeing schedule         - 09/16/2019
    V4.1.8 - Changed icon location to prevent duplication - Please update icon file location   - 09/16/2019
    V4.1.7 - Moved driver to the HubitatCommunity github, added 'Nighttime' schedule option    - 09/16/2019
