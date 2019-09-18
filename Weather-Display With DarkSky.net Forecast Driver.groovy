@@ -54,7 +54,7 @@ The driver exposes both metric and imperial measurements for you to select from.
    on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
    for the specific language governing permissions and limitations under the License.
  
-   Last Update 09/16/2019
+   Last Update 09/18/2019
   { Left room below to document version changes...}
 
 
@@ -63,7 +63,7 @@ The driver exposes both metric and imperial measurements for you to select from.
 
 
 
-
+   V4.1.0 - Randomized schedule start times, Added 'Powered by DarkSky' attribution           - 09/18/2019
    V4.1.9 - Default to 'TinyURL' for icon location, added log when changeing schedule         - 09/16/2019
    V4.1.8 - Changed icon location to prevent duplication - Please update icon file location   - 09/16/2019
    V4.1.7 - Moved driver to the HubitatCommunity github, added 'Nighttime' schedule option    - 09/16/2019
@@ -117,7 +117,7 @@ The way the 'optional' attributes work:
    available in the dashboard is to delete the virtual device and create a new one AND DO NOT SELECT the
    attribute you do not want to show.
  */
-public static String version()      {  return "4.1.9"  }
+public static String version()      {  return "4.2.0"  }
 import groovy.transform.Field
 
 metadata {
@@ -161,7 +161,8 @@ metadata {
 			input "apiKey", "text", required: true, defaultValue: "Type DarkSky.net API Key Here", title: "API Key"
 			input "pollIntervalForecast", "enum", title: "External Source Poll Interval (daylight)", required: true, defaultValue: "3 Hours", options: ["Manual Poll Only", "2 Minutes", "5 Minutes", "10 Minutes", "15 Minutes", "30 Minutes", "1 Hour", "3 Hours"]
             input "pollIntervalForecastnight", "enum", title: "External Source Poll Interval (nighttime)", required: true, defaultValue: "3 Hours", options: ["Manual Poll Only", "2 Minutes", "5 Minutes", "10 Minutes", "15 Minutes", "30 Minutes", "1 Hour", "3 Hours"]
-			input "sourceImg", "bool", required: true, defaultValue: false, title: "Icons from: On = Standard - Off = Alternative"
+            input "dsIconbackgrounddark", "bool", required: true, defaultValue: false, title: "DarkSky logo text color: On = Dark  -  Off = Light"
+            input "sourceImg", "bool", required: true, defaultValue: false, title: "Icons from: On = Standard - Off = Alternative"
 			input "iconLocation", "text", required: true, defaultValue: "https://tinyurl.com/y6xrbhpf/", title: "Alternative Icon Location:"
             input "iconType", "bool", title: "Condition Icon: On = Current - Off = Forecast", required: true, defaultValue: false
 	    	input "tempFormat", "enum", required: true, defaultValue: "Fahrenheit (°F)", title: "Display Unit - Temperature: Fahrenheit (°F) or Celsius (°C)",  options: ["Fahrenheit (°F)", "Celsius (°C)"]
@@ -662,6 +663,7 @@ def PostPoll() {
         sendEvent(name: "sunsetTime", value: new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", sunRiseSet.sunset).format(timeFormat, TimeZone.getDefault()))
         sendEvent(name: "tw_end", value: new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", sunRiseSet.civil_twilight_end).format(timeFormat, TimeZone.getDefault()))    
     }
+    sendEvent(name: "DSattribution", value: '<a href=\"https://darksky.net/poweredby/\"><img src=' + getDataValue("iconLocation") + (dsIconbackgrounddark ? 'poweredby-oneline.png' : 'poweredby-oneline-darkbackground.png') + ' style=\"height:1.5em\";></a>')
     sendEvent(name: "localSunset", value: new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", sunRiseSet.sunset).format(timeFormat, TimeZone.getDefault())) // only needed for certain dashboards
     sendEvent(name: "localSunrise", value: new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", sunRiseSet.sunrise).format(timeFormat, TimeZone.getDefault())) // only needed for certain dashboards       
 /*  Weather-Display & 'Required for Dashboards' Data Elements */
@@ -749,15 +751,16 @@ def PostPoll() {
 //  <<<<<<<<<< Begin Built mytext >>>>>>>>>> 
     if(myTilePublish){ // don't bother setting these values if it's not enabled
     	iconClose = (((getDataValue("iconLocation").toLowerCase().contains('://github.com/')) && (getDataValue("iconLocation").toLowerCase().contains('/blob/master/'))) ? "?raw=true" : "")
-        alertStyleOpen = ((!getDataValue("possAlert") || getDataValue("possAlert")=="" || getDataValue("possAlert")=="false")  ?  '' : '<span style=\"font-size:0.75em;line-height=75%;\">')
-        alertStyleClose = ((!getDataValue("possAlert") || getDataValue("possAlert")=="" || getDataValue("possAlert")=="false") ? '' : ' | <span style=\"font-style:italic;\">' + getDataValue("alert") + "</span></span>" )
+        alertStyleOpen = '<div style=\"display:inline;margin-top:0em;margin-bottom:0em;float:center;\">' + (((!getDataValue("possAlert") || getDataValue("possAlert")=="" || getDataValue("possAlert")=="false")) ? '' :  '<span style=\"font-size:0.75em;line-height=75%;font-style:italic;\">')
+        alertStyleClose = ((!getDataValue("possAlert") || getDataValue("possAlert")=="" || getDataValue("possAlert")=="false")) ? '</div>' : '</span></div>'
+        dsIcon = '<a href=\"https://darksky.net/poweredby/\"><img src=' + getDataValue("iconLocation") + (dsIconbackgrounddark ? 'poweredby-oneline.png' : 'poweredby-oneline-darkbackground.png') + ' style=\"height:1.5em\";></a>'
         if(getDataValue("wind_gust").toBigDecimal() < 1.0 ) {
             wgust = 0.0g
         } else {
             wgust = getDataValue("wind_gust").toBigDecimal()
         }
-        mytext = '<div style=\"text-align:center;display:inline;margin-top:0em;margin-bottom:0em;\">' + getDataValue("city") + ", " + getDataValue("state") + '</div><br>'
-        mytext+= alertStyleOpen + getDataValue("condition_text") + alertStyleClose + '<br>'
+        mytext = '<div style=\"display:inline;margin-top:0em;margin-bottom:0em;float:center;\">' + getDataValue("city") + ", " + getDataValue("state") + '</div><br>'
+        mytext+= getDataValue("condition_text") + (((!getDataValue("possAlert") || getDataValue("possAlert")=="" || getDataValue("possAlert")=="false")) ? '' : ' | ') + alertStyleOpen + (((!getDataValue("possAlert") || getDataValue("possAlert")=="" || getDataValue("possAlert")=="false")) ? '' : getDataValue("alert")) + alertStyleClose + '<br>'
         mytext+= getDataValue("temperature") + (isFahrenheit ? '°F ' : '°C ') + '<img style=\"height:2.0em\" src=' + getDataValue("condition_icon_url") + '>' + '<span style= \"font-size:.75em;\"> Feels like ' + getDataValue("feelsLike") + (isFahrenheit ? '°F' : '°C') + '</span><br>'
         mytext+= '<div style=\"font-size:0.75em;line-height=50%;\">' + '<img src=' + getDataValue("iconLocation") + getDataValue("wind_bft_icon") + iconClose + '>' + getDataValue("wind_direction") + " "
         mytext+= getDataValue("wind").toBigDecimal() < 1.0 ? 'calm' : "@ " + getDataValue("wind") + (isDistanceMetric ? ' KPH' : ' MPH')
@@ -766,6 +769,7 @@ def PostPoll() {
         mytext+= getDataValue("humidity") + '%  ' + '<img src=' + getDataValue("iconLocation") + 'wu.png' + iconClose + '>' + getDataValue("percentPrecip") + '%'
         mytext+= (getDataValue("precip_today").toBigDecimal() > 0.0 ? '  <img src=' + getDataValue("iconLocation") + 'wr.png' + iconClose + '>' + getDataValue("precip_today") + (isRainMetric ? ' mm' : ' inches') : '') + '<br>'
         mytext+= '<img src=' + getDataValue("iconLocation") + 'wsr.png' + iconClose + '>' + getDataValue("localSunrise") + '     <img src=' + getDataValue("iconLocation") + 'wss.png' + iconClose + '>' + getDataValue("localSunset") + '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Updated:&nbsp;' + Summary_last_poll_time + '</div>'
+        mytext+= '<div style=\"display:inline;margin-top:0em;margin-bottom:0em;float:center;\">' + dsIcon + '</div>'
         LOGINFO("mytext: ${mytext}")
         sendEvent(name: "myTile", value: mytext)
     }
@@ -788,6 +792,7 @@ def initialize() {
     pollLocationStation = (settings?.pollLocationStation ?: "http://")
     pollIntervalForecast = (settings?.pollIntervalForecast ?: "3 Hours")
     pollIntervalForecastnight = (settings?.pollIntervalForecastnight ?: "3 Hours")
+    dsIconbackgrounddark = (settings?.dsIconbackgrounddark ?: true)
     datetimeFormat = (settings?.datetimeFormat ?: 1).toInteger()
     distanceFormat = (settings?.distanceFormat ?: "Miles (mph)")
     pressureFormat = (settings?.pressureFormat ?: "Inches")
@@ -810,6 +815,13 @@ def initialize() {
     pollSunRiseSet()
     Random rand = new Random(now())
     ssseconds = rand.nextInt(60)
+    minutes2 = rand.nextInt(2)
+    minutes5 = rand.nextInt(5)
+    minutes10 = rand.nextInt(10)
+    minutes15 = rand.nextInt(15)
+    minutes30 = rand.nextInt(30)
+    minutes60 = rand.nextInt(60)
+    hours3 = rand.nextInt(3)
     if(ssseconds < 52 ){
         wdseconds = ssseconds + 4
         dsseconds = wdseconds + 4
@@ -828,19 +840,19 @@ def initialize() {
         if(pollIntervalStation=='1Minute'){
             schedule("${wdseconds} * * * * ? *", pollWD)
         }else if(pollIntervalStation=='2Minutes'){
-            schedule("${wdseconds} 1/2 * * * ? *", pollWD)                
+            schedule("${wdseconds} ${minutes2}/2 * * * ? *", pollWD)                
         }else if(pollIntervalStation=='5Minutes'){
-            schedule("${wdseconds} 2/5 * * * ? *", pollWD)                
+            schedule("${wdseconds} ${minutes5}/5 * * * ? *", pollWD)                
         }else if(pollIntervalStation=='10Minutes'){
-            schedule("${wdseconds} 3/10 * * * ? *", pollWD)                
+            schedule("${wdseconds} ${minutes10}/10 * * * ? *", pollWD)                
         }else if(pollIntervalStation=='15Minutes'){
-            schedule("${wdseconds} 4/15 * * * ? *", pollWD)                
+            schedule("${wdseconds} ${minutes15}/15 * * * ? *", pollWD)                
         }else if(pollIntervalStation=='30Minutes'){
-            schedule("${wdseconds} 5/30 * * * ? *", pollWD)                
+            schedule("${wdseconds} ${minutes30}/30 * * * ? *", pollWD)                
         }else if(pollIntervalStation=='1Hour'){
-            schedule("${wdseconds} 6 * * * ? *", pollWD)                
+            schedule("${wdseconds} ${minutes60} * * * ? *", pollWD)                
         }else if(pollIntervalStation=='3Hours'){
-            schedule("${wdseconds} 7 0/3 * * ? *", pollWD)                
+            schedule("${wdseconds} ${minutes60} ${hours3}/3 * * ? *", pollWD)                
         }
     }
 	if(getDataValue("is_light")=="1") {
@@ -850,19 +862,19 @@ def initialize() {
 			pollIntervalForecast = (settings?.pollIntervalForecast ?: "3 Hours").replace(" ", "")
 			if (extSource.toInteger() == 2) {
 				if(pollIntervalForecast=='2Minutes'){
-					schedule("${dsseconds} 1/2 * * * ? *", pollDS)
+					schedule("${dsseconds} ${minutes2}/2 * * * ? *", pollDS)
 				}else if(pollIntervalForecast=='5Minutes'){
-    				schedule("${dsseconds} 2/5 * * * ? *", pollDS)                
+    				schedule("${dsseconds} ${minutes5}/5 * * * ? *", pollDS)                
 				}else if(pollIntervalForecast=='10Minutes'){
-					schedule("${dsseconds} 3/10 * * * ? *", pollDS)                
+					schedule("${dsseconds} ${minutes10}/10 * * * ? *", pollDS)                
 				}else if(pollIntervalForecast=='15Minutes'){
-					schedule("${dsseconds} 4/15 * * * ? *", pollDS)                
+					schedule("${dsseconds} ${minutes15}/15 * * * ? *", pollDS)                
 				}else if(pollIntervalForecast=='30Minutes'){
-					schedule("${dsseconds} 5/30 * * * ? *", pollDS)                
+					schedule("${dsseconds} ${minutes30}/30 * * * ? *", pollDS)                
 				}else if(pollIntervalForecast=='1Hour'){
-					schedule("${dsseconds} 6 * * * ? *", pollDS)                
+					schedule("${dsseconds} ${minutes60} * * * ? *", pollDS)                
 				}else if(pollIntervalForecast=='3Hours'){
-					schedule("${dsseconds} 7 0/3 * * ? *", pollDS)                
+					schedule("${dsseconds} ${minutes60} ${hours3}/3 * * ? *", pollDS)                
 				}
 			}
 		}
@@ -873,19 +885,19 @@ def initialize() {
 			pollIntervalForecastnight = (settings?.pollIntervalForecastnight ?: "3 Hours").replace(" ", "")
 			if (extSource.toInteger() == 2) {
 				if(pollIntervalForecastnight=='2Minutes'){
-					schedule("${dsseconds} 1/2 * * * ? *", pollDS)
+					schedule("${dsseconds} ${minutes2}/2 * * * ? *", pollDS)
 				}else if(pollIntervalForecastnight=='5Minutes'){
-				    schedule("${dsseconds} 2/5 * * * ? *", pollDS)                
+				    schedule("${dsseconds} ${minutes5}/5 * * * ? *", pollDS)                
 				}else if(pollIntervalForecastnight=='10Minutes'){
-					schedule("${dsseconds} 3/10 * * * ? *", pollDS)                
+					schedule("${dsseconds} ${minutes10}/10 * * * ? *", pollDS)                
 				}else if(pollIntervalForecastnight=='15Minutes'){
-					schedule("${dsseconds} 4/15 * * * ? *", pollDS)                
+					schedule("${dsseconds} ${minutes15}/15 * * * ? *", pollDS)                
 				}else if(pollIntervalForecastnight=='30Minutes'){
-					schedule("${dsseconds} 5/30 * * * ? *", pollDS)                
+					schedule("${dsseconds} ${minutes30}/30 * * * ? *", pollDS)                
 				}else if(pollIntervalForecastnight=='1Hour'){
-					schedule("${dsseconds} 6 * * * ? *", pollDS)                
+					schedule("${dsseconds} ${minutes60} * * * ? *", pollDS)                
 				}else if(pollIntervalForecastnight=='3Hours'){
-					schedule("${dsseconds} 7 0/3 * * ? *", pollDS)                
+					schedule("${dsseconds} ${minutes60} ${hours3}/3 * * ? *", pollDS)                
 				}
 			}
 		}
@@ -1040,6 +1052,7 @@ public SummaryMessage(SType, Slast_poll_date, Slast_poll_time, SforecastTemp, Sp
     } else {
         wgust = getDataValue("wind_gust").toBigDecimal()
     }
+    dsIcon = '<a href=\"https://darksky.net/poweredby/\"><img src=' + getDataValue("iconLocation") + (dsIconbackgrounddark ? 'poweredby-oneline.png' : 'poweredby-oneline-darkbackground.png') + ' style=\"height:1.5em\";></a>'    
     if(SType == true){
         wSum = "Weather summary for " + getDataValue("city") + ", " + getDataValue("state") + " updated at ${Slast_poll_time} on ${Slast_poll_date}. "
         wSum+= getDataValue("condition_text")
@@ -1049,15 +1062,14 @@ public SummaryMessage(SType, Slast_poll_date, Slast_poll_time, SforecastTemp, Sp
         wSum+= "Wind: " + getDataValue("wind_string") + ", gusts: " + ((wgust < 1.00) ? "calm. " : "up to " + wgust.toString() + (isDistanceMetric ? ' KPH. ' : ' MPH. '))
         wSum+= Sprecip
         wSum+= Svis
-        wSum+= (!getDataValue("alert") || getDataValue("alert")==null) ? "" : getDataValue("alert") + '.'
-        sendEvent(name: "weatherSummary", value: wSum)
+        wSum+= ((!getDataValue("alert") || getDataValue("alert")==null) ? "" : getDataValue("alert") + '. ') + dsIcon
     } else {
         wSum = getDataValue("condition_text") + " "
         wSum+= ((!SforecastTemp || SforecastTemp=="") ? ". " : "${SforecastTemp}")
         wSum+= " Humidity: " + getDataValue("humidity") + "%. Temperature: " + String.format("%3.1f", getDataValue("temperature").toBigDecimal()) + (isFahrenheit ? '°F. ' : '°C. ')
-        wSum+= getDataValue("wind_string") + ", gusts: " + ((wgust == 0.00) ? "calm. " : "up to " + wgust + (isDistanceMetric ? ' KPH. ' : ' MPH. '))
-		sendEvent(name: "weatherSummary", value: wSum)
+        wSum+= getDataValue("wind_string") + ", gusts: " + ((wgust == 0.00) ? "calm. " : "up to " + wgust + (isDistanceMetric ? ' KPH. ' : ' MPH. ')) + dsIcon
 	}
+    sendEvent(name: "weatherSummary", value: wSum)
 	return
 }
 
@@ -1214,7 +1226,7 @@ def updateCheckHandler(resp, data) {
 			      if (descTextEnable) log.warn "You are using a Test version of this Driver (Expecting: ${respUD.driver.(state.InternalName).ver})"
 				break
 			default:
-				state.Status = "Current"
+				state.Status = "Current Version: ${respUD.driver.(state.InternalName).ver}"
 				if (descTextEnable) log.info "You are using the current version of this driver"
 				break
 		}
