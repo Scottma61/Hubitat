@@ -5,7 +5,7 @@
 	"application": {
 	},
  	"driver": {
-		"DarkSky.net Weather Driver":  {"ver": "1.1.0", "updated": "18/09/2019"},
-		"Weather-Display With DarkSky.net Forecast Driver":  {"ver": "4.2.0", "updated": "18/09/2019"}
+		"DarkSky.net Weather Driver":  {"ver": "1.1.1", "updated": "24/09/2019"},
+		"Weather-Display With DarkSky.net Forecast Driver":  {"ver": "4.2.1", "updated": "24/09/2019"}
 	}
 }
