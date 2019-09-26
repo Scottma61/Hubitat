@@ -59,7 +59,7 @@ The driver exposes both metric and imperial measurements for you to select from.
 
 
 
-
+   V4.2.4   Prevent myTile from exceeding 1,024 characters                                    - 09/26/2019
    V4.2.3   Corrected myTile for 'alert' condition                                            - 09/26/2019
    V4.2.2 - Added 'wind_cardinal', more code optimization and cleanup                         - 09/25/2019 
    V4.2.1 - Optimized lux updates and code optimizations re-organized preference order        - 09/24/2019
@@ -118,7 +118,7 @@ The way the 'optional' attributes work:
    available in the dashboard is to delete the virtual device and create a new one AND DO NOT SELECT the
    attribute you do not want to show.
  */
-public static String version()      {  return "4.2.3"  }
+public static String version()      {  return "4.2.4"  }
 import groovy.transform.Field
 
 metadata {
@@ -840,6 +840,38 @@ void PostPoll() {
         mytext+= (getDataValue("precip_today").toBigDecimal() > 0.0 ? '  <img src=' + getDataValue("iconLocation") + 'wr.png' + iconClose + '>' + getDataValue("precip_today") + (isRainMetric ? ' mm' : ' inches') : '') + '<br>'
         mytext+= '<img src=' + getDataValue("iconLocation") + 'wsr.png' + iconClose + '>' + getDataValue("localSunrise") + '     <img src=' + getDataValue("iconLocation") + 'wss.png' + iconClose + '>' + getDataValue("localSunset") + '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Updated:&nbsp;' + Summary_last_poll_time + '</div>'
         mytext+= '<div style=\"display:inline;margin-top:0em;margin-bottom:0em;float:center;\">' + dsIcon + '</div>'
+        if(mytext.length() > 1024) {
+           log.info "myTile exceeds 1,024 characters (" + mytext.length() + ") ... removing icons."
+           mytext = '<div style=\"display:inline;margin-top:0em;margin-bottom:0em;float:center;\">' + getDataValue("city") + '</div><br>'
+           mytext+= getDataValue("condition_text") + (isAlert ? '' : ' | ') + alertStyleOpen + (isAlert ? '' : getDataValue("alert")) + alertStyleClose + '<br>'
+           mytext+= getDataValue("temperature") + (isFahrenheit ? '°F ' : '°C ') + '<span style= \"font-size:.75em;\"> Feels like ' + getDataValue("feelsLike") + (isFahrenheit ? '°F' : '°C') + '</span><br>'
+           mytext+= '<div style=\"font-size:0.75em;line-height=50%;\">' + getDataValue("wind_direction") + " "
+           mytext+= getDataValue("wind").toBigDecimal() < 1.0 ? 'calm' : "@ " + getDataValue("wind") + (isDistanceMetric ? ' KPH' : ' MPH')
+           mytext+= ', gusts ' + ((wgust < 1.0) ? 'calm' :  "@ " + wgust.toString() + (isDistanceMetric ? ' KPH' : ' MPH')) + '<br>'
+           mytext+= 'Bar: ' + (isPressureMetric ? String.format("%,4.1f", getDataValue("pressure").toBigDecimal()) : String.format("%2.2f", getDataValue("pressure").toBigDecimal())) + (isPressureMetric ? ' mbar' : ' inHg')
+           mytext+= ' | Hum: ' + getDataValue("humidity") + '%  ' + ' | Precip%: ' + getDataValue("percentPrecip") + '%'
+           mytext+= (getDataValue("precip_today").toBigDecimal() > 0.0 ? ' | Precip: '  + getDataValue("precip_today") + (isRainMetric ? ' mm' : ' inches') : '') + '<br>'
+           mytext+= 'Sunrise: ' + getDataValue("localSunrise") + ' | Sunset:' + getDataValue("localSunset") + '&nbsp;|&nbsp; Updated: ' + Summary_last_poll_time + '</div>'
+           mytext+= '<div style=\"display:inline;margin-top:0em;margin-bottom:0em;float:center;\"></div>'
+           if(mytext.length() > 1024) {
+               log.info "myTile still exceeds 1,024 characters (" + mytext.length() + ") ... removing all formatting."
+               mytext = getDataValue("city") + '<br>'
+               mytext+= getDataValue("condition_text") + (isAlert ? '' : ' | ') + (isAlert ? '' : getDataValue("alert")) + '<br>'
+               mytext+= getDataValue("temperature") + (isFahrenheit ? '°F ' : '°C ') + 'Feels like ' + getDataValue("feelsLike") + (isFahrenheit ? '°F' : '°C') + '<br>'
+               mytext+= getDataValue("wind_direction") + " "
+               mytext+= getDataValue("wind").toBigDecimal() < 1.0 ? 'calm' : "@ " + getDataValue("wind") + (isDistanceMetric ? ' KPH' : ' MPH')
+               mytext+= ', gusts ' + ((wgust < 1.0) ? 'calm' :  "@ " + wgust.toString() + (isDistanceMetric ? ' KPH' : ' MPH')) + '<br>'
+               mytext+= 'Bar: ' + (isPressureMetric ? String.format("%,4.1f", getDataValue("pressure").toBigDecimal()) : String.format("%2.2f", getDataValue("pressure").toBigDecimal())) + (isPressureMetric ? ' mbar' : ' inHg')
+               mytext+= ' | Hum: ' + getDataValue("humidity") + '%  ' + ' | Precip%: ' + getDataValue("percentPrecip") + '%<br>'
+               mytext+= (getDataValue("precip_today").toBigDecimal() > 0.0 ? ' | Precip: '  + getDataValue("precip_today") + (isRainMetric ? ' mm' : ' inches') : '') + '<br>'               
+               mytext+= 'Sunrise: ' + getDataValue("localSunrise") + ' | Sunset:' + getDataValue("localSunset") + '&nbsp;|&nbsp; Updated:' + Summary_last_poll_time
+               log.debug  "656 mytext.length(): " + mytext.length()
+               if(mytext.length() > 1024) {
+                   log.info "myTile even still exceeds 1,024 characters (" + mytext.length() + ") ... truncating."
+                   mytext = mytext.take(1024)
+               }
+           }
+        }
         LOGINFO("mytext: ${mytext}")
         sendEvent(name: "myTile", value: mytext)
     }
@@ -1151,6 +1183,7 @@ void SummaryMessage(SType, Slast_poll_date, Slast_poll_time, SforecastTemp, Spre
         wSum+= " Humidity: " + getDataValue("humidity") + "%. Temperature: " + String.format("%3.1f", getDataValue("temperature").toBigDecimal()) + (isFahrenheit ? '°F. ' : '°C. ')
         wSum+= getDataValue("wind_string") + ", gusts: " + ((windgust == 0.00) ? "calm. " : "up to " + windgust + (isDistanceMetric ? ' KPH. ' : ' MPH. '))
 	}
+    wSum = wSum.take(1024)
     sendEvent(name: "weatherSummary", value: wSum)
 	return
 }
