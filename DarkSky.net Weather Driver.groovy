@@ -41,11 +41,11 @@
    on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
    for the specific language governing permissions and limitations under the License.
  
-   Last Update 09/27/2019
+   Last Update 09/28/2019
   { Left room below to document version changes...}
  
 
-
+   V1.1.7   More myTile 'display:inline' corrections                                          - 09/28/2019
    V1.1.6   myTile 'display:inline' correction                                                - 09/27/2019
    V1.1.5   myTile enhancement for excessive length                                           - 09/27/2019
    V1.1.4   Prevent myTile from exceeding 1,024 characters                                    - 09/26/2019
@@ -79,7 +79,7 @@ The way the 'optional' attributes work:
    available in the dashboard is to delete the virtual device and create a new one AND DO NOT SELECT the
    attribute you do not want to show.
 */
-public static String version()      {  return "1.1.6"  }
+public static String version()      {  return "1.1.7"  }
 import groovy.transform.Field
 
 metadata {
