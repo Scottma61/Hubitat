@@ -57,7 +57,7 @@ The driver exposes both metric and imperial measurements for you to select from.
    Last Update 09/27/2019
   { Left room below to document version changes...}
 
-
+   V4.2.6   myTile 'display:inline' correction                                                - 09/27/2019
    V4.2.5   myTile enhancement for excessive length                                           - 09/27/2019
    V4.2.4   Prevent myTile from exceeding 1,024 characters                                    - 09/26/2019
    V4.2.3   Corrected myTile for 'alert' condition                                            - 09/26/2019
@@ -118,7 +118,7 @@ The way the 'optional' attributes work:
    available in the dashboard is to delete the virtual device and create a new one AND DO NOT SELECT the
    attribute you do not want to show.
  */
-public static String version()      {  return "4.2.5"  }
+public static String version()      {  return "4.2.6"  }
 import groovy.transform.Field
 
 metadata {
