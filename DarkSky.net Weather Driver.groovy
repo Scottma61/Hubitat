@@ -1,5 +1,5 @@
 /*
-   DarkSky.net Weather Driver new icon/summary code
+   DarkSky.net Weather Driver
    Import URL: https://raw.githubusercontent.com/HubitatCommunity/DarkSky.net-Weather-Driver/master/DarkSky.net%20Weather%20Driver.groovy
    Copyright 2019 @Matthew (Scottma61)
  
@@ -986,7 +986,7 @@ def estimateLux(String condition_code, int cloud)     {
 			LUitem = LUTable.find{ it.ccode == condition_code }            
 			if (LUitem && (condition_code != "unknown"))    {
 				cCF = (LUitem ? LUitem.luxpercent : 0)
-				cCT = (LUitem ? LUitem.wuphrase : 'unknown') + ' using cloud cover.'
+				cCT = (LUitem ? LUitem.ctext : 'unknown') + ' using cloud cover.'
             } else    {
                 cCF = 1.0
 		        cCT = 'cloud not available now.'
