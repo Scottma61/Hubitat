@@ -14,6 +14,7 @@
    - @bangali also contributed the icon work from
      https://github.com/jebbett for new cooler 'Alternative' weather icons with icons courtesy
      of https://www.deviantart.com/vclouds/art/VClouds-Weather-Icons-179152045.
+    - @storageanarchy for his Dark Sky Icon mapping and some new icons to compliment the Vclouds set.
  
    In addition to all the cloned code from the Hubitat community, I have heavily modified/created new
    code myself @Matthew (Scottma61) with lots of help from the Hubitat community.  If you believe you
@@ -694,10 +695,10 @@ void PostPoll() {
         mytext+= '<span style=\"font-size:.8em;\"><img src=' + getDataValue("iconLocation") + getDataValue("wind_bft_icon") + iconCloseStyled + getDataValue("wind_direction") + " "
         mytext+= getDataValue("wind").toBigDecimal() < 1.0 ? 'calm' : "@ " + getDataValue("wind") + (isDistanceMetric ? ' KPH' : ' MPH')
         mytext+= ', gusts ' + ((wgust < 1.0) ? 'calm' :  "@ " + wgust.toString() + (isDistanceMetric ? ' KPH' : ' MPH')) + '<br>'
-        mytext+= '<img src=' + getDataValue("iconLocation") + 'wb.png' + iconCloseStyled + String.format("%,4.1f", getDataValue("pressure").toBigDecimal()) + (isPressureMetric ? ' mbar' : ' inHg') + '     <img src=' + getDataValue("iconLocation") + 'wh.png' + iconCloseStyled
-        mytext+= getDataValue("humidity") + '%     ' + '<img src=' + getDataValue("iconLocation") + 'wu.png' + iconCloseStyled + getDataValue("percentPrecip") + '%<br>'
-        mytext+= '<img src=' + getDataValue("iconLocation") + 'wsr.png' + iconCloseStyled + getDataValue("localSunrise") + '     <img src=' + getDataValue("iconLocation") + 'wss.png' + iconCloseStyled
-        mytext+= getDataValue("localSunset") + '     Updated: ' + Summary_last_poll_time
+        mytext+= '<img src=' + getDataValue("iconLocation") + 'wb.png' + iconCloseStyled + String.format("%,4.1f", getDataValue("pressure").toBigDecimal()) + (isPressureMetric ? ' mbar' : ' inHg') + '     <img src=' + getDataValue("iconLocation") + 'wh.png' + iconCloseStyled
+        mytext+= getDataValue("humidity") + '%     ' + '<img src=' + getDataValue("iconLocation") + 'wu.png' + iconCloseStyled + getDataValue("percentPrecip") + '%<br>'
+        mytext+= '<img src=' + getDataValue("iconLocation") + 'wsr.png' + iconCloseStyled + getDataValue("localSunrise") + '     <img src=' + getDataValue("iconLocation") + 'wss.png' + iconCloseStyled
+        mytext+= getDataValue("localSunset") + '     Updated: ' + Summary_last_poll_time
         if((mytext.length() + dsIcon.length() + 10) < 1025) {
             mytext+= '<br>' + dsIcon + '</span>'
         }else{
