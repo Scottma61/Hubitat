@@ -370,20 +370,12 @@ void doPollWD(Map wd) {
         updateDataValue("condition_text", wd.everything.forecast.icon.text)
         updateLux(false)
 // <<<<<<<<<< Begin Icon processing >>>>>>>>>>
-        if(sourceImg==false){  // 'Alternative' Icons selected
-            String imgName = getImgName(getDataValue("condition_code"))
-            sendEventPublisg(name: "condition_icon", value: '<img src=' + imgName + '>')
-            sendEventPublish(name: "condition_iconWithText", value: "<img src=" + imgName + "><br>" + getDataValue("condition_text"))
-            sendEventPublish(name: "condition_icon_url", value: imgName)
-            updateDataValue("condition_icon_url", imgName)
-            sendEventPublish(name: "condition_icon_only", value: imgName.split("/")[-1].replaceFirst("\\?raw=true",""))
-        } else if(sourceImg==true) { // 'Standard' icons selected
-            sendEventPublish(name: "condition_icon", value: '<img src=https://icons.wxug.com/i/c/a/' + getDataValue("condition_code") + '.gif>')
-            sendEventPublish(name: "condition_iconWithText", value: '<img src=https://icons.wxug.com/i/c/a/' + getDataValue("condition_code") + '.gif><br>' + getDataValue("condition_text"))
-            sendEventPublish(name: "condition_icon_url", value: 'https://icons.wxug.com/i/c/a/' + getDataValue("condition_code") +'.gif')
-            updateDataValue("condition_icon_url", 'https://icons.wxug.com/i/c/a/' + getDataValue("condition_code") +'.gif')
-            sendEventPublish(name: "condition_icon_only", value: getDataValue("condition_code") +'.gif')
-        }
+        String imgName = getImgName(getDataValue("condition_code"))
+        sendEventPublisg(name: "condition_icon", value: '<img src=' + imgName + '>')
+        sendEventPublish(name: "condition_iconWithText", value: "<img src=" + imgName + "><br>" + getDataValue("condition_text"))
+        sendEventPublish(name: "condition_icon_url", value: imgName)
+        updateDataValue("condition_icon_url", imgName)
+        sendEventPublish(name: "condition_icon_only", value: imgName.split("/")[-1].replaceFirst("\\?raw=true",""))
 // >>>>>>>>>> End Icon Processing <<<<<<<<<<        
         String Summary_forecastTemp = ". "
         String Summary_vis = ""
