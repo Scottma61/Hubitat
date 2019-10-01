@@ -55,10 +55,10 @@ The driver exposes both metric and imperial measurements for you to select from.
    on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
    for the specific language governing permissions and limitations under the License.
  
-   Last Update 09/30/2019
+   Last Update 10/01/2019
   { Left room below to document version changes...}
 
-
+   V4.3.1   Added ability to show 'knots' for wind/gust speeds                                - 10/01/2019
    V4.3.0   Eliminated 'Std' Icons.  Reworked condition_code/condition_text.                  - 09/30/2019
    V4.2.9   myTile format tweaking                                                            - 09/29/2019
    V4.2.8   Bug fixes, optimizations, Added 'wind' and lux jitter control                     - 09/28/2019
@@ -124,7 +124,7 @@ The way the 'optional' attributes work:
    available in the dashboard is to delete the virtual device and create a new one AND DO NOT SELECT the
    attribute you do not want to show.
  */
-public static String version()      {  return "4.3.0"  }
+public static String version()      {  return "4.3.1"  }
 import groovy.transform.Field
 
 metadata {
@@ -202,7 +202,7 @@ metadata {
             input "logSet", "bool", title: "Create extended Logging", required: true, defaultValue: false
 	    	input "tempFormat", "enum", required: true, defaultValue: "Fahrenheit (°F)", title: "Display Unit - Temperature: Fahrenheit (°F) or Celsius (°C)",  options: ["Fahrenheit (°F)", "Celsius (°C)"]
             input "datetimeFormat", "enum", required: true, defaultValue: "1", title: "Display Unit - Date-Time Format",  options: [1:"m/d/yyyy 12 hour (am|pm)", 2:"m/d/yyyy 24 hour", 3:"mm/dd/yyyy 12 hour (am|pm)", 4:"mm/dd/yyyy 24 hour", 5:"d/m/yyyy 12 hour (am|pm)", 6:"d/m/yyyy 24 hour", 7:"dd/mm/yyyy 12 hour (am|pm)", 8:"dd/mm/yyyy 24 hour", 9:"yyyy/mm/dd 24 hour"]
-            input "distanceFormat", "enum", required: true, defaultValue: "Miles (mph)", title: "Display Unit - Distance/Speed: Miles or Kilometres",  options: ["Miles (mph)", "Kilometers (kph)"]
+            input "distanceFormat", "enum", required: true, defaultValue: "Miles (mph)", title: "Display Unit - Distance/Speed: Miles, Kilometres or knots",  options: ["Miles (mph)", "Kilometers (kph)", "knots"]
             input "pressureFormat", "enum", required: true, defaultValue: "Inches", title: "Display Unit - Pressure: Inches or Millibar",  options: ["Inches", "Millibar"]
             input "rainFormat", "enum", required: true, defaultValue: "Inches", title: "Display Unit - Precipitation: Inches or Millimetres",  options: ["Inches", "Millimetres"]
             input "luxjitter", "bool", title: "Use lux jitter control (rounding)?", required: true, defaultValue: false
@@ -406,8 +406,8 @@ void doPollWD(Map wd) {
         case 12: w_string_bft = "Hurricane force"; break;
         default: w_string_bft = "Calm"; break;
     }
-    updateDataValue("wind", (isDistanceMetric ? wd.everything.weather.wind.avg_speed.kmh.toBigDecimal() : wd.everything.weather.wind.avg_speed.mph.toBigDecimal()).toString())
-    updateDataValue("wind_gust", (isDistanceMetric ? wd.everything.weather.wind.gust_speed.kmh.toBigDecimal() : wd.everything.weather.wind.gust_speed.mph.toBigDecimal()).toString())
+    updateDataValue("wind", (isDistanceMetric ? (isDistanceKnots ? (Math.round(wd.everything.weather.wind.avg_speed.mph.toBigDecimal() * 0.868976 * 10) / 10) : wd.everything.weather.wind.avg_speed.kmh.toBigDecimal()) : wd.everything.weather.wind.avg_speed.mph.toBigDecimal()).toString())
+    updateDataValue("wind_gust", (isDistanceMetric ? (isDistanceKnots ? (Math.round(wd.everything.weather.wind.gust_speed.mph.toBigDecimal() * 0.868976 *10) / 10) : wd.everything.weather.wind.gust_speed.kmh.toBigDecimal()) : wd.everything.weather.wind.gust_speed.mph.toBigDecimal()).toString())
     updateDataValue("wind_degree", wd.everything.weather.wind.direction.degrees.toInteger().toString())
     String w_direction
     switch(wd.everything.weather.wind.direction.cardinal.toUpperCase()){
@@ -430,7 +430,7 @@ void doPollWD(Map wd) {
         default: w_direction = 'Unknown'; break;
     }
     updateDataValue("wind_direction", w_direction)
-    updateDataValue("wind_string", w_string_bft + " from the " + getDataValue("wind_direction") + (getDataValue("wind").toBigDecimal() < 1.0 ? '': " at " + getDataValue("wind") + (isDistanceMetric ? " KPH" : " MPH")))
+    updateDataValue("wind_string", w_string_bft + " from the " + getDataValue("wind_direction") + (getDataValue("wind").toBigDecimal() < 1.0 ? '': " at " + getDataValue("wind") + (isDistanceMetric ? (isDistanceKnots ? " knots" : " KPH") : " MPH")))
 
     updateDataValue("city", wd.station.name.split(/ /)[0])
     updateDataValue("state", wd.station.name.split(/ /)[1])
@@ -738,9 +738,7 @@ String getdsIconCode(String icon='unknown', String dcs='unknown') {
 		case 'clear-day':
 			icon = 'clear'
 			break;
-        case 'fog':
-			icon = 'fog'
-			break;        
+        case 'fog':      
 		case 'wind':
 			// wind=[Windy and Overcast, Windy and Mostly Cloudy, Windy and Partly Cloudy, Breezy and Mostly Cloudy, Breezy and Partly Cloudy, 
 			// Breezy and Overcast, Breezy, Windy, Dangerously Windy and Overcast, Windy and Foggy, Dangerously Windy and Partly Cloudy, Breezy and Foggy]}
@@ -802,8 +800,8 @@ void PostPoll() {
     if(dashSharpToolsPublish || dashSmartTilesPublish) { sendEvent(name: "weather", value: getDataValue("condition_text")) }
     if(dashSharpToolsPublish || dashSmartTilesPublish) { sendEvent(name: "weatherIcon", value: getDataValue("condition_code")) }
     if(dashHubitatOWMPublish) { sendEvent(name: "weatherIcons", value: getowmImgName(getDataValue("condition_code"))) }
-    if(dashSharpToolsPublish || windPublish) { sendEvent(name: "wind", value: getDataValue("wind"), unit: (isDistanceMetric ? 'KPH' : 'MPH')) }
-    if(dashHubitatOWMPublish) { sendEvent(name: "windSpeed", value: getDataValue("wind").toBigDecimal(), unit: (isDistanceMetric ? 'KPH' : 'MPH')) }
+    if(dashSharpToolsPublish || windPublish) { sendEvent(name: "wind", value: getDataValue("wind"), unit: (isDistanceMetric ? (isDistanceKnots ? "knots" : "KPH") : "MPH")) }
+    if(dashHubitatOWMPublish) { sendEvent(name: "windSpeed", value: getDataValue("wind").toBigDecimal(), unit: (isDistanceMetric ? (isDistanceKnots ? "knots" : "KPH") : "MPH")) }
     if(dashHubitatOWMPublish) { sendEvent(name: "windDirection", value: getDataValue("wind_degree").toInteger(), unit: "DEGREE")   }
         
 /*  Selected optional Data Elements */   
@@ -849,7 +847,7 @@ void PostPoll() {
     sendEventPublish(name: "wind_degree", value: getDataValue("wind_degree").toInteger(), unit: "DEGREE")
     sendEventPublish(name: "wind_direction", value: getDataValue("wind_direction"))    
     sendEventPublish(name: "wind_cardinal", value: getDataValue("wind_cardinal"))    
-    sendEventPublish(name: "wind_gust", value: getDataValue("wind_gust").toBigDecimal(), unit: (isDistanceMetric ? 'KPH' : 'MPH'))
+    sendEventPublish(name: "wind_gust", value: getDataValue("wind_gust").toBigDecimal(), unit: (isDistanceMetric ? (isDistanceKnots ? "knots" : "KPH") : "MPH"))
     sendEventPublish(name: "wind_string", value: getDataValue("wind_string"))
     if(nearestStormPublish) {
         sendEvent(name: "nearestStormBearing", value: getDataValue("nearestStormBearing"), unit: "DEGREE")
@@ -902,13 +900,13 @@ void PostPoll() {
         mytext+= getDataValue("temperature") + (isFahrenheit ? '°F ' : '°C ') + '<img src=' + getDataValue("condition_icon_url") + iconClose + ' style=\"height:2.2em;display:inline;\">'
         mytext+= ' Feels like ' + getDataValue("feelsLike") + (isFahrenheit ? '°F' : '°C') + '<br></span>'
         mytext+= '<span style=\"font-size:.8em;\"><img src=' + getDataValue("iconLocation") + getDataValue("wind_bft_icon") + iconCloseStyled + getDataValue("wind_direction") + " "
-        mytext+= getDataValue("wind").toBigDecimal() < 1.0 ? 'calm' : "@ " + getDataValue("wind") + (isDistanceMetric ? ' KPH' : ' MPH')
-        mytext+= ', gusts ' + ((wgust < 1.0) ? 'calm' :  "@ " + wgust.toString() + (isDistanceMetric ? ' KPH' : ' MPH')) + '<br>'
-        mytext+= '<img src=' + getDataValue("iconLocation") + 'wb.png' + iconCloseStyled + String.format("%,4.1f", getDataValue("pressure").toBigDecimal()) + (isPressureMetric ? ' mbar' : ' inHg') + '   <img src=' + getDataValue("iconLocation") + 'wh.png' + iconCloseStyled
-        mytext+= getDataValue("humidity") + '%   ' + '<img src=' + getDataValue("iconLocation") + 'wu.png' + iconCloseStyled + getDataValue("percentPrecip") + '%'
-        mytext+= (raintoday ? '   <img src=' + getDataValue("iconLocation") + 'wr.png' + iconCloseStyled + getDataValue("precip_today") + (isRainMetric ? ' mm' : ' inches') : '') + '<br>'
-        mytext+= '<img src=' + getDataValue("iconLocation") + 'wsr.png' + iconCloseStyled + getDataValue("localSunrise") + '     <img src=' + getDataValue("iconLocation") + 'wss.png' + iconCloseStyled
-        mytext+= getDataValue("localSunset") + '     Updated: ' + Summary_last_poll_time
+        mytext+= getDataValue("wind").toBigDecimal() < 1.0 ? 'calm' : "@ " + getDataValue("wind") + (isDistanceMetric ? (isDistanceKnots ? " knots" : " KPH") : " MPH")
+        mytext+= ', gusts ' + ((wgust < 1.0) ? 'calm' :  "@ " + wgust.toString() + (isDistanceMetric ? (isDistanceKnots ? " knots" : " KPH") : " MPH")) + '<br>'
+        mytext+= '<img src=' + getDataValue("iconLocation") + 'wb.png' + iconCloseStyled + String.format("%,4.1f", getDataValue("pressure").toBigDecimal()) + (isPressureMetric ? ' mbar' : ' inHg') + '   <img src=' + getDataValue("iconLocation") + 'wh.png' + iconCloseStyled
+        mytext+= getDataValue("humidity") + '%   ' + '<img src=' + getDataValue("iconLocation") + 'wu.png' + iconCloseStyled + getDataValue("percentPrecip") + '%'
+        mytext+= (raintoday ? '   <img src=' + getDataValue("iconLocation") + 'wr.png' + iconCloseStyled + getDataValue("precip_today") + (isRainMetric ? ' mm' : ' inches') : '') + '<br>'
+        mytext+= '<img src=' + getDataValue("iconLocation") + 'wsr.png' + iconCloseStyled + getDataValue("localSunrise") + '     <img src=' + getDataValue("iconLocation") + 'wss.png' + iconCloseStyled
+        mytext+= getDataValue("localSunset") + '     Updated: ' + Summary_last_poll_time
         if((mytext.length() + dsIcon.length() + 10) < 1025) {
             mytext+= '<br>' + dsIcon + '</span>'
         }else{
@@ -970,23 +968,23 @@ void PostPoll() {
                 mytext+= getDataValue("temperature") + (isFahrenheit ? '°F ' : '°C ') + (removeicons < (raintoday ? 8 : 7) ? '<img src=' + getDataValue("condition_icon_url") + iconClose + ' style=\"height:2.0em;display:inline;\">' : '') 
                 mytext+= ' Feels like ' + getDataValue("feelsLike") + (isFahrenheit ? '°F' : '°C') + '<br></span>'
                 mytext+= '<span style=\"font-size:.8em;\">' + (removeicons < (raintoday ? 7 : 6) ? '<img src=' + getDataValue("iconLocation") + getDataValue("wind_bft_icon") + iconCloseStyled : '') + getDataValue("wind_direction") + " "
-                mytext+= getDataValue("wind").toBigDecimal() < 1.0 ? 'calm' : "@ " + getDataValue("wind") + (isDistanceMetric ? ' KPH' : ' MPH')
-                mytext+= ', gusts ' + ((wgust < 1.0) ? 'calm' :  "@ " + wgust.toString() + (isDistanceMetric ? ' KPH' : ' MPH')) + '<br>'
+                mytext+= getDataValue("wind").toBigDecimal() < 1.0 ? 'calm' : "@ " + getDataValue("wind") + (isDistanceMetric ? (isDistanceKnots ? " knots" : " KPH") : " MPH")
+                mytext+= ', gusts ' + ((wgust < 1.0) ? 'calm' :  "@ " + wgust.toString() + (isDistanceMetric ? (isDistanceKnots ? " knots" : " KPH") : " MPH")) + '<br>'
                 mytext+= (removeicons < (raintoday ? 6 : 5) ? '<img src=' + getDataValue("iconLocation") + 'wb.png' + iconCloseStyled : 'Bar: ') + (isPressureMetric ? String.format("%,4.1f", getDataValue("pressure").toBigDecimal()) : String.format("%2.2f", getDataValue("pressure").toBigDecimal())) + (isPressureMetric ? ' mbar' : ' inHg') + '  '
                 mytext+= (removeicons < (raintoday ? 5 : 4) ? '<img src=' + getDataValue("iconLocation") + 'wh.png' + iconCloseStyled : ' | Hum: ') + getDataValue("humidity") + '%  ' 
                 mytext+= (removeicons < (raintoday ? 4 : 3) ? '<img src=' + getDataValue("iconLocation") + 'wu.png' + iconCloseStyled : ' | Precip%: ') + getDataValue("percentPrecip") + '%'
                 mytext+= (raintoday ? (removeicons < 3 ? ('<img src=' + getDataValue("iconLocation") + 'wr.png' + iconCloseStyled) : (' | Precip: ')) + getDataValue("precip_today") + (isRainMetric ? ' mm' : ' inches') : '') + '<br>'
                 mytext+= (removeicons < 2 ? ('<img src=' + getDataValue("iconLocation") + 'wsr.png' + iconCloseStyled) : ('Sunrise: ')) + getDataValue("localSunrise") + '  '
                 mytext+= (removeicons < 1 ? ('<img src=' + getDataValue("iconLocation") + 'wss.png' + iconCloseStyled) : (' | Sunset: ')) + getDataValue("localSunset")
-                mytext+= '     Updated ' + Summary_last_poll_time + '</span>'
+                mytext+= '     Updated ' + Summary_last_poll_time + '</span>'
             }else{
                 LOGINFO("myTile still exceeds 1,024 characters (" + mytext.length() + ") ... removing all formatting.")
                 mytext = getDataValue("city") + '<br>'
                 mytext+= getDataValue("condition_text") + (noAlert ? '' : ' | ') + (noAlert ? '' : getDataValue("alert")) + '<br>'
                 mytext+= getDataValue("temperature") + (isFahrenheit ? '°F ' : '°C ') + 'Feels like ' + getDataValue("feelsLike") + (isFahrenheit ? '°F' : '°C') + '<br>'
                 mytext+= getDataValue("wind_direction") + " "
-                mytext+= getDataValue("wind").toBigDecimal() < 1.0 ? 'calm' : "@ " + getDataValue("wind") + (isDistanceMetric ? ' KPH' : ' MPH')
-                mytext+= ', gusts ' + ((wgust < 1.0) ? 'calm' :  "@ " + wgust.toString() + (isDistanceMetric ? ' KPH' : ' MPH')) + '<br>'
+                mytext+= getDataValue("wind").toBigDecimal() < 1.0 ? 'calm' : "@ " + getDataValue("wind") + (isDistanceMetric ? (isDistanceKnots ? " knots" : " KPH") : " MPH")
+                mytext+= ', gusts ' + ((wgust < 1.0) ? 'calm' :  "@ " + wgust.toString() + (isDistanceMetric ? (isDistanceKnots ? " knots" : " KPH") : " MPH")) + '<br>'
                 mytext+= 'Bar: ' + (isPressureMetric ? String.format("%,4.1f", getDataValue("pressure").toBigDecimal()) : String.format("%2.2f", getDataValue("pressure").toBigDecimal())) + (isPressureMetric ? ' mbar' : ' inHg')
                 mytext+= ' | Hum: ' + getDataValue("humidity") + '%  ' + ' | Precip%: ' + getDataValue("percentPrecip") + '%'
                 mytext+= (raintoday ? ' | Precip: ' + getDataValue("precip_today") + (isRainMetric ? ' mm' : ' inches') : '') + '<br>'
@@ -1004,6 +1002,7 @@ void PostPoll() {
 // >>>>>>>>>> End Post-Poll Routines <<<<<<<<<<
 
 public void refresh() {
+    pollWD()
 	pollDS()
 }
 
@@ -1169,7 +1168,8 @@ public void setDateTimeFormats(String formatselector){
 }
 
 public void setMeasurementMetrics(distFormat, pressFormat, precipFormat, temptFormat){
-    isDistanceMetric = (distFormat == "Kilometers (kph)") ? true : false
+    isDistanceMetric = (distFormat == "Miles (mph)") ? false : true
+    isDistanceKnots =  isDistanceMetric ? ((distFormat == "knots") ? true : false) : false
     isPressureMetric = (pressFormat == "Millibar") ? true : false
     isRainMetric = (precipFormat == "Millimetres") ? true : false
     isFahrenheit = (temptFormat == "Fahrenheit (°F)") ? true : false
@@ -1313,7 +1313,7 @@ void SummaryMessage(boolean SType, String Slast_poll_date, String Slast_poll_tim
         wSum+= (!SforecastTemp || SforecastTemp=="") ? ". " : "${SforecastTemp}"
         wSum+= "Humidity is " + getDataValue("humidity") + "% and the temperature is " + String.format("%3.1f", getDataValue("temperature").toBigDecimal()) +  (isFahrenheit ? '°F. ' : '°C. ')
         wSum+= "The temperature feels like it is " + String.format("%3.1f", getDataValue("feelsLike").toBigDecimal()) + (isFahrenheit ? '°F. ' : '°C. ')
-        wSum+= "Wind: " + getDataValue("wind_string") + ", gusts: " + ((windgust < 1.00) ? "calm. " : "up to " + windgust.toString() + (isDistanceMetric ? ' KPH. ' : ' MPH. '))
+        wSum+= "Wind: " + getDataValue("wind_string") + ", gusts: " + ((windgust < 1.00) ? "calm. " : "up to " + windgust.toString() + (isDistanceMetric ? (isDistanceKnots ? " knots. " : ' KPH. ') : ' MPH. '))
         wSum+= Sprecip
         wSum+= Svis
         wSum+= ((!getDataValue("alert") || getDataValue("alert")==null) ? "" : " " + getDataValue("alert") + '. ')
@@ -1321,7 +1321,7 @@ void SummaryMessage(boolean SType, String Slast_poll_date, String Slast_poll_tim
         wSum = getDataValue("condition_text") + " "
         wSum+= ((!SforecastTemp || SforecastTemp=="") ? ". " : "${SforecastTemp}")
         wSum+= " Humidity: " + getDataValue("humidity") + "%. Temperature: " + String.format("%3.1f", getDataValue("temperature").toBigDecimal()) + (isFahrenheit ? '°F. ' : '°C. ')
-        wSum+= getDataValue("wind_string") + ", gusts: " + ((windgust == 0.00) ? "calm. " : "up to " + windgust + (isDistanceMetric ? ' KPH. ' : ' MPH. '))
+        wSum+= getDataValue("wind_string") + ", gusts: " + ((windgust == 0.00) ? "calm. " : "up to " + windgust + (isDistanceMetric ? (isDistanceKnots ? " knots. " : ' KPH. ') : ' MPH. '))
 	}
     wSum = wSum.take(1024)
     sendEvent(name: "weatherSummary", value: wSum)
@@ -1402,7 +1402,7 @@ void sendEventPublish(evt)	{
 [ ccode: 'cloudy', altIcon: '26.png', ctext: 'Overcast', owmIcon: '04d', stdIcon: 'cloudy', luxpercent: 0.6 ],
 [ ccode: 'drizzle', altIcon: '9.png', ctext: 'Drizzle', owmIcon: '09d', stdIcon: 'rain', luxpercent: 0.5 ],
 [ ccode: 'flurries', altIcon: '13.png', ctext: 'Snow Flurries', owmIcon: '13d', stdIcon: 'flurries', luxpercent: 0.4 ],
-[ ccode: 'fog', altIcon: '19.png', ctext: 'Fog', owmIcon: '50d', stdIcon: 'fog', luxpercent: 0.2 ],
+[ ccode: 'fog', altIcon: '19.png', ctext: 'Foggy', owmIcon: '50d', stdIcon: 'fog', luxpercent: 0.2 ],
 [ ccode: 'heavyrain', altIcon: '12.png', ctext: 'Heavy Rain', owmIcon: '10d', stdIcon: 'rain', luxpercent: 0.5 ],
 [ ccode: 'heavyrainbreezy', altIcon: '1.png', ctext: 'Heavy Rain and Breezy', owmIcon: '10d', stdIcon: 'rain', luxpercent: 0.5 ],
 [ ccode: 'heavyrainwindy', altIcon: '1.png', ctext: 'Heavy Rain and Windy', owmIcon: '10d', stdIcon: 'rain', luxpercent: 0.5 ],
@@ -1442,7 +1442,7 @@ void sendEventPublish(evt)	{
 [ ccode: 'nt_cloudy', altIcon: '26.png', ctext: 'Overcast', owmIcon: '04n', stdIcon: 'nt_cloudy', luxpercent: 0 ],
 [ ccode: 'nt_drizzle', altIcon: '9.png', ctext: 'Drizzle', owmIcon: '09n', stdIcon: 'nt_rain', luxpercent: 0 ],
 [ ccode: 'nt_flurries', altIcon: '13.png', ctext: 'Flurries', owmIcon: '13n', stdIcon: 'nt_flurries', luxpercent: 0 ],
-[ ccode: 'nt_fog', altIcon: '22.png', ctext: 'Fog', owmIcon: '50n', stdIcon: 'nt_fog', luxpercent: 0 ],
+[ ccode: 'nt_fog', altIcon: '22.png', ctext: 'Foggy', owmIcon: '50n', stdIcon: 'nt_fog', luxpercent: 0 ],
 [ ccode: 'nt_heavyrain', altIcon: '12.png', ctext: 'Heavy Rain', owmIcon: '10n', stdIcon: 'nt_rain', luxpercent: 0 ],
 [ ccode: 'nt_heavyrainbreezy', altIcon: '1.png', ctext: 'Heavy Rain and Breezy', owmIcon: '10n', stdIcon: 'nt_rain', luxpercent: 0 ],
 [ ccode: 'nt_heavyrainwindy', altIcon: '1.png', ctext: 'Heavy Rain and Windy', owmIcon: '10n', stdIcon: 'nt_rain', luxpercent: 0 ],
