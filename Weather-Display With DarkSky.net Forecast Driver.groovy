@@ -55,12 +55,13 @@ The driver exposes both metric and imperial measurements for you to select from.
    on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
    for the specific language governing permissions and limitations under the License.
  
-   Last Update 10/13/2019
+   Last Update 10/14/2019
   { Left room below to document version changes...}
 
 
 
-
+   V4.3.4   added meters per second ('m/s') for wind and hectopascals for pressure,           - 10/14/2019
+            added ability to use DarkSky for wind instead of your weather station.
    V4.3.3   forecastIcon & weatherIcon fix.  Tuned Lux for 'fully nighttime'                  - 10/13/2019
    V4.3.2   Bug fix for is_day/is_light                                                       - 10/02/2019
    V4.3.1   Added ability to show 'knots' for wind/gust speeds                                - 10/01/2019
@@ -129,7 +130,7 @@ The way the 'optional' attributes work:
    available in the dashboard is to delete the virtual device and create a new one AND DO NOT SELECT the
    attribute you do not want to show.
  */
-public static String version()      {  return "4.3.3"  }
+public static String version()      {  return "4.3.4"  }
 import groovy.transform.Field
 
 metadata {
@@ -207,9 +208,9 @@ metadata {
             input "logSet", "bool", title: "Create extended Logging", required: true, defaultValue: false
 	    	input "tempFormat", "enum", required: true, defaultValue: "Fahrenheit (°F)", title: "Display Unit - Temperature: Fahrenheit (°F) or Celsius (°C)",  options: ["Fahrenheit (°F)", "Celsius (°C)"]
             input "datetimeFormat", "enum", required: true, defaultValue: "1", title: "Display Unit - Date-Time Format",  options: [1:"m/d/yyyy 12 hour (am|pm)", 2:"m/d/yyyy 24 hour", 3:"mm/dd/yyyy 12 hour (am|pm)", 4:"mm/dd/yyyy 24 hour", 5:"d/m/yyyy 12 hour (am|pm)", 6:"d/m/yyyy 24 hour", 7:"dd/mm/yyyy 12 hour (am|pm)", 8:"dd/mm/yyyy 24 hour", 9:"yyyy/mm/dd 24 hour"]
-            input "distanceFormat", "enum", required: true, defaultValue: "Miles (mph)", title: "Display Unit - Distance/Speed: Miles, Kilometers or knots",  options: ["Miles (mph)", "Kilometers (kph)", "knots"]
-            input "pressureFormat", "enum", required: true, defaultValue: "Inches", title: "Display Unit - Pressure: Inches or Millibar",  options: ["Inches", "Millibar"]
-            input "rainFormat", "enum", required: true, defaultValue: "Inches", title: "Display Unit - Precipitation: Inches or Millimetres",  options: ["Inches", "Millimetres"]
+            input "distanceFormat", "enum", required: true, defaultValue: "Miles (mph)", title: "Display Unit - Distance/Speed: Miles, Kilometers or knots",  options: ["Miles (mph)", "Kilometers (kph)", "knots", "meters (m/s)"]
+            input "pressureFormat", "enum", required: true, defaultValue: "Inches", title: "Display Unit - Pressure: Inches or Millibar",  options: ["Inches", "Millibar", "Hectopascal"]
+            input "rainFormat", "enum", required: true, defaultValue: "Inches", title: "Display Unit - Precipitation: Inches or Millimeters",  options: ["Inches", "Millimeters"]
             input "luxjitter", "bool", title: "Use lux jitter control (rounding)?", required: true, defaultValue: false
 			input "iconLocation", "text", required: true, defaultValue: "https://tinyurl.com/y6xrbhpf/", title: "Alternative Icon Location:"
             input "iconType", "bool", title: "Condition Icon: On = Current - Off = Forecast", required: true, defaultValue: false
@@ -217,6 +218,7 @@ metadata {
             input "sourcefeelsLike", "bool", required: true, title: "Feelslike from Weather-Display?", defaultValue: false
 		    input "sourceIllumination", "bool", required: true, title: "Illuminance from Weather-Display?", defaultValue: true
             input "sourceUV", "bool", required: true, title: "UV from Weather-Display?", defaultValue: true
+            input "sourceWind", "bool", required: true, title: "Wind from Weather-Display?", defaultValue: true
             input "settingEnable", "bool", title: "<b>Display All Optional Attributes</b>", description: "$settingDescr", defaultValue: true
 	// build a Selector for each mapped Attribute or group of attributes
 	    	attributesMap.each
@@ -388,55 +390,77 @@ void doPollWD(Map wd) {
 // >>>>>>>>>> End Process Only If No External Forcast Is Selected  <<<<<<<<<<
     
 // <<<<<<<<<< Begin Process Standard Weather-Station Variables (Regardless of Forecast Selection)  >>>>>>>>>>    
-    updateDataValue("dewpoint", (isFahrenheit ? wd.everything.weather.dew_point.current.f.toBigDecimal() : wd.everything.weather.dew_point.current.c.toBigDecimal()).toString())
+    updateDataValue("dewpoint", (tMetric=="°F" ? wd.everything.weather.dew_point.current.f.toBigDecimal() : wd.everything.weather.dew_point.current.c.toBigDecimal()).toString())
     updateDataValue("humidity", wd.everything.weather.humidity.current.toBigDecimal().toString())
-    updateDataValue("precip_today", (isRainMetric ? wd.everything.weather.rainfall.daily.mm.toBigDecimal() : wd.everything.weather.rainfall.daily.in.toBigDecimal()).toString())
-    updateDataValue("pressure", (isPressureMetric ? wd.everything.weather.pressure.current.mb.toBigDecimal() : wd.everything.weather.pressure.current.inhg.toBigDecimal()).toString())
-    updateDataValue("temperature", (isFahrenheit ? wd.everything.weather.temperature.current.f.toBigDecimal() : wd.everything.weather.temperature.current.c.toBigDecimal()).toString())
-    updateDataValue("wind_bft_icon", 'wb' + wd.everything.weather.wind.avg_speed.bft.toInteger().toString() + '.png')
-    String w_string_bft
-    switch(wd.everything.weather.wind.avg_speed.bft.toInteger()){
-        case 0: w_string_bft = "Calm"; break;
-        case 1: w_string_bft = "Light air"; break;
-        case 2: w_string_bft = "Light breeze"; break;
-        case 3: w_string_bft = "Gentle breeze"; break;
-        case 4: w_string_bft = "Moderate breeze"; break;
-        case 5: w_string_bft = "Fresh breeze"; break;
-        case 6: w_string_bft = "Strong breeze"; break;
-        case 7: w_string_bft = "High wind, moderate gale, near gale"; break;
-        case 8: w_string_bft = "Gale, fresh gale"; break;
-        case 9: w_string_bft = "Strong/severe gale"; break;
-        case 10: w_string_bft = "Storm, whole gale"; break;
-        case 11: w_string_bft = "Violent storm"; break;
-        case 12: w_string_bft = "Hurricane force"; break;
-        default: w_string_bft = "Calm"; break;
-    }
-    updateDataValue("wind", (isDistanceMetric ? (isDistanceKnots ? (Math.round(wd.everything.weather.wind.avg_speed.mph.toBigDecimal() * 0.868976 * 10) / 10) : wd.everything.weather.wind.avg_speed.kmh.toBigDecimal()) : wd.everything.weather.wind.avg_speed.mph.toBigDecimal()).toString())
-    updateDataValue("wind_gust", (isDistanceMetric ? (isDistanceKnots ? (Math.round(wd.everything.weather.wind.gust_speed.mph.toBigDecimal() * 0.868976 *10) / 10) : wd.everything.weather.wind.gust_speed.kmh.toBigDecimal()) : wd.everything.weather.wind.gust_speed.mph.toBigDecimal()).toString())
-    updateDataValue("wind_degree", wd.everything.weather.wind.direction.degrees.toInteger().toString())
-    String w_direction
-    switch(wd.everything.weather.wind.direction.cardinal.toUpperCase()){
-        case 'N': w_direction = 'North'; break;
-        case 'NNE': w_direction = 'North-Northeast'; break;
-        case 'NE': w_direction = 'Northeast'; break;
-        case 'ENE': w_direction = 'East-Northeast'; break;
-        case 'E': w_direction = 'East'; break;
-        case 'ESE': w_direction = 'East-Southeast'; break;
-        case 'SE': w_direction = 'Southeast'; break;
-        case 'SSE': w_direction = 'South-Southeast'; break;
-        case 'S': w_direction = 'South'; break;
-        case 'SSW': w_direction = 'South-Southwest'; break;
-        case 'SW': w_direction = 'Southwest'; break;
-        case 'WSW': w_direction = 'West-Southwest'; break;
-        case 'W': w_direction = 'West'; break;
-        case 'WNW': w_direction = 'West-Northwest'; break;
-        case 'NW': w_direction = 'Northwest'; break;
-        case 'NNW': w_direction = 'North-Northwest'; break;
-        default: w_direction = 'Unknown'; break;
-    }
-    updateDataValue("wind_direction", w_direction)
-    updateDataValue("wind_string", w_string_bft + " from the " + getDataValue("wind_direction") + (getDataValue("wind").toBigDecimal() < 1.0 ? '': " at " + getDataValue("wind") + (isDistanceMetric ? (isDistanceKnots ? " knots" : " KPH") : " MPH")))
+    updateDataValue("precip_today", (rMetric!="Inches" ? wd.everything.weather.rainfall.daily.in.toBigDecimal() : wd.everything.weather.rainfall.daily.mm.toBigDecimal()).toString())
+    updateDataValue("pressure", (pMetric!="inHg" ? wd.everything.weather.pressure.current.mb.toBigDecimal() : wd.everything.weather.pressure.current.inhg.toBigDecimal()).toString())
+    updateDataValue("temperature", (tMetric=="°F" ? wd.everything.weather.temperature.current.f.toBigDecimal() : wd.everything.weather.temperature.current.c.toBigDecimal()).toString())
 
+// <<<<<<<<<< Begin Process Only If Wind from WD Is Selected  >>>>>>>>>>                
+    if(sourceWind==true){
+        updateDataValue("wind_bft_icon", 'wb' + wd.everything.weather.wind.avg_speed.bft.toInteger().toString() + '.png')
+        String w_string_bft
+        switch(wd.everything.weather.wind.avg_speed.bft.toInteger()){
+            case 0: w_string_bft = "Calm"; break;
+            case 1: w_string_bft = "Light air"; break;
+            case 2: w_string_bft = "Light breeze"; break;
+            case 3: w_string_bft = "Gentle breeze"; break;
+            case 4: w_string_bft = "Moderate breeze"; break;
+            case 5: w_string_bft = "Fresh breeze"; break;
+            case 6: w_string_bft = "Strong breeze"; break;
+            case 7: w_string_bft = "High wind, moderate gale, near gale"; break;
+            case 8: w_string_bft = "Gale, fresh gale"; break;
+            case 9: w_string_bft = "Strong/severe gale"; break;
+            case 10: w_string_bft = "Storm, whole gale"; break;
+            case 11: w_string_bft = "Violent storm"; break;
+            case 12: w_string_bft = "Hurricane force"; break;
+            default: w_string_bft = "Calm"; break;
+        }
+        BigDecimal t_wd
+        BigDecimal t_wg
+        if(dMetric == "MPH") {
+            t_wd = Math.round(wd.everything.weather.wind.avg_speed.mph.toBigDecimal() * 10) / 10
+            t_wg = Math.round(wd.everything.weather.wind.gust_speed.mph.toBigDecimal() * 10) / 10
+        } else if(dMetric == "KPH") {
+            t_wd = Math.round(wd.everything.weather.wind.avg_speed.kmh.toBigDecimal() * 10) / 10
+            t_wg = Math.round(wd.everything.weather.wind.gust_speed.kmh.toBigDecimal() * 1.609344 * 10) / 10
+        } else if(dMetric == "knots") {
+            t_wd = Math.round(wd.everything.weather.wind.avg_speed.mph.toBigDecimal() * 0.868976 * 10) / 10
+            t_wg = Math.round(wd.everything.weather.wind.gust_speed.mph.toBigDecimal() * 0.868976 * 10) / 10
+        } else {  //  this leave only m/s
+            t_wd = Math.round(wd.everything.weather.wind.avg_speed.mph.toBigDecimal() *  0.44704 * 10) / 10
+            t_wg = Math.round(wd.everything.weather.wind.gust_speed.mph.toBigDecimal()  * 0.44704 * 10) / 10
+        }
+        updateDataValue("wind", t_wd.toString())
+        updateDataValue("wind_gust", t_wg.toString())
+
+        updateDataValue("wind_degree", wd.everything.weather.wind.direction.degrees.toInteger().toString())
+        String w_direction
+        switch(wd.everything.weather.wind.direction.cardinal.toUpperCase()){
+            case 'N': w_direction = 'North'; break;
+            case 'NNE': w_direction = 'North-Northeast'; break;
+            case 'NE': w_direction = 'Northeast'; break;
+            case 'ENE': w_direction = 'East-Northeast'; break;
+            case 'E': w_direction = 'East'; break;
+            case 'ESE': w_direction = 'East-Southeast'; break;
+            case 'SE': w_direction = 'Southeast'; break;
+            case 'SSE': w_direction = 'South-Southeast'; break;
+            case 'S': w_direction = 'South'; break;
+            case 'SSW': w_direction = 'South-Southwest'; break;
+            case 'SW': w_direction = 'Southwest'; break;
+            case 'WSW': w_direction = 'West-Southwest'; break;
+            case 'W': w_direction = 'West'; break;
+            case 'WNW': w_direction = 'West-Northwest'; break;
+            case 'NW': w_direction = 'Northwest'; break;
+            case 'NNW': w_direction = 'North-Northwest'; break;
+            default: w_direction = 'Unknown'; break;
+        }
+        updateDataValue("wind_direction", w_direction)
+        updateDataValue("wind_cardinal", wd.everything.weather.wind.direction.cardinal.toUpperCase())
+        updateDataValue("wind_string", w_string_bft + " from the " + getDataValue("wind_direction") + (getDataValue("wind").toBigDecimal() < 1.0 ? '': " at " + getDataValue("wind") + " " + dMetric))
+    }
+// >>>>>>>>>> End Process Only If Wind from WD Is Selected <<<<<<<<<<
+    
     updateDataValue("city", wd.station.name.split(/ /)[0])
     updateDataValue("state", wd.station.name.split(/ /)[1])
     updateDataValue("country", wd.station.name.split(/ /)[2])
@@ -486,7 +510,13 @@ void doPollWD(Map wd) {
     
 // <<<<<<<<<< Begin Process Only If feelsLike from WD Is Selected  >>>>>>>>>>                                
     if(sourcefeelsLike==true){
-        updateDataValue("feelsLike", (isFahrenheit ? wd.everything.weather.apparent_temperature.current.f.toBigDecimal() : wd.everything.weather.apparent_temperature.current.c.toBigDecimal()).toString())
+        BigDecimal t_fl
+        if(tMetric == "°F") {
+            t_fl = wd.everything.weather.apparent_temperature.current.f.toBigDecimal()
+        } else {
+            t_fl = wd.everything.weather.apparent_temperature.current.c.toBigDecimal()
+        }
+        updateDataValue("feelsLike", t_fl.toString())
     }    
 // >>>>>>>>>> End Process Only If feelsLike from WD Is Selected  <<<<<<<<<<
     
@@ -552,7 +582,7 @@ void doPollDS(Map ds) {
         updateDataValue("alert", ds.alerts.title.toString().replaceAll("[{}\\[\\]]", "").split(/,/)[0])
         updateDataValue("possAlert", "true")
     }
-    updateDataValue("vis", (isDistanceMetric ? ds.currently.visibility.toBigDecimal() * 1.60934 : ds.currently.visibility.toBigDecimal()).toString())
+    updateDataValue("vis", (dMetric!="MPH" ? ds.currently.visibility.toBigDecimal() * 1.60934 : ds.currently.visibility.toBigDecimal()).toString())
     updateDataValue("percentPrecip", (ds.daily.data[0].precipProbability.toBigDecimal() * 100).toInteger().toString())
 
     String c_code = getdsIconCode(ds?.currently?.icon, ds?.currently?.summary)
@@ -563,12 +593,110 @@ void doPollDS(Map ds) {
     updateDataValue("forecast_code", f_code)
     updateDataValue("forecast_text", getcondText(f_code))
 
-    updateDataValue("forecastHigh", (isFahrenheit ? (Math.round(ds.daily.data[0].temperatureHigh.toBigDecimal() * 10) / 10) : (Math.round((ds.daily.data[0].temperatureHigh.toBigDecimal() - 32) / 1.8 * 10) / 10)).toString())
-    updateDataValue("forecastLow", (isFahrenheit ? (Math.round(ds.daily.data[0].temperatureLow.toBigDecimal() * 10) / 10) : (Math.round((ds.daily.data[0].temperatureLow.toBigDecimal() - 32) / 1.8 * 10) / 10)).toString())
+    updateDataValue("forecastHigh", ((tMetric == "°F") ? (Math.round(ds.daily.data[0].temperatureHigh.toBigDecimal() * 10) / 10) : (Math.round((ds.daily.data[0].temperatureHigh.toBigDecimal() - 32) / 1.8 * 10) / 10)).toString())
+    updateDataValue("forecastLow", ((tMetric == "°F") ? (Math.round(ds.daily.data[0].temperatureLow.toBigDecimal() * 10) / 10) : (Math.round((ds.daily.data[0].temperatureLow.toBigDecimal() - 32) / 1.8 * 10) / 10)).toString())
     if(precipExtendedPublish){
         updateDataValue("rainTomorrow", (ds.daily.data[1].precipProbability.toBigDecimal() * 100).toInteger().toString())
         updateDataValue("rainDayAfterTomorrow", (ds.daily.data[2].precipProbability.toBigDecimal() * 100).toInteger().toString())
     }
+    
+// <<<<<<<<<< Begin Process Only If Wind from WD Is NOT Selected  >>>>>>>>>>                
+    String w_string_bft
+    String w_bft_icon
+    BigDecimal t_ws = ds.currently.windSpeed.toBigDecimal()
+    if(t_ws < 1.0) {
+        w_string_bft = "Calm"; w_bft_icon = 'wb0.png'
+    }else if(t_ws < 4.0) {
+        w_string_bft = "Light air"; w_bft_icon = 'wb1.png'
+    }else if(t_ws < 8.0) {
+        w_string_bft = "Light breeze"; w_bft_icon = 'wb2.png'
+    }else if(t_ws < 13.0) {
+        w_string_bft = "Gentle breeze"; w_bft_icon = 'wb3.png'
+    }else if(t_ws < 19.0) {
+        w_string_bft = "Moderate breeze"; w_bft_icon = 'wb4.png'
+    }else if(t_ws < 25.0) {
+        w_string_bft = "Fresh breeze"; w_bft_icon = 'wb5.png'
+    }else if(t_ws < 32.0) {
+        w_string_bft = "Strong breeze"; w_bft_icon = 'wb6.png'
+    }else if(t_ws < 39.0) {
+        w_string_bft = "High wind, moderate gale, near gale"; w_bft_icon = 'wb7.png'
+    }else if(t_ws < 47.0) {
+        w_string_bft = "Gale, fresh gale"; w_bft_icon = 'wb8.png'
+    }else if(t_ws < 55.0) {
+        w_string_bft = "Strong/severe gale"; w_bft_icon = 'wb9.png'
+    }else if(t_ws < 64.0) {
+        w_string_bft = "Storm, whole gale"; w_bft_icon = 'wb10.png'
+    }else if(t_ws < 73.0) {
+        w_string_bft = "Violent storm"; w_bft_icon = 'wb11.png'
+    }else if(t_ws >= 73.0) {
+        w_string_bft = "Hurricane force"; w_bft_icon = 'wb12.png'
+    }
+	updateDataValue("wind_string_bft", w_string_bft)
+    updateDataValue("wind_bft_icon", w_bft_icon)
+
+    BigDecimal t_wd
+    BigDecimal t_wg
+    if(dMetric == "MPH") {
+        t_wd = Math.round(ds.currently.windSpeed.toBigDecimal() * 10) / 10
+        t_wg = Math.round(ds.currently.windGust.toBigDecimal() * 10) / 10
+    } else if(dMetric == "KPH") {
+        t_wd = Math.round(ds.currently.windSpeed.toBigDecimal() * 1.609344 * 10) / 10
+        t_wg = Math.round(ds.currently.windGust.toBigDecimal() * 1.609344 * 10) / 10
+    } else if(dMetric == "knots") {
+        t_wd = Math.round(ds.currently.windSpeed.toBigDecimal() * 0.868976 * 10) / 10
+        t_wg = Math.round(ds.currently.windGust.toBigDecimal() * 0.868976 * 10) / 10
+    } else {  //  this leave only m/s
+        t_wd = Math.round(ds.currently.windSpeed.toBigDecimal() * 0.44704 * 10) / 10
+        t_wg = Math.round(ds.currently.windGust.toBigDecimal() * 0.44704 * 10) / 10
+    }
+    updateDataValue("wind", t_wd.toString())
+    updateDataValue("wind_gust", t_wg.toString())
+
+    updateDataValue("wind_degree", ds.currently.windBearing.toInteger().toString())	
+    String w_cardinal
+    String w_direction
+    BigDecimal twb = ds.currently.windBearing.toBigDecimal()
+    if(twb < 11.25) {
+        w_cardinal = 'N'; w_direction = 'North'
+    }else if(twb < 33.75) {
+        w_cardinal = 'NNE'; w_direction = 'North-Northeast'
+    }else if(twb < 56.25) {
+        w_cardinal = 'NE';  w_direction = 'Northeast'
+    }else if(twb < 56.25) {
+        w_cardinal = 'ENE'; w_direction = 'East-Northeast'
+    }else if(twb < 101.25) {
+        w_cardinal = 'E'; w_direction = 'East'
+    }else if(twb < 123.75) {
+        w_cardinal = 'ESE'; w_direction = 'East-Southeast'
+    }else if(twb < 146.25) {
+        w_cardinal = 'SE'; w_direction = 'Southeast'
+    }else if(twb < 168.75) {
+        w_cardinal = 'SSE'; w_direction = 'South-Southeast'
+    }else if(twb < 191.25) {
+        w_cardinal = 'S'; w_direction = 'South'
+    }else if(twb < 213.75) {
+        w_cardinal = 'SSW'; w_direction = 'South-Southwest'
+    }else if(twb < 236.25) {
+        w_cardinal = 'SW'; w_direction = 'Southwest'
+    }else if(twb < 258.75) {
+        w_cardinal = 'WSW'; w_direction = 'West-Southwest'
+    }else if(twb < 281.25) {
+        w_cardinal = 'W'; w_direction = 'West'
+    }else if(twb < 303.75) {
+        w_cardinal = 'WNW'; w_direction = 'West-Northwest'
+    }else if(twb < 326.25) {
+        w_cardinal = 'NW'; w_direction = 'Northwest'
+    }else if(twb < 348.75) {
+        w_cardinal = 'NNW'; w_direction = 'North-Northwest'
+    }else if(twb >= 348.75) {
+        w_cardinal = 'N'; w_direction = 'North'
+    }
+    updateDataValue("wind_direction", w_direction)
+    updateDataValue("wind_cardinal", w_cardinal)	
+    updateDataValue("wind_string", w_string_bft + " from the " + getDataValue("wind_direction") + (getDataValue("wind").toBigDecimal() < 1.0 ? '': " at " + getDataValue("wind") + " " + dMetric))
+
+// >>>>>>>>>> End Process Only If Wind from WD Is NOT Selected <<<<<<<<<<
+        
     String s_cardinal
     String s_direction
     if(!ds.currently.nearestStormBearing){
@@ -615,7 +743,15 @@ void doPollDS(Map ds) {
         }
         updateDataValue("nearestStormCardinal", s_cardinal)
         updateDataValue("nearestStormDirection", s_direction)
-        updateDataValue("nearestStormDistance", (!ds.currently.nearestStormDistance ? "9999.9" : (isDistanceMetric ? (Math.round(ds.currently.nearestStormDistance.toBigDecimal() * 1.609344 * 10) / 10) : (Math.round(ds.currently.nearestStormDistance.toBigDecimal() * 10) / 10)).toString()))
+        BigDecimal t_nsd
+        if(!ds.currently.nearestStormDistance) {
+            t_nsd = 9999.9
+        } else if(dMetric == "MPH") {
+            t_nsd = Math.round(ds.currently.nearestStormDistance.toBigDecimal() * 10) / 10
+        } else {
+            t_nsd = Math.round(ds.currently.nearestStormDistance.toBigDecimal() * 1.609344 * 10) / 10
+        }    
+        updateDataValue("nearestStormDistance", t_nsd.toString())
     }
 	updateDataValue("ozone", (Math.round(ds.currently.ozone.toBigDecimal() * 10 ) / 10).toString())
 // >>>>>>>>>> End Setup Forecast Variables <<<<<<<<<<
@@ -634,7 +770,13 @@ void doPollDS(Map ds) {
     
 // <<<<<<<<<< Begin Process Only If feelsLike Index from WD Is NOT Selected  >>>>>>>>>>                        
     if(sourcefeelsLike==false){
-        updateDataValue("feelsLike",  (isFahrenheit ? (Math.round(ds.currently.apparentTemperature.toBigDecimal() * 10) / 10) : (Math.round((ds.currently.apparentTemperature.toBigDecimal() - 32) / 1.8 * 10) / 10)).toString())
+        BigDecimal t_fl
+        if(tMetric == "°F") {
+            t_fl = Math.round(ds.currently.apparentTemperature.toBigDecimal() * 10) / 10
+        } else {
+            t_fl = Math.round((ds.currently.apparentTemperature.toBigDecimal() - 32) / 1.8 * 10) / 10
+        }
+        updateDataValue("feelsLike", t_fl.toString())
     }    
 // >>>>>>>>>> End Process Only If feelsLike from WD Is NOT Selected  <<<<<<<<<<    
 
@@ -792,20 +934,20 @@ void PostPoll() {
 /*  Weather-Display Data Elements */
 	sendEvent(name: "humidity", value: getDataValue("humidity").toBigDecimal(), unit: '%')
     sendEvent(name: "illuminance", value: getDataValue("illuminance").toInteger(), unit: 'lx')
-	sendEvent(name: "pressure", value: String.format("%,4.1f", getDataValue("pressure").toBigDecimal()), unit: (isPressureMetric ? 'mbar' : 'inHg'))
-	sendEvent(name: "temperature", value: String.format("%3.1f", getDataValue("temperature").toBigDecimal()), unit: (isFahrenheit ? '°F' : '°C'))
+	sendEvent(name: "pressure", value: (pMetric == "inHg" ? String.format("%2.2f", getDataValue("pressure").toBigDecimal()) : String.format("%,4.1f", getDataValue("pressure").toBigDecimal())), unit: pMetric)
+	sendEvent(name: "temperature", value: String.format("%3.1f", getDataValue("temperature").toBigDecimal()), unit: tMetric)
     sendEvent(name: "ultravioletIndex", value: getDataValue("ultravioletIndex").toBigDecimal(), unit: 'uvi')
     
 /*  'Required for Dashboards' Data Elements */    
     if(dashHubitatOWMPublish || dashSharpToolsPublish || dashSmartTilesPublish) { sendEvent(name: "city", value: getDataValue("city")) }
-    if(dashSharpToolsPublish || dashSmartTilesPublish) { sendEvent(name: "feelsLike", value: getDataValue("feelsLike").toBigDecimal(), unit: (isFahrenheit ? '°F' : '°C')) }
+    if(dashSharpToolsPublish || dashSmartTilesPublish) { sendEvent(name: "feelsLike", value: getDataValue("feelsLike").toBigDecimal(), unit: tMetric) }
     if(dashSharpToolsPublish) { sendEvent(name: "forecastIcon", value: getstdImgName(getDataValue("condition_code"))) }
     if(dashSharpToolsPublish || dashSmartTilesPublish) { sendEvent(name: "percentPrecip", value: getDataValue("percentPrecip")) }
     if(dashSharpToolsPublish || dashSmartTilesPublish) { sendEvent(name: "weather", value: getDataValue("condition_text")) }
     if(dashSharpToolsPublish || dashSmartTilesPublish) { sendEvent(name: "weatherIcon", value: getstdImgName(getDataValue("condition_code"))) }
     if(dashHubitatOWMPublish) { sendEvent(name: "weatherIcons", value: getowmImgName(getDataValue("condition_code"))) }
-    if(dashSharpToolsPublish || windPublish) { sendEvent(name: "wind", value: getDataValue("wind"), unit: (isDistanceMetric ? (isDistanceKnots ? "knots" : "KPH") : "MPH")) }
-    if(dashHubitatOWMPublish) { sendEvent(name: "windSpeed", value: getDataValue("wind").toBigDecimal(), unit: (isDistanceMetric ? (isDistanceKnots ? "knots" : "KPH") : "MPH")) }
+    if(dashSharpToolsPublish || windPublish) { sendEvent(name: "wind", value: getDataValue("wind"), unit: dMetric) }
+    if(dashHubitatOWMPublish) { sendEvent(name: "windSpeed", value: getDataValue("wind").toBigDecimal(), unit: dMetric) }
     if(dashHubitatOWMPublish) { sendEvent(name: "windDirection", value: getDataValue("wind_degree").toInteger(), unit: "DEGREE")   }
         
 /*  Selected optional Data Elements */   
@@ -815,7 +957,7 @@ void PostPoll() {
     sendEventPublish(name: "condition_code", value: getDataValue("condition_code"))
     sendEventPublish(name: "condition_text", value: getDataValue("condition_text"))
     sendEventPublish(name: "country", value: getDataValue("country"))
-    sendEventPublish(name: "dewpoint", value: getDataValue("dewpoint").toBigDecimal(), unit: (isFahrenheit ? '°F' : '°C'))
+    sendEventPublish(name: "dewpoint", value: getDataValue("dewpoint").toBigDecimal(), unit: tMetric)
     if(dsAttributionPublish){
         sendEvent(name: "dsIconlighttext", value: '<a href=\"https://darksky.net/poweredby/\"><img src=' + getDataValue("iconLocation") + 'dsL.png' + ' style=\"height:2em\";></a>')
         sendEvent(name: "dsIcondarktext", value: '<a href=\"https://darksky.net/poweredby/\"><img src=' + getDataValue("iconLocation") + 'dsD.png' + ' style=\"height:2em\";></a>')
@@ -823,8 +965,8 @@ void PostPoll() {
     sendEventPublish(name: "forecast_code", value: getDataValue("forecast_code"))
     sendEventPublish(name: "forecast_text", value: getDataValue("forecast_text"))
     if(fcstHighLowPublish && extSource.toInteger() == 2){ // don't bother setting these values if it's not enabled
-        sendEvent(name: "forecastHigh", value: String.format("%3.1f", getDataValue("forecastHigh").toBigDecimal()), unit: (isFahrenheit ? '°F' : '°C'))
-    	sendEvent(name: "forecastLow", value: String.format("%3.1f", getDataValue("forecastLow").toBigDecimal()), unit: (isFahrenheit ? '°F' : '°C'))
+        sendEvent(name: "forecastHigh", value: String.format("%3.1f", getDataValue("forecastHigh").toBigDecimal()), unit: tMetric)
+    	sendEvent(name: "forecastLow", value: String.format("%3.1f", getDataValue("forecastLow").toBigDecimal()), unit: tMetric)
     }
     sendEventPublish(name: "illuminated", value: getDataValue("illuminated") + ' lx')
     sendEventPublish(name: "is_day", value: getDataValue("is_day"))
@@ -836,7 +978,7 @@ void PostPoll() {
         sendEvent(name: "last_observation_Forecast", value: new Date().parse("EEE MMM dd HH:mm:ss z yyyy", getDataValue("fotime")).format(dateFormat, TimeZone.getDefault()) + ", " + new Date().parse("EEE MMM dd HH:mm:ss z yyyy", getDataValue("fotime")).format(timeFormat, TimeZone.getDefault()))
     }
     sendEventPublish(name: "ozone", value: Math.round(getDataValue("ozone").toBigDecimal() * 10) / 10)
-    sendEventPublish(name: "precip_today", value: getDataValue("precip_today").toBigDecimal(), unit: (isRainMetric ? 'mm' : 'inches'))
+    sendEventPublish(name: "precip_today", value: getDataValue("precip_today").toBigDecimal(), unit: rMetric)
     if(precipExtendedPublish && extSource.toInteger() == 2){ // don't bother setting these values if it's not enabled
         sendEvent(name: "rainDayAfterTomorrow", value: getDataValue("rainDayAfterTomorrow").toBigDecimal(), unit: '%')	
     	sendEvent(name: "rainTomorrow", value: getDataValue("rainTomorrow").toBigDecimal(), unit: '%')
@@ -846,18 +988,18 @@ void PostPoll() {
     if(extSource.toInteger()==1){
         sendEventPublish(name: "vis", value: getDataValue("vis"))
     }else{
-        sendEventPublish(name: "vis", value: Math.round(getDataValue("vis").toBigDecimal() * 10) / 10, unit: (isDistanceMetric ? "kilometers" : "miles"))
+        sendEventPublish(name: "vis", value: Math.round(getDataValue("vis").toBigDecimal() * 10) / 10, unit: (dMetric=="MPH" ? "miles" : "kilometers"))
     }
     sendEventPublish(name: "wind_degree", value: getDataValue("wind_degree").toInteger(), unit: "DEGREE")
     sendEventPublish(name: "wind_direction", value: getDataValue("wind_direction"))    
     sendEventPublish(name: "wind_cardinal", value: getDataValue("wind_cardinal"))    
-    sendEventPublish(name: "wind_gust", value: getDataValue("wind_gust").toBigDecimal(), unit: (isDistanceMetric ? (isDistanceKnots ? "knots" : "KPH") : "MPH"))
+    sendEventPublish(name: "wind_gust", value: getDataValue("wind_gust").toBigDecimal(), unit: dMetric)
     sendEventPublish(name: "wind_string", value: getDataValue("wind_string"))
     if(nearestStormPublish) {
         sendEvent(name: "nearestStormBearing", value: getDataValue("nearestStormBearing"), unit: "DEGREE")
         sendEvent(name: "nearestStormCardinal", value: getDataValue("nearestStormCardinal"))    
         sendEvent(name: "nearestStormDirection", value: getDataValue("nearestStormDirection"))    	
-        sendEvent(name: "nearestStormDistance", value: String.format("%,5.1f", getDataValue("nearestStormDistance").toBigDecimal()), unit: (isDistanceMetric ? "kilometers" : "miles"))	
+        sendEvent(name: "nearestStormDistance", value: String.format("%,5.1f", getDataValue("nearestStormDistance").toBigDecimal()), unit: (dMetric=="MPH" ? "miles" : "kilometers"))	
     }
 //  <<<<<<<<<< Begin Built Weather Summary text >>>>>>>>>> 
     Summary_last_poll_time = (getDataValue("sutime") > getDataValue("futime") ? new Date().parse("EEE MMM dd HH:mm:ss z yyyy", getDataValue("sutime")).format(timeFormat, TimeZone.getDefault()) : new Date().parse("EEE MMM dd HH:mm:ss z yyyy", getDataValue("futime")).format(timeFormat, TimeZone.getDefault()))
@@ -868,9 +1010,9 @@ void PostPoll() {
         String Summary_vis
         String mtprecip
         if(extSource.toInteger() == 2){
-			Summary_forecastTemp = " with a high of " + String.format("%3.1f", getDataValue("forecastHigh").toBigDecimal()) + (isFahrenheit ? '°F' : '°C') + " and a low of " + String.format("%3.1f", getDataValue("forecastLow").toBigDecimal()) + (isFahrenheit ? '°F. ' : '°C. ')
+			Summary_forecastTemp = " with a high of " + String.format("%3.1f", getDataValue("forecastHigh").toBigDecimal()) + tMetric + " and a low of " + String.format("%3.1f", getDataValue("forecastLow").toBigDecimal()) + tMetric + ". "
             Summary_precip = "There is a " + getDataValue("percentPrecip") + "% chance of precipitation. "
-    		Summary_vis = "Visibility is around " + String.format("%3.1f", getDataValue("vis").toBigDecimal()) + (isDistanceMetric ? " kilometers." : " miles.")
+    		Summary_vis = "Visibility is around " + String.format("%3.1f", getDataValue("vis").toBigDecimal()) + (dMetric=="MPH" ? " miles." : " kilometers.")
             mtprecip = getDataValue("percentPrecip") + '%'       
         }else{
 			Summary_forecastTemp = ""
@@ -901,14 +1043,14 @@ void PostPoll() {
         }
         String mytext = '<span>' + getDataValue("city") + ", " + getDataValue("state") + '<br>'        
         mytext+= getDataValue("condition_text") + (noAlert ? '' : ' | ') + alertStyleOpen + (noAlert ? '' : getDataValue("alert")) + alertStyleClose
-        mytext+= getDataValue("temperature") + (isFahrenheit ? '°F ' : '°C ') + '<img src=' + getDataValue("condition_icon_url") + iconClose + ' style=\"height:2.2em;display:inline;\">'
-        mytext+= ' Feels like ' + getDataValue("feelsLike") + (isFahrenheit ? '°F' : '°C') + '<br></span>'
+        mytext+= getDataValue("temperature") + tMetric + '<img src=' + getDataValue("condition_icon_url") + iconClose + ' style=\"height:2.2em;display:inline;\">'
+        mytext+= ' Feels like ' + getDataValue("feelsLike") + tMetric + '<br></span>'
         mytext+= '<span style=\"font-size:.8em;\"><img src=' + getDataValue("iconLocation") + getDataValue("wind_bft_icon") + iconCloseStyled + getDataValue("wind_direction") + " "
-        mytext+= getDataValue("wind").toBigDecimal() < 1.0 ? 'calm' : "@ " + getDataValue("wind") + (isDistanceMetric ? (isDistanceKnots ? " knots" : " KPH") : " MPH")
-        mytext+= ', gusts ' + ((wgust < 1.0) ? 'calm' :  "@ " + wgust.toString() + (isDistanceMetric ? (isDistanceKnots ? " knots" : " KPH") : " MPH")) + '<br>'
-        mytext+= '<img src=' + getDataValue("iconLocation") + 'wb.png' + iconCloseStyled + String.format("%,4.1f", getDataValue("pressure").toBigDecimal()) + (isPressureMetric ? ' mbar' : ' inHg') + '   <img src=' + getDataValue("iconLocation") + 'wh.png' + iconCloseStyled
+        mytext+= getDataValue("wind").toBigDecimal() < 1.0 ? 'calm' : "@ " + getDataValue("wind") + " " + dMetric
+        mytext+= ', gusts ' + ((wgust < 1.0) ? 'calm' :  "@ " + wgust.toString() + " " + dMetric) + '<br>'
+        mytext+= '<img src=' + getDataValue("iconLocation") + 'wb.png' + iconCloseStyled + String.format("%,4.1f", getDataValue("pressure").toBigDecimal()) + " " + pMetric + '   <img src=' + getDataValue("iconLocation") + 'wh.png' + iconCloseStyled
         mytext+= getDataValue("humidity") + '%   ' + '<img src=' + getDataValue("iconLocation") + 'wu.png' + iconCloseStyled + getDataValue("percentPrecip") + '%'
-        mytext+= (raintoday ? '   <img src=' + getDataValue("iconLocation") + 'wr.png' + iconCloseStyled + getDataValue("precip_today") + (isRainMetric ? ' mm' : ' inches') : '') + '<br>'
+        mytext+= (raintoday ? '   <img src=' + getDataValue("iconLocation") + 'wr.png' + iconCloseStyled + getDataValue("precip_today") + rMetric : '') + '<br>'
         mytext+= '<img src=' + getDataValue("iconLocation") + 'wsr.png' + iconCloseStyled + getDataValue("localSunrise") + '     <img src=' + getDataValue("iconLocation") + 'wss.png' + iconCloseStyled
         mytext+= getDataValue("localSunset") + '     Updated: ' + Summary_last_poll_time
         if((mytext.length() + dsIcon.length() + 10) < 1025) {
@@ -969,15 +1111,15 @@ void PostPoll() {
                 LOGINFO("myTile exceeds 1,024 characters (" + mytext.length() + ") ... removing last " + (removeicons + 1).toString() + " icons.")            
                 mytext = '<span>' + getDataValue("city") + '<br>'
                 mytext+= getDataValue("condition_text") + (noAlert ? '' : ' | ') + alertStyleOpen + (noAlert ? '' : getDataValue("alert")) + alertStyleClose + '<br>'
-                mytext+= getDataValue("temperature") + (isFahrenheit ? '°F ' : '°C ') + (removeicons < (raintoday ? 8 : 7) ? '<img src=' + getDataValue("condition_icon_url") + iconClose + ' style=\"height:2.0em;display:inline;\">' : '') 
-                mytext+= ' Feels like ' + getDataValue("feelsLike") + (isFahrenheit ? '°F' : '°C') + '<br></span>'
+                mytext+= getDataValue("temperature") + tMetric + " " + (removeicons < (raintoday ? 8 : 7) ? '<img src=' + getDataValue("condition_icon_url") + iconClose + ' style=\"height:2.0em;display:inline;\">' : '') 
+                mytext+= ' Feels like ' + getDataValue("feelsLike") + tMetric + '<br></span>'
                 mytext+= '<span style=\"font-size:.8em;\">' + (removeicons < (raintoday ? 7 : 6) ? '<img src=' + getDataValue("iconLocation") + getDataValue("wind_bft_icon") + iconCloseStyled : '') + getDataValue("wind_direction") + " "
-                mytext+= getDataValue("wind").toBigDecimal() < 1.0 ? 'calm' : "@ " + getDataValue("wind") + (isDistanceMetric ? (isDistanceKnots ? " knots" : " KPH") : " MPH")
-                mytext+= ', gusts ' + ((wgust < 1.0) ? 'calm' :  "@ " + wgust.toString() + (isDistanceMetric ? (isDistanceKnots ? " knots" : " KPH") : " MPH")) + '<br>'
-                mytext+= (removeicons < (raintoday ? 6 : 5) ? '<img src=' + getDataValue("iconLocation") + 'wb.png' + iconCloseStyled : 'Bar: ') + (isPressureMetric ? String.format("%,4.1f", getDataValue("pressure").toBigDecimal()) : String.format("%2.2f", getDataValue("pressure").toBigDecimal())) + (isPressureMetric ? ' mbar' : ' inHg') + '  '
+                mytext+= getDataValue("wind").toBigDecimal() < 1.0 ? 'calm' : "@ " + getDataValue("wind") + " " + dMetric
+                mytext+= ', gusts ' + ((wgust < 1.0) ? 'calm' :  "@ " + wgust.toString() + " " + dMetric) + '<br>'
+                mytext+= (removeicons < (raintoday ? 6 : 5) ? '<img src=' + getDataValue("iconLocation") + 'wb.png' + iconCloseStyled : 'Bar: ') + (pMetric == "inHg" ? String.format("%2.2f", getDataValue("pressure").toBigDecimal()) : String.format("%,4.1f", getDataValue("pressure").toBigDecimal())) + pMetric + '  '
                 mytext+= (removeicons < (raintoday ? 5 : 4) ? '<img src=' + getDataValue("iconLocation") + 'wh.png' + iconCloseStyled : ' | Hum: ') + getDataValue("humidity") + '%  ' 
                 mytext+= (removeicons < (raintoday ? 4 : 3) ? '<img src=' + getDataValue("iconLocation") + 'wu.png' + iconCloseStyled : ' | Precip%: ') + getDataValue("percentPrecip") + '%'
-                mytext+= (raintoday ? (removeicons < 3 ? ('<img src=' + getDataValue("iconLocation") + 'wr.png' + iconCloseStyled) : (' | Precip: ')) + getDataValue("precip_today") + (isRainMetric ? ' mm' : ' inches') : '') + '<br>'
+                mytext+= (raintoday ? (removeicons < 3 ? ('<img src=' + getDataValue("iconLocation") + 'wr.png' + iconCloseStyled) : (' | Precip: ')) + getDataValue("precip_today") + rMetric : '') + '<br>'
                 mytext+= (removeicons < 2 ? ('<img src=' + getDataValue("iconLocation") + 'wsr.png' + iconCloseStyled) : ('Sunrise: ')) + getDataValue("localSunrise") + '  '
                 mytext+= (removeicons < 1 ? ('<img src=' + getDataValue("iconLocation") + 'wss.png' + iconCloseStyled) : (' | Sunset: ')) + getDataValue("localSunset")
                 mytext+= '     Updated ' + Summary_last_poll_time + '</span>'
@@ -985,13 +1127,13 @@ void PostPoll() {
                 LOGINFO("myTile still exceeds 1,024 characters (" + mytext.length() + ") ... removing all formatting.")
                 mytext = getDataValue("city") + '<br>'
                 mytext+= getDataValue("condition_text") + (noAlert ? '' : ' | ') + (noAlert ? '' : getDataValue("alert")) + '<br>'
-                mytext+= getDataValue("temperature") + (isFahrenheit ? '°F ' : '°C ') + 'Feels like ' + getDataValue("feelsLike") + (isFahrenheit ? '°F' : '°C') + '<br>'
+                mytext+= getDataValue("temperature") + tMetric + ' Feels like ' + getDataValue("feelsLike") + tMetric + '<br>'
                 mytext+= getDataValue("wind_direction") + " "
-                mytext+= getDataValue("wind").toBigDecimal() < 1.0 ? 'calm' : "@ " + getDataValue("wind") + (isDistanceMetric ? (isDistanceKnots ? " knots" : " KPH") : " MPH")
-                mytext+= ', gusts ' + ((wgust < 1.0) ? 'calm' :  "@ " + wgust.toString() + (isDistanceMetric ? (isDistanceKnots ? " knots" : " KPH") : " MPH")) + '<br>'
-                mytext+= 'Bar: ' + (isPressureMetric ? String.format("%,4.1f", getDataValue("pressure").toBigDecimal()) : String.format("%2.2f", getDataValue("pressure").toBigDecimal())) + (isPressureMetric ? ' mbar' : ' inHg')
+                mytext+= getDataValue("wind").toBigDecimal() < 1.0 ? 'calm' : "@ " + getDataValue("wind") + " " + dMetric
+                mytext+= ', gusts ' + ((wgust < 1.0) ? 'calm' :  "@ " + wgust.toString() + " " + dMetric) + '<br>'
+                mytext+= 'Bar: ' + (pMetric == "inHg" ? String.format("%2.2f", getDataValue("pressure").toBigDecimal()) : String.format("%,4.1f", getDataValue("pressure").toBigDecimal())) + pMetric
                 mytext+= ' | Hum: ' + getDataValue("humidity") + '%  ' + ' | Precip%: ' + getDataValue("percentPrecip") + '%'
-                mytext+= (raintoday ? ' | Precip: ' + getDataValue("precip_today") + (isRainMetric ? ' mm' : ' inches') : '') + '<br>'
+                mytext+= (raintoday ? ' | Precip: ' + getDataValue("precip_today") + " " + rMetric : '') + '<br>'
                 mytext+= 'Sunrise: ' + getDataValue("localSunrise") + ' | Sunset:' + getDataValue("localSunset") + ' |  Updated:' + Summary_last_poll_time
                 if(mytext.length() > 1024) {
                     LOGINFO("myTile even still exceeds 1,024 characters (" + mytext.length() + ") ... truncating.")
@@ -1046,11 +1188,20 @@ void initialize() {
     boolean sourcefeelsLike = (settings?.sourcefeelsLike ?: false)
     boolean sourceIllumination = (settings?.sourceIllumination ?: false)
     boolean sourceUV = (settings?.sourceUV ?: false)
+    boolean sourceWind = (settings?.sourceWind ?: false)
     boolean summaryType = (settings?.summaryType ?: false)
     String iconLocation = (settings?.iconLocation ?: "https://tinyurl.com/y6xrbhpf/")
     updateDataValue("iconLocation", iconLocation)
     state.DarkSky = '<a href=\"https://darksky.net/poweredby/\"><img src=' + getDataValue("iconLocation") + 'dsD.png style=\"height:2em\";></a>'
     setDateTimeFormats(datetimeFormat)
+    boolean isDistanceMetric
+    boolean isPressureMetric
+    boolean isRainMetric
+    boolean isFahrenheit
+    String dMetric
+    String pMetric
+    String rMetric
+    String tMetric    
     setMeasurementMetrics(distanceFormat, pressureFormat, rainFormat, tempFormat)
     
     pollSunRiseSet()
@@ -1173,11 +1324,43 @@ public void setDateTimeFormats(String formatselector){
 }
 
 public void setMeasurementMetrics(distFormat, pressFormat, precipFormat, temptFormat){
-    isDistanceMetric = (distFormat == "Miles (mph)") ? false : true
-    isDistanceKnots =  isDistanceMetric ? ((distFormat == "knots") ? true : false) : false
-    isPressureMetric = (pressFormat == "Millibar") ? true : false
-    isRainMetric = (precipFormat == "Millimetres") ? true : false
-    isFahrenheit = (temptFormat == "Fahrenheit (°F)") ? true : false
+    if(distFormat == "Miles (mph)") {
+        isDistanceMetric = false
+        dMetric = "MPH"
+    } else if(distFormat == "knots") {
+        isDistanceMetric = true
+        dMetric = "knots"
+    } else if(distFormat == "Kilometers (kph)") {
+        isDistanceMetric = true
+        dMetric = "KPH"
+    } else {
+        isDistanceMetric = true
+        dMetric = "m/s"
+    }
+    if(pressFormat == "Millibar") {
+        isPressureMetric = true
+        pMetric = "MBAR"
+    } else if(pressFormat == "Inches") {
+        isPressureMetric = true
+        pMetric = "inHg"
+    } else {
+        isPressureMetric = true
+        pMetric = "hPa"
+    }
+    if(precipFormat == "Millimeters") {
+        isRainMetric = true
+        rMetric = "mm"
+    } else {
+        isRainMetric = false
+        rMetric = "inches"
+    }
+    if(temptFormat == "Fahrenheit (°F)") {
+        isFahrenheit = true
+        tMetric = "°F"
+    } else {
+        isFahrenheit = false
+        tMetric = "°C"
+    }        
     return
 }
 
@@ -1319,17 +1502,17 @@ void SummaryMessage(boolean SType, String Slast_poll_date, String Slast_poll_tim
         wSum = "Weather summary for " + getDataValue("city") + ", " + getDataValue("state") + " updated at ${Slast_poll_time} on ${Slast_poll_date}. "
         wSum+= getDataValue("condition_text")
         wSum+= (!SforecastTemp || SforecastTemp=="") ? ". " : "${SforecastTemp}"
-        wSum+= "Humidity is " + getDataValue("humidity") + "% and the temperature is " + String.format("%3.1f", getDataValue("temperature").toBigDecimal()) +  (isFahrenheit ? '°F. ' : '°C. ')
-        wSum+= "The temperature feels like it is " + String.format("%3.1f", getDataValue("feelsLike").toBigDecimal()) + (isFahrenheit ? '°F. ' : '°C. ')
-        wSum+= "Wind: " + getDataValue("wind_string") + ", gusts: " + ((windgust < 1.00) ? "calm. " : "up to " + windgust.toString() + (isDistanceMetric ? (isDistanceKnots ? " knots. " : ' KPH. ') : ' MPH. '))
+        wSum+= "Humidity is " + getDataValue("humidity") + "% and the temperature is " + String.format("%3.1f", getDataValue("temperature").toBigDecimal()) +  tMetric + ". "
+        wSum+= "The temperature feels like it is " + String.format("%3.1f", getDataValue("feelsLike").toBigDecimal()) +  tMetric + ". "
+        wSum+= "Wind: " + getDataValue("wind_string") + ", gusts: " + ((windgust < 1.00) ? "calm. " : "up to " + windgust.toString() + " " + dMetric + ". ")
         wSum+= Sprecip
         wSum+= Svis
         wSum+= ((!getDataValue("alert") || getDataValue("alert")==null) ? "" : " " + getDataValue("alert") + '. ')
     } else {
         wSum = getDataValue("condition_text") + " "
         wSum+= ((!SforecastTemp || SforecastTemp=="") ? ". " : "${SforecastTemp}")
-        wSum+= " Humidity: " + getDataValue("humidity") + "%. Temperature: " + String.format("%3.1f", getDataValue("temperature").toBigDecimal()) + (isFahrenheit ? '°F. ' : '°C. ')
-        wSum+= getDataValue("wind_string") + ", gusts: " + ((windgust == 0.00) ? "calm. " : "up to " + windgust + (isDistanceMetric ? (isDistanceKnots ? " knots. " : ' KPH. ') : ' MPH. '))
+        wSum+= " Humidity: " + getDataValue("humidity") + "%. Temperature: " + String.format("%3.1f", getDataValue("temperature").toBigDecimal()) + tMetric + ". "
+        wSum+= getDataValue("wind_string") + ", gusts: " + ((windgust == 0.00) ? "calm. " : "up to " + windgust + " " + dMetric + ". ")
 	}
     wSum = wSum.take(1024)
     sendEvent(name: "weatherSummary", value: wSum)
@@ -1486,7 +1669,7 @@ void sendEventPublish(evt)	{
 	"condition_code":			[title: "Condition Code", descr: "Display 'condition_code'?", typeof: "string", default: "false"],
 	"condition_icon_only":		[title: "Condition Icon Only", descr: "Display 'condition_code_only'?", typeof: "string", default: "false"],
 	"condition_icon_url":		[title: "Condition Icon URL", descr: "Display 'condition_code_url'?", typeof: "string", default: "false"],
-	"condition_icon":			[title: "Condition Icon", descr: "Dislay 'condition_icon'?", typeof: "string", default: "false"],
+	"condition_icon":			[title: "Condition Icon", descr: "Display 'condition_icon'?", typeof: "string", default: "false"],
     "condition_iconWithText":   [title: "Condition Icon With Text", descr: "Display 'condition_iconWithText'?", typeof: "string", default: "false"],    
 	"condition_text":			[title: "Condition Text", descr: "Display 'condition_text'?", typeof: "string", default: "false"],
 	"country":				    [title: "Country", descr: "Display 'country'?", typeof: "string", default: "false"],
