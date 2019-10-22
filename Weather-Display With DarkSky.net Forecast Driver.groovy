@@ -58,7 +58,7 @@ The driver exposes both metric and imperial measurements for you to select from.
    Last Update 10/22/2019
   { Left room below to document version changes...}
 
-
+   V4.3.6   Changed 'pressure' to a number from a string, added 'pressured' as a string.      - 10/22/2019
    V4.3.5   Added three day forecast tile                                                     - 10/22/2019
    V4.3.4   added meters per second ('m/s') for wind and hectopascals for pressure,           - 10/14/2019
             added ability to use DarkSky for wind instead of your weather station.
@@ -130,7 +130,7 @@ The way the 'optional' attributes work:
    available in the dashboard is to delete the virtual device and create a new one AND DO NOT SELECT the
    attribute you do not want to show.
  */
-public static String version()      {  return "4.3.5"  }
+public static String version()      {  return "4.3.6"  }
 import groovy.transform.Field
 
 metadata {
@@ -964,7 +964,8 @@ void PostPoll() {
 /*  Weather-Display Data Elements */
 	sendEvent(name: "humidity", value: getDataValue("humidity").toBigDecimal(), unit: '%')
     sendEvent(name: "illuminance", value: getDataValue("illuminance").toInteger(), unit: 'lx')
-	sendEvent(name: "pressure", value: (pMetric == "inHg" ? String.format("%2.2f", getDataValue("pressure").toBigDecimal()) : String.format("%,4.1f", getDataValue("pressure").toBigDecimal())), unit: pMetric)
+    sendEvent(name: "pressure", value: getDataValue("pressure").toBigDecimal(), unit: pMetric)
+	sendEvent(name: "pressured", value: (pMetric == "inHg" ? String.format("%2.2f", getDataValue("pressure").toBigDecimal()) : String.format("%,4.1f", getDataValue("pressure").toBigDecimal())), unit: pMetric)
 	sendEvent(name: "temperature", value: String.format("%3.1f", getDataValue("temperature").toBigDecimal()), unit: tMetric)
     sendEvent(name: "ultravioletIndex", value: getDataValue("ultravioletIndex").toBigDecimal(), unit: 'uvi')
     
