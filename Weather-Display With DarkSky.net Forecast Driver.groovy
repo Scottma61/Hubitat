@@ -55,9 +55,14 @@ The driver exposes both metric and imperial measurements for you to select from.
    on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
    for the specific language governing permissions and limitations under the License.
  
-   Last Update 10/22/2019
+   Last Update 10/23/2019
   { Left room below to document version changes...}
 
+
+
+
+
+   V4.3.7   Force three day forcast icons to be 'daytime' (instead of 'nighttime')            - 10/23/2019
    V4.3.6   Changed 'pressure' to a number from a string, added 'pressured' as a string.      - 10/22/2019
    V4.3.5   Added three day forecast tile                                                     - 10/22/2019
    V4.3.4   added meters per second ('m/s') for wind and hectopascals for pressure,           - 10/14/2019
@@ -130,7 +135,7 @@ The way the 'optional' attributes work:
    available in the dashboard is to delete the virtual device and create a new one AND DO NOT SELECT the
    attribute you do not want to show.
  */
-public static String version()      {  return "4.3.6"  }
+public static String version()      {  return "4.3.7"  }
 import groovy.transform.Field
 
 metadata {
@@ -559,6 +564,7 @@ void doPollDS(Map ds) {
     setMeasurementMetrics(distanceFormat, pressureFormat, rainFormat, tempFormat)
     updateDataValue("currDate", new Date().format("yyyy-MM-dd", TimeZone.getDefault()))
     updateDataValue("currTime", new Date().format("HH:mm", TimeZone.getDefault()))    
+
     if(getDataValue("riseTime") <= getDataValue("currTime") && getDataValue("setTime") >= getDataValue("currTime")) {
         updateDataValue("is_day", "true")
     } else {
@@ -588,26 +594,27 @@ void doPollDS(Map ds) {
     updateDataValue("vis", (dMetric!="MPH" ? ds.currently.visibility.toBigDecimal() * 1.60934 : ds.currently.visibility.toBigDecimal()).toString())
     updateDataValue("percentPrecip", (ds.daily.data[0].precipProbability.toBigDecimal() * 100).toInteger().toString())
 
-    String c_code = getdsIconCode(ds?.currently?.icon, ds?.currently?.summary)
+    String c_code = getdsIconCode(ds?.currently?.icon, ds?.currently?.summary, getDataValue("is_day"))
     updateDataValue("condition_code", c_code)
     updateDataValue("condition_text", getcondText(c_code))    
 
-    String f_code = getdsIconCode(ds?.daily?.data[0]?.icon, ds?.daily?.data[0]?.summary)
+    String f_code = getdsIconCode(ds?.daily?.data[0]?.icon, ds?.daily?.data[0]?.summary, getDataValue("is_day"))
     updateDataValue("forecast_code", f_code)
     updateDataValue("forecast_text", getcondText(f_code))
 
     if(threedayTilePublish) {
-        String f_code1 = getdsIconCode(ds?.daily?.data[1]?.icon, ds?.daily?.data[1]?.summary)
+        updateDataValue("day1", new Date(ds.daily.data[1].time * 1000L).format("EEEE"))
+        updateDataValue("day2", new Date(ds.daily.data[2].time * 1000L).format("EEEE"))
+        updateDataValue("is_day1", "true")
+        updateDataValue("is_day2", "true")
+        String f_code1 = getdsIconCode(ds?.daily?.data[1]?.icon, ds?.daily?.data[1]?.summary, getDataValue("is_day1"))
         updateDataValue("forecast_code1", f_code1)
         updateDataValue("forecast_text1", getcondText(f_code1))
 
-        String f_code2 = getdsIconCode(ds?.daily?.data[2]?.icon, ds?.daily?.data[2]?.summary)
+        String f_code2 = getdsIconCode(ds?.daily?.data[2]?.icon, ds?.daily?.data[2]?.summary, getDataValue("is_day2"))
         updateDataValue("forecast_code2", f_code2)
         updateDataValue("forecast_text2", getcondText(f_code2))
 
-        updateDataValue("day1", new Date(ds.daily.data[1].time * 1000L).format("EEEE"))
-        updateDataValue("day2", new Date(ds.daily.data[2].time * 1000L).format("EEEE"))
-    
         updateDataValue("forecastHigh1", (tMetric=="°F" ? (Math.round(ds.daily.data[1].temperatureHigh.toBigDecimal() * 10) / 10) : (Math.round((ds.daily.data[1].temperatureHigh.toBigDecimal() - 32) / 1.8 * 10) / 10)).toString())
         updateDataValue("forecastHigh2", (tMetric=="°F" ? (Math.round(ds.daily.data[2].temperatureHigh.toBigDecimal() * 10) / 10) : (Math.round((ds.daily.data[2].temperatureHigh.toBigDecimal() - 32) / 1.8 * 10) / 10)).toString())    
 
@@ -622,7 +629,7 @@ void doPollDS(Map ds) {
         updateDataValue("PoP1", (!ds.daily.data[1].precipProbability ? 0 : (ds.daily.data[1].precipProbability.toBigDecimal() * 100).toInteger()).toString())
         updateDataValue("PoP2", (!ds.daily.data[2].precipProbability ? 0 : (ds.daily.data[2].precipProbability.toBigDecimal() * 100).toInteger()).toString())
     }
-
+    
     updateDataValue("forecastHigh", ((tMetric == "°F") ? (Math.round(ds.daily.data[0].temperatureHigh.toBigDecimal() * 10) / 10) : (Math.round((ds.daily.data[0].temperatureHigh.toBigDecimal() - 32) / 1.8 * 10) / 10)).toString())
     updateDataValue("forecastLow", ((tMetric == "°F") ? (Math.round(ds.daily.data[0].temperatureLow.toBigDecimal() * 10) / 10) : (Math.round((ds.daily.data[0].temperatureLow.toBigDecimal() - 32) / 1.8 * 10) / 10)).toString())
     if(precipExtendedPublish){
@@ -853,7 +860,7 @@ void updateLux(boolean pollAgain=true) {
 }
 // >>>>>>>>>> End Lux Processing <<<<<<<<<<
 // <<<<<<<<<< Begin Icon and condition_code, condition_text processing >>>>>>>>>>
-String getdsIconCode(String icon='unknown', String dcs='unknown') {
+String getdsIconCode(String icon='unknown', String dcs='unknown', String isDay='true') {
 	switch(icon) {
 		case 'rain':
 		// rain=[Possible Light Rain, Light Rain, Rain, Heavy Rain, Drizzle, Light Rain and Breezy, Light Rain and Windy, 
@@ -939,7 +946,7 @@ String getdsIconCode(String icon='unknown', String dcs='unknown') {
 		default:
 			icon = 'unknown'
 	}
-    if(getDataValue("is_day")=="false") icon = 'nt_' + icon
+    if(isDay == 'false') icon = 'nt_' + icon
     return icon
 }
 // >>>>>>>>>> End Icon and condition_code, condition_text processing <<<<<<<<<<
@@ -1060,7 +1067,7 @@ void PostPoll() {
     if(threedayTilePublish) {
         String my3day = '<style type=\"text/css\">'
         my3day += '.centerImage'
-        my3day += '{ text-align:center; display:inline; }'
+        my3day += '{text-align:center;display:inline;}'
         my3day += '</style>'
         my3day += '<table align=\"center\" style=\"width:100%\">'
         my3day += '<tr>'
@@ -1076,44 +1083,44 @@ void PostPoll() {
 	    my3day += '<td>' + getDataValue('imgName2') + '</td>'
         my3day += '</tr>'
         my3day += '<tr>'
-        my3day += '<td style=\"text-align:right;\">Now:</td>'
+        my3day += '<td style=\"text-align:right\">Now:</td>'
         my3day += '<td>' + getDataValue('temperature') + tMetric + '</td>'
         my3day += '<td>' + getDataValue('forecast_text1') + '</td>'
 	    my3day += '<td>' + getDataValue('forecast_text2') + '</td>'
         my3day += '</tr>'
         my3day += '<tr>'
-        my3day += '<td style=\"text-align:right;\">Low:</td>'
+        my3day += '<td style=\"text-align:right\">Low:</td>'
         my3day += '<td>' + getDataValue('forecastLow') + tMetric + '</td>'
         my3day += '<td>' + getDataValue('forecastLow1') + tMetric + '</td>'
         my3day += '<td>' + getDataValue('forecastLow2') + tMetric + '</td>'
         my3day += '</tr>'
         my3day += '<tr>'
-        my3day += '<td style=\"text-align:right;\">High:</td>'
+        my3day += '<td style=\"text-align:right\">High:</td>'
         my3day += '<td>' + getDataValue('forecastHigh') + tMetric + '</td>'
         my3day += '<td>' + getDataValue('forecastHigh1') + tMetric + '</td>'
         my3day += '<td>' + getDataValue('forecastHigh2') + tMetric + '</td>'
         my3day += '</tr>'
         my3day += '<tr>'
-        my3day += '<td style=\"text-align:right;\">PoP:</td>'
+        my3day += '<td style=\"text-align:right\">PoP:</td>'
         my3day += '<td>' + getDataValue('PoP') + '%</td>'
         my3day += '<td>' + getDataValue('PoP1') + '%</td>'
         my3day += '<td>' + getDataValue('PoP2') + '%</td>'
         my3day += '</tr>'
         my3day += '</table>'
-        if((my3day.length() + dsIcon.length() + 10) < 1025) {
-            my3day += dsIcon + '</span>'
+        if(my3day.length() + 19 > 1024) {
+            my3day = "Too much data to display.</br></br>Exceeds maximum tile length by " + 1024 - my3day.length() - 19 + " characters."
+        }else if((my3day.length() + dsIcon.length() + 10) < 1025) {
+            my3day += dsIcon
+        }else if((my3day.length() + dsText.length() + 10) < 1025) {
+            my3day += dsText
         }else{
-            if((my3day.length() + dsText.length() + 10) < 1025) {
-                my3day += dsText + '</span>'
-            }else{
-                my3day += 'Powered by Dark Sky</span>'
-            }
+            my3day += 'Powered by Dark Sky'
         }
         sendEvent(name: "threedayfcstTile", value: my3day.take(1024))
     }
 //  >>>>>>>>>> End Built 3dayfcstTile <<<<<<<<<<
 
-//  <<<<<<<<<< Begin Built mytext >>>>>>>>>> 
+    //  <<<<<<<<<< Begin Built mytext >>>>>>>>>> 
     if(myTilePublish){ // don't bother setting these values if it's not enabled
         boolean gitclose = (getDataValue("iconLocation").toLowerCase().contains('://github.com/')) && (getDataValue("iconLocation").toLowerCase().contains('/blob/master/'))
         String iconClose = (gitclose ? "?raw=true" : "")
