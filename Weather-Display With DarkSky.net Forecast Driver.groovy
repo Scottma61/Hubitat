@@ -55,12 +55,12 @@ The driver exposes both metric and imperial measurements for you to select from.
    on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
    for the specific language governing permissions and limitations under the License.
  
-   Last Update 11/11/2019
+   Last Update 12/15/2019
   { Left room below to document version changes...}
 
 
 
-
+   V4.3.9   Fixed pressured definition to avoid excess events                                 - 12/15/2019
    V4.3.8   Exposed 'feelsLike' so it gets updated                                            - 11/11/2019
    V4.3.7   Force three day forcast icons to be 'daytime' (instead of 'nighttime')            - 10/23/2019
    V4.3.6   Changed 'pressure' to a number from a string, added 'pressured' as a string.      - 10/22/2019
@@ -161,6 +161,7 @@ metadata {
         attribute "localSunrise", "string"      //SharpTool.io  SmartTiles
         attribute "localSunset", "string"       //SharpTool.io  SmartTiles
         attribute "percentPrecip", "number"     //SharpTool.io  SmartTiles
+        attribute "pressured", "string"         //UNSURE SharpTool.io  SmartTiles
         attribute "weather", "string"           //SharpTool.io  SmartTiles
         attribute "weatherIcon", "string"       //SharpTool.io  SmartTiles
         attribute "weatherIcons", "string"      //Hubitat  openWeather
