@@ -840,6 +840,7 @@ void doPollDS(Map ds) {
 
 // >>>>>>>>>> Begin Lux Processing <<<<<<<<<<    
 void updateLux(boolean pollAgain=true) {
+	if(!pollAgain) { pollAgain = false }
 	LOGINFO("UpdateLux $pollAgain")
 	if(pollAgain) {
 		String curTime = new Date().format("HH:mm", TimeZone.getDefault())
