@@ -55,10 +55,10 @@ The driver exposes both metric and imperial measurements for you to select from.
    on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
    for the specific language governing permissions and limitations under the License.
  
-   Last Update 02/23/2020
+   Last Update 02/24/2020
   { Left room below to document version changes...}
 
-
+   V4.4.1   Corrected bug from 1.3.0 that made some attrubutes strings instead of numbers     - 02/24/2020
    V4.4.0   Added ability to select displayed decimals                                        - 02/23/2020
    V4.3.9   Fixed pressured definition to avoid excess events                                 - 12/15/2019
    V4.3.8   Exposed 'feelsLike' so it gets updated                                            - 11/11/2019
@@ -135,7 +135,7 @@ The way the 'optional' attributes work:
    available in the dashboard is to delete the virtual device and create a new one AND DO NOT SELECT the
    attribute you do not want to show.
  */
-public static String version()      {  return "4.4.0"  }
+public static String version()      {  return "4.4.1"  }
 import groovy.transform.Field
 
 metadata {
@@ -980,9 +980,9 @@ void PostPoll() {
     sendEvent(name: "illuminance", value: getDataValue("illuminance").toInteger(), unit: 'lx')
     sendEvent(name: "pressure", value: getDataValue("pressure").toBigDecimal(), unit: pMetric)
 	sendEvent(name: "pressured", value: String.format(ddisp_p, getDataValue("pressure").toBigDecimal()), unit: pMetric)
-	sendEvent(name: "temperature", value: String.format(ddisp_twd, getDataValue("temperature").toBigDecimal()), unit: tMetric)
+	sendEvent(name: "temperature", value: getDataValue("temperature").toBigDecimal(), unit: tMetric)
     sendEvent(name: "ultravioletIndex", value: getDataValue("ultravioletIndex").toBigDecimal(), unit: 'uvi')
-    sendEvent(name: "feelsLike", value: String.format(ddisp_twd, getDataValue("feelsLike").toBigDecimal()), unit: tMetric)
+    sendEvent(name: "feelsLike", value: getDataValue("feelsLike").toBigDecimal(), unit: tMetric)
     
 /*  'Required for Dashboards' Data Elements */    
     if(dashHubitatOWMPublish || dashSharpToolsPublish || dashSmartTilesPublish) { sendEvent(name: "city", value: getDataValue("city")) }
@@ -991,8 +991,8 @@ void PostPoll() {
     if(dashSharpToolsPublish || dashSmartTilesPublish) { sendEvent(name: "weather", value: getDataValue("condition_text")) }
     if(dashSharpToolsPublish || dashSmartTilesPublish) { sendEvent(name: "weatherIcon", value: getstdImgName(getDataValue("condition_code"))) }
     if(dashHubitatOWMPublish) { sendEvent(name: "weatherIcons", value: getowmImgName(getDataValue("condition_code"))) }
-    if(dashSharpToolsPublish || windPublish) { sendEvent(name: "wind", value: String.format(ddisp_twd, getDataValue("wind").toBigDecimal), unit: dMetric) }
-    if(dashHubitatOWMPublish) { sendEvent(name: "windSpeed", value: String.format(ddisp_twd, getDataValue("wind").toBigDecimal()), unit: dMetric) }
+    if(dashSharpToolsPublish || windPublish) { sendEvent(name: "wind", value: getDataValue("wind").toBigDecimal, unit: dMetric) }
+    if(dashHubitatOWMPublish) { sendEvent(name: "windSpeed", value: getDataValue("wind").toBigDecimal(), unit: dMetric) }
     if(dashHubitatOWMPublish) { sendEvent(name: "windDirection", value: getDataValue("wind_degree").toInteger(), unit: "DEGREE")   }
         
 /*  Selected optional Data Elements */   
@@ -1010,8 +1010,8 @@ void PostPoll() {
     sendEventPublish(name: "forecast_code", value: getDataValue("forecast_code"))
     sendEventPublish(name: "forecast_text", value: getDataValue("forecast_text"))
     if(fcstHighLowPublish && extSource.toInteger() == 2){ // don't bother setting these values if it's not enabled
-        sendEvent(name: "forecastHigh", value: String.format(ddisp_twd, getDataValue("forecastHigh").toBigDecimal()), unit: tMetric)
-    	sendEvent(name: "forecastLow", value: String.format(ddisp_twd, getDataValue("forecastLow").toBigDecimal()), unit: tMetric)
+        sendEvent(name: "forecastHigh", value: getDataValue("forecastHigh").toBigDecimal(), unit: tMetric)
+    	sendEvent(name: "forecastLow", value: getDataValue("forecastLow").toBigDecimal(), unit: tMetric)
     }
     sendEventPublish(name: "illuminated", value: getDataValue("illuminated") + ' lx')
     sendEventPublish(name: "is_day", value: getDataValue("is_day"))
@@ -1044,7 +1044,7 @@ void PostPoll() {
         sendEvent(name: "nearestStormBearing", value: getDataValue("nearestStormBearing"), unit: "DEGREE")
         sendEvent(name: "nearestStormCardinal", value: getDataValue("nearestStormCardinal"))    
         sendEvent(name: "nearestStormDirection", value: getDataValue("nearestStormDirection"))    	
-        sendEvent(name: "nearestStormDistance", value: String.format("%,5.0f", getDataValue("nearestStormDistance").toBigDecimal()), unit: (dMetric=="MPH" ? "miles" : "kilometers"))	
+        sendEvent(name: "nearestStormDistance", value: getDataValue("nearestStormDistance").toBigDecimal(), unit: (dMetric=="MPH" ? "miles" : "kilometers"))	
     }
 //  <<<<<<<<<< Begin Built Weather Summary text >>>>>>>>>> 
     Summary_last_poll_time = (getDataValue("sutime") > getDataValue("futime") ? new Date().parse("EEE MMM dd HH:mm:ss z yyyy", getDataValue("sutime")).format(timeFormat, TimeZone.getDefault()) : new Date().parse("EEE MMM dd HH:mm:ss z yyyy", getDataValue("futime")).format(timeFormat, TimeZone.getDefault()))
