@@ -991,10 +991,10 @@ void PostPoll() {
     if(dashSharpToolsPublish || dashSmartTilesPublish) { sendEvent(name: "weather", value: getDataValue("condition_text")) }
     if(dashSharpToolsPublish || dashSmartTilesPublish) { sendEvent(name: "weatherIcon", value: getstdImgName(getDataValue("condition_code"))) }
     if(dashHubitatOWMPublish) { sendEvent(name: "weatherIcons", value: getowmImgName(getDataValue("condition_code"))) }
-    if(dashSharpToolsPublish || windPublish) { sendEvent(name: "wind", value: getDataValue("wind").toBigDecimal, unit: dMetric) }
+    if(dashHubitatOWMPublish || dashSharpToolsPublish || windPublish) { sendEvent(name: "wind", value: getDataValue("wind").toBigDecimal(), unit: dMetric) }
     if(dashHubitatOWMPublish) { sendEvent(name: "windSpeed", value: getDataValue("wind").toBigDecimal(), unit: dMetric) }
     if(dashHubitatOWMPublish) { sendEvent(name: "windDirection", value: getDataValue("wind_degree").toInteger(), unit: "DEGREE")   }
-        
+	
 /*  Selected optional Data Elements */   
     sendEventPublish(name: "alert", value: getDataValue("alert"))
     sendEventPublish(name: "betwixt", value: getDataValue("bwn"))
