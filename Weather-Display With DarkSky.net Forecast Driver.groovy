@@ -57,7 +57,7 @@ The driver exposes both metric and imperial measurements for you to select from.
  
    Last Update 02/24/2020
   { Left room below to document version changes...}
-
+   V4.4.2   Further bug squashing                                                             - 02/24/2020 8:20 PM EDT
    V4.4.1   Corrected bug from 1.3.0 that made some attrubutes strings instead of numbers     - 02/24/2020
    V4.4.0   Added ability to select displayed decimals                                        - 02/23/2020
    V4.3.9   Fixed pressured definition to avoid excess events                                 - 12/15/2019
@@ -135,7 +135,7 @@ The way the 'optional' attributes work:
    available in the dashboard is to delete the virtual device and create a new one AND DO NOT SELECT the
    attribute you do not want to show.
  */
-public static String version()      {  return "4.4.1"  }
+public static String version()      {  return "4.4.2"  }
 import groovy.transform.Field
 
 metadata {
@@ -840,7 +840,6 @@ void doPollDS(Map ds) {
 
 // >>>>>>>>>> Begin Lux Processing <<<<<<<<<<    
 void updateLux(boolean pollAgain=true) {
-	if(!pollAgain) { pollAgain = false }
 	LOGINFO("UpdateLux $pollAgain")
 	if(pollAgain) {
 		String curTime = new Date().format("HH:mm", TimeZone.getDefault())
@@ -1258,7 +1257,7 @@ void updated()   {
 	unschedule()
 	updateCheck()
 	initialize()
-	runEvery5Minutes(updateLux)
+	runEvery5Minutes(updateLux, [Data: [false]])
 	Random rand = new Random(now())
 	int ssseconds = rand.nextInt(60)
 	schedule("${ssseconds} 20 0/8 ? * * *", pollSunRiseSet)
