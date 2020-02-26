@@ -55,8 +55,13 @@ The driver exposes both metric and imperial measurements for you to select from.
    on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
    for the specific language governing permissions and limitations under the License.
  
-   Last Update 02/24/2020
+   Last Update 02/26/2020
   { Left room below to document version changes...}
+
+
+
+   V4.4.3   Updated (reduced) logging and the behavior of 'refresh' (use 'pollData' instead   - 02/26/2020
+                  to force a polling of data.
    V4.4.2   Further bug squashing                                                             - 02/24/2020 8:20 PM EDT
    V4.4.1   Corrected bug from 1.3.0 that made some attrubutes strings instead of numbers     - 02/24/2020
    V4.4.0   Added ability to select displayed decimals                                        - 02/23/2020
@@ -135,7 +140,7 @@ The way the 'optional' attributes work:
    available in the dashboard is to delete the virtual device and create a new one AND DO NOT SELECT the
    attribute you do not want to show.
  */
-public static String version()      {  return "4.4.2"  }
+public static String version()      {  return "4.4.3"  }
 import groovy.transform.Field
 
 metadata {
@@ -214,7 +219,7 @@ metadata {
             input "pollLocationStation", "text", required: true, title: "Station Data File Location:", defaultValue: "http://"
 			input "pollIntervalForecast", "enum", title: "External Source Poll Interval (daylight)", required: true, defaultValue: "3 Hours", options: ["Manual Poll Only", "2 Minutes", "5 Minutes", "10 Minutes", "15 Minutes", "30 Minutes", "1 Hour", "3 Hours"]
             input "pollIntervalForecastnight", "enum", title: "External Source Poll Interval (nighttime)", required: true, defaultValue: "3 Hours", options: ["Manual Poll Only", "2 Minutes", "5 Minutes", "10 Minutes", "15 Minutes", "30 Minutes", "1 Hour", "3 Hours"]
-            input "logSet", "bool", title: "Create extended Logging", required: true, defaultValue: false
+            input "logSet", "bool", title: "Enable extended Logging", description: "<i>Extended logging will turn off automatically after 30 minutes.</i>", required: true, defaultValue: false
 	    	input "tempFormat", "enum", required: true, defaultValue: "Fahrenheit (°F)", title: "Display Unit - Temperature: Fahrenheit (°F) or Celsius (°C)",  options: ["Fahrenheit (°F)", "Celsius (°C)"]
             input "TWDDecimals", "enum", required: true, defaultValue: "0", title: "Display decimals for Temp, Wind & Distance", options: [0:"0", 1:"1", 2:"2", 3:"3", 4:"4"]
             input "PDecimals", "enum", required: true, defaultValue: "0", title: "Display decimals for Pressure", options: [0:"0", 1:"1", 2:"2", 3:"3", 4:"4"]
@@ -251,7 +256,7 @@ metadata {
 // <<<<<<<<<< Begin Sunrise-Sunset Poll Routines >>>>>>>>>>
 void pollSunRiseSet() {
     currDate = new Date().format("yyyy-MM-dd", TimeZone.getDefault())
-    log.info("Weather-Display Driver - INFO: Polling Sunrise-Sunset.org")
+    LOGINFO("Weather-Display Driver - INFO: Polling Sunrise-Sunset.org")
     def requestParams = [ uri: "https://api.sunrise-sunset.org/json?lat=" + location.latitude + "&lng=" + location.longitude + "&formatted=0" ]
     if (currDate) {requestParams = [ uri: "https://api.sunrise-sunset.org/json?lat=" + location.latitude + "&lng=" + location.longitude + "&formatted=0&date=$currDate" ]}
     LOGINFO("Poll Sunrise-Sunset: $requestParams")
@@ -273,7 +278,7 @@ void sunRiseSetHandler(resp, data) {
 		updateDataValue("localSunset",new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", sunRiseSet.sunset).format(timeFormat, TimeZone.getDefault()))
 		updateDataValue("localSunrise", new Date().parse("yyyy-MM-dd'T'HH:mm:ssXXX", sunRiseSet.sunrise).format(timeFormat, TimeZone.getDefault()))
     } else {
-		log.warn "Sunrise-Sunset API did not return data"
+		log.warn "Weather-Display Driver - WARNING: Sunrise-Sunset API did not return data"
 	}
     return
 }
@@ -281,7 +286,7 @@ void sunRiseSetHandler(resp, data) {
 
 // <<<<<<<<<< Begin Weather-Display Poll Routines >>>>>>>>>>
 void pollWD() {
-    log.info("Weather-Display Driver - INFO: Polling Weather-Display")    
+    LOGINFO("Weather-Display Driver - INFO: Polling Weather-Display")    
 	def ParamsWD = [ uri: "${pollLocationStation}everything.php" ]
     LOGINFO("Poll Weather-Display: $ParamsWD")
 	asynchttpGet("pollWDHandler", ParamsWD)
@@ -293,7 +298,7 @@ void pollWDHandler(resp, data) {
         def wd = parseJson(resp.data)
 		doPollWD(wd)		// parse the data returned by Weather-Display
 	} else {
-		log.error "Weather-Display API did not return data"
+		log.warn "Weather-Display Driver - WARNING: Weather-Display API did not return data"
 	}
     return
 }
@@ -544,7 +549,7 @@ void doPollWD(Map wd) {
 // <<<<<<<<<< Begin DarkSky Poll Routines >>>>>>>>>>
 void pollDS() {
     if( apiKey == null ) {
-        log.error "DarkSky API Key not found.  Please configure in preferences."
+        log.warn "Weather-Display Driver - WARNING: DarkSky API Key not found.  Please configure in preferences."
         return
     }    
 	def ParamsDS = [ uri: "https://api.darksky.net/forecast/${apiKey}/" + location.latitude + ',' + location.longitude + "?units=us&exclude=minutely,hourly,flags" ]
@@ -554,12 +559,12 @@ void pollDS() {
 }
 
 void pollDSHandler(resp, data) {
-    log.info "Weather-Display Driver - INFO: Polling DarkSky.net"
+    LOGINFO("Weather-Display Driver - INFO: Polling DarkSky.net")
 	if(resp.getStatus() == 200 || resp.getStatus() == 207) {
         def ds = parseJson(resp.data)
 		doPollDS(ds)		// parse the data returned by DarkSky
 	} else {
-		log.error "Weather-Display Driver - ERROR:DarkSky.net API did not return data"
+		log.warn "Weather-Display Driver - WARNING: DarkSky.net API did not return data"
 	}
 }
 
@@ -994,7 +999,7 @@ void PostPoll() {
     if(dashHubitatOWMPublish || dashSharpToolsPublish || windPublish) { sendEvent(name: "wind", value: getDataValue("wind").toBigDecimal(), unit: dMetric) }
     if(dashHubitatOWMPublish) { sendEvent(name: "windSpeed", value: getDataValue("wind").toBigDecimal(), unit: dMetric) }
     if(dashHubitatOWMPublish) { sendEvent(name: "windDirection", value: getDataValue("wind_degree").toInteger(), unit: "DEGREE")   }
-	
+        
 /*  Selected optional Data Elements */   
     sendEventPublish(name: "alert", value: getDataValue("alert"))
     sendEventPublish(name: "betwixt", value: getDataValue("bwn"))
@@ -1249,15 +1254,17 @@ void PostPoll() {
 // >>>>>>>>>> End Post-Poll Routines <<<<<<<<<<
 
 public void refresh() {
-    pollWD()
-	pollDS()
+    updateLux(true)
+//    pollWD()
+//	pollDS()
+    return
 }
 
 void updated()   {
 	unschedule()
 	updateCheck()
 	initialize()
-	runEvery5Minutes(updateLux, [Data: [false]])
+	runEvery5Minutes(updateLux, [Data: [true]])
 	Random rand = new Random(now())
 	int ssseconds = rand.nextInt(60)
 	schedule("${ssseconds} 20 0/8 ? * * *", pollSunRiseSet)
@@ -1269,8 +1276,8 @@ void updated()   {
 	schedule("0 ${r_minutes} 8 ? * FRI *", updateCheck)
 }
 void initialize() {
-    unschedule("pollWD")
-    unschedule("pollDS")
+    unschedule(pollWD)
+    unschedule(pollDS)
     boolean logSet = (settings?.logSet ?: false)
 	int extSource = (settings?.extSource.toInteger() ?: 2).toInteger()
     String pollIntervalStation = (settings?.pollIntervalStation ?: "3 Hours")
@@ -1338,6 +1345,7 @@ void initialize() {
         LOGINFO("MANUAL STATION POLLING ONLY")
     } else {
         pollIntervalStation = (settings?.pollIntervalStation ?: "3 Hours").replace(" ", "")
+        LOGINFO("pollIntervalStation: $pollIntervalStation")
         if(pollIntervalStation=='1Minute'){
             schedule("${wdseconds} * * * * ? *", pollWD)
         }else if(pollIntervalStation=='2Minutes'){
@@ -1362,6 +1370,7 @@ void initialize() {
 		} else {
 			pollIntervalForecast = (settings?.pollIntervalForecast ?: "3 Hours").replace(" ", "")
 			if (extSource.toInteger() == 2) {
+                LOGINFO("pollIntervalForecast: $pollIntervalForecast")
 				if(pollIntervalForecast=='2Minutes'){
 					schedule("${dsseconds} ${minutes2}/2 * * * ? *", pollDS)
 				}else if(pollIntervalForecast=='5Minutes'){
@@ -1385,6 +1394,7 @@ void initialize() {
 		} else {
 			pollIntervalForecastnight = (settings?.pollIntervalForecastnight ?: "3 Hours").replace(" ", "")
 			if (extSource.toInteger() == 2) {
+                LOGINFO("pollIntervalForecastnight: $pollIntervalForecastnight")
 				if(pollIntervalForecastnight=='2Minutes'){
 					schedule("${dsseconds} ${minutes2}/2 * * * ? *", pollDS)
 				}else if(pollIntervalForecastnight=='5Minutes'){
@@ -1608,7 +1618,7 @@ def estimateLux(String condition_code, int cloud)     {
         }
     }
     lux = Math.max(lux, 5)
-	LOGDEBUG("condition: $cC | condition factor: $cCF | condition text: $cCT| lux: $lux")
+	LOGINFO("condition: $cC | condition factor: $cCF | condition text: $cCT| lux: $lux")
 	return [lux, bwn]
 }
 
@@ -1693,12 +1703,12 @@ void LOGINFO(txt){
 }
 
 void logsOff(){
-	log.warn "${device?.displayName} debug logging disabled..."
+	log.info "Weather-Display Driver - INFO: extended logging disabled..."
 	device.updateSetting("logSet",[value:"false",type:"bool"])
 }
 
 void settingsOff(){
-	log.warn "Settings disabled..."
+	log.info "Weather-Display Driver - INFO: Settings disabled..."
 	device.updateSetting("settingEnable",[value:"false",type:"bool"])
 }
 
@@ -1706,7 +1716,7 @@ void sendEventPublish(evt)	{
 // 	Purpose: Attribute sent to DB if selected	
     if (settings."${evt.name + "Publish"}") {
 		sendEvent(name: evt.name, value: evt.value, descriptionText: evt.descriptionText, unit: evt.unit, displayed: evt.displayed);
-		LOGDEBUG("$evt.name") //: $evt.name, $evt.value $evt.unit"
+		LOGINFO("$evt.name") //: $evt.name, $evt.value $evt.unit"
     }
 }
 
