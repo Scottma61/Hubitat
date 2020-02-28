@@ -526,15 +526,15 @@ void doPollDS(Map ds) {
         updateDataValue("alertLink3", '<a style="font-style:italic;color:red;">'+ds.alerts.title.toString().replaceAll("[{}\\[\\]]", "").split(/,/)[0]+'</a>')
         updateDataValue("alert", ds.alerts.title.toString().replaceAll("[{}\\[\\]]", "").split(/,/)[0])
         updateDataValue("possAlert", "true")
-/* code to test weather alerts
+/* code to test weather alerts 
         updateDataValue("alertTileLink", '<a style="font-style:italic;color:red;" href="'+"https://alerts.weather.gov/cap/wwacapget.php?x=NJ125F3B5DE240.WindAdvisory.125F3B5E5130NJ.PHINPWPHI.4c81e473f52888dec2cb0723d0145f0b"+'">'+"Wind Advisory"+'</a>')
         updateDataValue("alertLink", '<a style="font-style:italic;color:red;" href="'+"https://alerts.weather.gov/cap/wwacapget.php?x=NJ125F3B5DE240.WindAdvisory.125F3B5E5130NJ.PHINPWPHI.4c81e473f52888dec2cb0723d0145f0b"+'">'+"Wind Advisory"+'</a>')
         updateDataValue("alertLink2", '<a style="font-style:italic;color:red;" href="https://darksky.net/forecast/' + String.format("%3.4f",location.latitude) + "," + String.format("%3.4f",location.longitude) + '12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890">'+'Wind Advisory'+'</a>')
         updateDataValue("alertLink3", '<a style="font-style:italic;color:red;">'+'Wind Advisory'+'</a>')
         updateDataValue("alert", "Wind Advisory")
         updateDataValue("possAlert", "true")
-
-*/    }
+*/
+    }
 
     if(threedayTilePublish) {
         updateDataValue("day1", new Date(ds.daily.data[1].time * 1000L).format("EEEE"))
@@ -556,9 +556,9 @@ void doPollDS(Map ds) {
         updateDataValue("forecastLow1", (tMetric=="°F" ? (Math.round(ds.daily.data[1].temperatureMin.toBigDecimal() * getDataValue("mult_twd").toInteger()) / getDataValue("mult_twd").toInteger()) : (Math.round((ds.daily.data[1].temperatureMin.toBigDecimal() - 32) / 1.8 * getDataValue("mult_twd").toInteger()) / getDataValue("mult_twd").toInteger())).toString())
         updateDataValue("forecastLow2", (tMetric=="°F" ? (Math.round(ds.daily.data[2].temperatureMin.toBigDecimal() * getDataValue("mult_twd").toInteger()) / getDataValue("mult_twd").toInteger()) : (Math.round((ds.daily.data[2].temperatureMin.toBigDecimal() - 32) / 1.8 * getDataValue("mult_twd").toInteger()) / getDataValue("mult_twd").toInteger())).toString())
         
-        updateDataValue("imgName0", '<img class=\"centerImage\" style=\"height:50%;\" src=' + getImgName(getDataValue('forecast_code')) + '>')
-        updateDataValue("imgName1", '<img class=\"centerImage\" style=\"height:50%;\" src=' + getImgName(getDataValue('forecast_code1')) + '>')
-        updateDataValue("imgName2", '<img class=\"centerImage\" style=\"height:50%;\" src=' + getImgName(getDataValue('forecast_code2')) + '>')
+        updateDataValue("imgName0", '<img class=\"centerImage\" src=' + getImgName(getDataValue('forecast_code')) + '>')
+        updateDataValue("imgName1", '<img class=\"centerImage\" src=' + getImgName(getDataValue('forecast_code1')) + '>') // style=\"height:50%;\"
+        updateDataValue("imgName2", '<img class=\"centerImage\" src=' + getImgName(getDataValue('forecast_code2')) + '>')
         
         updateDataValue("PoP", (!ds.daily.data[0].precipProbability ? 0 : (ds.daily.data[0].precipProbability.toBigDecimal() * 100).toInteger()).toString())
         updateDataValue("PoP1", (!ds.daily.data[1].precipProbability ? 0 : (ds.daily.data[1].precipProbability.toBigDecimal() * 100).toInteger()).toString())
@@ -813,7 +813,7 @@ void PostPoll() {
     if(threedayTilePublish) {
         String my3day = '<style type=\"text/css\">'
         my3day += '.centerImage'
-        my3day += '{text-align:center;display:inline;}'
+        my3day += '{text-align:center;display:inline;height:50%;}'
         my3day += '</style>'
         my3day += '<table align=\"center\" style=\"width:100%\">'
         my3day += '<tr>'
@@ -853,6 +853,7 @@ void PostPoll() {
         my3day += '<td>' + getDataValue('PoP2') + '%</td>'
         my3day += '</tr>'
         my3day += '</table>'
+        log.debug "my3day length: " + my3day.length() + "  dsIcon length: " + dsIcon.length()
         if(my3day.length() + 19 > 1024) {
             my3day = "Too much data to display.</br></br>Exceeds maximum tile length by " + (my3day.length() + 19 - 1024).toString() + " characters."
         }else if((my3day.length() + dsIcon.length() + 10) < 1025) {
