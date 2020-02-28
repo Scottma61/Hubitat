@@ -55,10 +55,10 @@ The driver exposes both metric and imperial measurements for you to select from.
    on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
    for the specific language governing permissions and limitations under the License.
  
-   Last Update 02/27/2020
+   Last Update 02/28/2020
   { Left room below to document version changes...}
 
-
+   V4.4.5   Enhancements to myTile and threedayfcstTile, NEW alertTile                        - 02/28/2020
    V4.4.4   Changed forecasts to use temperatureMax/Min instead of temperatureHigh/Low        - 02/27/2020
                   from the Dark Sky API to match their website presentation.
    V4.4.3   Updated (reduced) logging and the behavior of 'refresh' (use 'pollData' instead   - 02/26/2020
@@ -141,7 +141,7 @@ The way the 'optional' attributes work:
    available in the dashboard is to delete the virtual device and create a new one AND DO NOT SELECT the
    attribute you do not want to show.
  */
-public static String version()      {  return "4.4.4"  }
+public static String version()      {  return "4.4.5"  }
 import groovy.transform.Field
 
 metadata {
@@ -176,6 +176,10 @@ metadata {
         attribute "windSpeed", "number"         //Hubitat  OpenWeather
 
         //      The attributes below are sub-groups of optional attributes.  They need to be listed here to be available
+//alert
+        attribute "alert", "string"
+        attribute "alertTile", "string"
+        
 //threedayTile
         attribute "threedayfcstTile", "string"
 
@@ -596,13 +600,6 @@ void doPollDS(Map ds) {
         cloudCover = (ds.currently.cloudCover.toBigDecimal() <= 0.01) ? 1 : ds.currently.cloudCover.toBigDecimal() * 100
     }
     updateDataValue("cloud", cloudCover.toString())
-    if (!ds.alerts){
-        updateDataValue("alert", "No current weather alerts for this area")
-        updateDataValue("possAlert", "false")
-    } else {
-        updateDataValue("alert", ds.alerts.title.toString().replaceAll("[{}\\[\\]]", "").split(/,/)[0])
-        updateDataValue("possAlert", "true")
-    }
     updateDataValue("vis", (dMetric!="MPH" ? ds.currently.visibility.toBigDecimal() * 1.60934 : ds.currently.visibility.toBigDecimal()).toString())
     updateDataValue("percentPrecip", (ds.daily.data[0].precipProbability.toBigDecimal() * 100).toInteger().toString())
 
@@ -614,6 +611,30 @@ void doPollDS(Map ds) {
     updateDataValue("forecast_code", f_code)
     updateDataValue("forecast_text", getcondText(f_code))
 
+    if (!ds.alerts){
+        updateDataValue("alert", 'No current weather alerts for this area')
+        updateDataValue("alertTileLink", '<a style="color:green;" href="https://darksky.net/forecast/' + String.format("%3.4f",location.latitude) + "," + String.format("%3.4f",location.longitude) + '">No current weather alerts for this area.</a>')
+        updateDataValue("alertLink", '<a>' + getDataValue("condition_text") + '</a>')        
+        updateDataValue("alertLink2", '<a>' + getDataValue("condition_text") + '</a>')
+        updateDataValue("alertLink3", '<a>' + getDataValue("condition_text") + '</a>')
+        updateDataValue("possAlert", "false")
+    } else {  
+        updateDataValue("alertTileLink", '<a style="font-style:italic;color:red;" href="'+ds.alerts[0].uri+'">'+ds.alerts.title.toString().replaceAll("[{}\\[\\]]", "").split(/,/)[0]+'</a>')
+        updateDataValue("alertLink", '<a style="font-style:italic;color:red;" href="'+ds.alerts[0].uri+'">'+ds.alerts.title.toString().replaceAll("[{}\\[\\]]", "").split(/,/)[0]+'</a>')        
+        updateDataValue("alertLink2", '<a style="font-style:italic;color:red;" href="https://darksky.net/forecast/' + String.format("%3.4f",location.latitude) + "," + String.format("%3.4f",location.longitude) + '">'+ds.alerts.title.toString().replaceAll("[{}\\[\\]]", "").split(/,/)[0]+'</a>')
+        updateDataValue("alertLink3", '<a style="font-style:italic;color:red;">'+ds.alerts.title.toString().replaceAll("[{}\\[\\]]", "").split(/,/)[0]+'</a>')
+        updateDataValue("alert", ds.alerts.title.toString().replaceAll("[{}\\[\\]]", "").split(/,/)[0])
+        updateDataValue("possAlert", "true")
+/* code to test weather alerts
+        updateDataValue("alertTileLink", '<a style="font-style:italic;color:red;" href="'+"https://alerts.weather.gov/cap/wwacapget.php?x=NJ125F3B5DE240.WindAdvisory.125F3B5E5130NJ.PHINPWPHI.4c81e473f52888dec2cb0723d0145f0b"+'">'+"Wind Advisory"+'</a>')
+        updateDataValue("alertLink", '<a style="font-style:italic;color:red;" href="'+"https://alerts.weather.gov/cap/wwacapget.php?x=NJ125F3B5DE240.WindAdvisory.125F3B5E5130NJ.PHINPWPHI.4c81e473f52888dec2cb0723d0145f0b"+'">'+"Wind Advisory"+'</a>')
+        updateDataValue("alertLink2", '<a style="font-style:italic;color:red;" href="https://darksky.net/forecast/' + String.format("%3.4f",location.latitude) + "," + String.format("%3.4f",location.longitude) + '12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890">'+'Wind Advisory'+'</a>')
+        updateDataValue("alertLink3", '<a style="font-style:italic;color:red;">'+'Wind Advisory'+'</a>')
+        updateDataValue("alert", "Wind Advisory")
+        updateDataValue("possAlert", "true")
+
+*/    }
+    
     if(threedayTilePublish) {
         updateDataValue("day1", new Date(ds.daily.data[1].time * 1000L).format("EEEE"))
         updateDataValue("day2", new Date(ds.daily.data[2].time * 1000L).format("EEEE"))
@@ -1085,7 +1106,7 @@ void PostPoll() {
         my3day += '<table align=\"center\" style=\"width:100%\">'
         my3day += '<tr>'
         my3day += '<td></td>'
-        my3day += '<td>Today</td>'
+        my3day += '<td><a href="https://darksky.net/forecast/' + String.format("%3.4f",location.latitude) + "," + String.format("%3.4f",location.longitude) + '">Today</a></td>'
 	    my3day += '<td>' + getDataValue('day1') + '</td>'
 	    my3day += '<td>' + getDataValue('day2') + '</td>'
         my3day += '</tr>'
@@ -1133,14 +1154,25 @@ void PostPoll() {
     }
 //  >>>>>>>>>> End Built 3dayfcstTile <<<<<<<<<<
 
+//  <<<<<<<<<< Begin Built alertTile >>>>>>>>>> 
+    if(alertPublish){ // don't bother setting these values if it's not enabled
+        String alertTile = "Weather Alerts for " + '<a href="https://darksky.net/forecast/' + String.format("%3.4f",location.latitude) + "," + String.format("%3.4f",location.longitude) + '">' + getDataValue("city") + ", " + getDataValue("state") +"</a><br>updated at ${Summary_last_poll_time} on ${Summary_last_poll_date}.<br><br>"
+        alertTile+= getDataValue("alertTileLink") + '<br><br>'
+        alertTile+= '<a href=\"https://darksky.net/poweredby/\"><img src=' + getDataValue("iconLocation") + (dsIconbackgrounddark ? 'dsD.png' : 'dsL.png') + ' style=\"height:1.5em;display:inline;\"></a>'       
+        updateDataValue("alertTile", alertTile)
+        sendEvent(name: "alert", value: getDataValue("alert"))
+        sendEvent(name: "alertTile", value: getDataValue("alertTile"))
+    }    
+//  >>>>>>>>>> End Built alertTile <<<<<<<<<<
+
     //  <<<<<<<<<< Begin Built mytext >>>>>>>>>> 
     if(myTilePublish){ // don't bother setting these values if it's not enabled
         boolean gitclose = (getDataValue("iconLocation").toLowerCase().contains('://github.com/')) && (getDataValue("iconLocation").toLowerCase().contains('/blob/master/'))
         String iconClose = (gitclose ? "?raw=true" : "")
-        String iconCloseStyled = iconClose  + ' style=\"height:3em;display:inline;\">'
+        String iconCloseStyled = iconClose + '>'
         boolean noAlert = (!getDataValue("possAlert") || getDataValue("possAlert")=="" || getDataValue("possAlert")=="false")
         boolean raintoday = (getDataValue("precip_today").toBigDecimal() > 0.0)        
-        String alertStyleOpen = (noAlert ? '' :  '<span style=\"font-style:italic;\">')
+        String alertStyleOpen = (noAlert ? '' :  '<span>')
         String alertStyleClose = (noAlert ? '<br>' : '</span><br>')
         BigDecimal wgust
         if(getDataValue("wind_gust").toBigDecimal() < 1.0 ) {
@@ -1148,25 +1180,36 @@ void PostPoll() {
         } else {
             wgust = getDataValue("wind_gust").toBigDecimal()
         }
-        String mytext = '<span>' + getDataValue("city") + ", " + getDataValue("state") + '<br>'        
-        mytext+= getDataValue("condition_text") + (noAlert ? '' : ' | ') + alertStyleOpen + (noAlert ? '' : getDataValue("alert")) + alertStyleClose
-        mytext+= String.format(ddisp_twd, getDataValue("temperature").toBigDecimal()) + tMetric + '<img src=' + getDataValue("condition_icon_url") + iconClose + ' style=\"height:2.2em;display:inline;\">'
-        mytext+= ' Feels like ' + String.format(ddisp_twd, getDataValue("feelsLike").toBigDecimal()) + tMetric + '<br></span>'
-        mytext+= '<span style=\"font-size:.8em;\"><img src=' + getDataValue("iconLocation") + getDataValue("wind_bft_icon") + iconCloseStyled + getDataValue("wind_direction") + " "
-        mytext+= getDataValue("wind").toBigDecimal() < 1.0 ? 'calm' : "@ " + String.format(ddisp_twd, getDataValue("wind").toBigDecimal()) + " " + dMetric
-        mytext+= ', gusts ' + ((wgust < 1.0) ? 'calm' :  "@ " + String.format(ddisp_twd, wgust) + " " + dMetric) + '<br>'
-        mytext+= '<img src=' + getDataValue("iconLocation") + 'wb.png' + iconCloseStyled + String.format(ddisp_p, getDataValue("pressure").toBigDecimal()) + " " + pMetric + '   <img src=' + getDataValue("iconLocation") + 'wh.png' + iconCloseStyled
-        mytext+= getDataValue("humidity") + '%   ' + '<img src=' + getDataValue("iconLocation") + 'wu.png' + iconCloseStyled + getDataValue("percentPrecip") + '%'
-        mytext+= (raintoday ? '   <img src=' + getDataValue("iconLocation") + 'wr.png' + iconCloseStyled + String.format(ddisp_r, getDataValue("precip_today").toBigDecimal()) + " " + rMetric : '') + '<br>'
-        mytext+= '<img src=' + getDataValue("iconLocation") + 'wsr.png' + iconCloseStyled + getDataValue("localSunrise") + '     <img src=' + getDataValue("iconLocation") + 'wss.png' + iconCloseStyled
-        mytext+= getDataValue("localSunset") + '     Updated: ' + Summary_last_poll_time
+        String mytextb = '<span style=\"display:inline;\"><a href="https://darksky.net/forecast/' + String.format("%3.4f",location.latitude) + "," + String.format("%3.4f",location.longitude) + '">' + getDataValue("city") + ", " + getDataValue("state") + '</a><br>'        
+        String mytextm1 = getDataValue("condition_text") + (noAlert ? '' : ' | ') + alertStyleOpen + (noAlert ? '' : getDataValue("alertLink")) + alertStyleClose
+        String mytextm2 = getDataValue("condition_text") + (noAlert ? '' : ' | ') + alertStyleOpen + (noAlert ? '' : getDataValue("alertLink2")) + alertStyleClose
+        String mytextm3 = getDataValue("condition_text") + (noAlert ? '' : ' | ') + alertStyleOpen + (noAlert ? '' : getDataValue("alertLink3")) + alertStyleClose        
+        String mytexte = String.format(ddisp_twd, getDataValue("temperature").toBigDecimal()) + tMetric + '<img src=' + getDataValue("condition_icon_url") + iconClose + ' style=\"height:2.2em;display:inline;\">'
+        mytexte+= ' Feels like ' + String.format(ddisp_twd, getDataValue("feelsLike").toBigDecimal()) + tMetric + '<br></span>'
+        mytexte+= '<span style=\"font-size:.9em;\"><img src=' + getDataValue("iconLocation") + getDataValue("wind_bft_icon") + iconCloseStyled + getDataValue("wind_direction") + " "
+        mytexte+= getDataValue("wind").toBigDecimal() < 1.0 ? 'calm' : "@ " + String.format(ddisp_twd, getDataValue("wind").toBigDecimal()) + " " + dMetric
+        mytexte+= ', gusts ' + ((wgust < 1.0) ? 'calm' :  "@ " + String.format(ddisp_twd, wgust) + " " + dMetric) + '<br>'
+        mytexte+= '<img src=' + getDataValue("iconLocation") + 'wb.png' + iconCloseStyled + String.format(ddisp_p, getDataValue("pressure").toBigDecimal()) + " " + pMetric + '   <img src=' + getDataValue("iconLocation") + 'wh.png' + iconCloseStyled
+        mytexte+= getDataValue("humidity") + '%   ' + '<img src=' + getDataValue("iconLocation") + 'wu.png' + iconCloseStyled + getDataValue("percentPrecip") + '%'
+        mytexte+= (raintoday ? '   <img src=' + getDataValue("iconLocation") + 'wr.png' + iconCloseStyled + String.format(ddisp_r, getDataValue("precip_today").toBigDecimal()) + " " + rMetric : '') + '<br>'
+        mytexte+= '<img src=' + getDataValue("iconLocation") + 'wsr.png' + iconCloseStyled + getDataValue("localSunrise") + '     <img src=' + getDataValue("iconLocation") + 'wss.png' + iconCloseStyled
+        mytexte+= getDataValue("localSunset") + '     Updated: ' + Summary_last_poll_time
+        String mytext = mytextb + mytextm1 + mytexte
         if((mytext.length() + dsIcon.length() + 10) < 1025) {
             mytext+= '<br>' + dsIcon + '</span>'
         }else{
-            if((mytext.length() + dsText.length() + 10) < 1025) {
-                mytext+= '<br>' + dsText + '</span>'
+            mytext = mytextb + mytextm2 + mytexte
+            if((mytext.length() + dsIcon.length() + 10) < 1025) {
+                mytext+= '<br>' + dsIcon + '</span>'
             }else{
-                mytext+= '<br>Powered by Dark Sky</span>'
+                mytext = mytextb + mytextm3 + mytexte
+                if((mytext.length() + dsIcon.length() + 10) < 1025) {
+                    mytext+= '<br>' + dsIcon + '</span>'
+                }else if((mytext.length() + dsText.length() + 10) < 1025) {
+                    mytext+= '<br>' + dsText + '</span>'
+                }else{
+                    mytext+= '<br>Powered by Dark Sky</span>'
+                }
             }
         }
         if(mytext.length() > 1024) {
@@ -1805,7 +1848,7 @@ void sendEventPublish(evt)	{
 
 @Field static attributesMap = [
     "threedayTile":             [title: "Three Day Forecast Tile", descr: "Display Three Day Forecast Tile?", typeof: false, default: "false"],
-    "alert":				    [title: "Weather Alert", descr: "Display any weather alert?", typeof: "string", default: "false"],
+    "alert":				    [title: "Weather Alert", descr: "Display any weather alert?", typeof: false, default: "false"],
     "betwixt":				    [title: "Slice of Day", descr: "Display the 'slice-of-day'?", typeof: "string", default: "false"],
 	"cloud":			    	[title: "Cloud", descr: "Display cloud coverage %?", typeof: "number", default: "false"],
 	"condition_code":			[title: "Condition Code", descr: "Display 'condition_code'?", typeof: "string", default: "false"],
