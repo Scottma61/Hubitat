@@ -516,7 +516,7 @@ void doPollWD(Map wd) {
             updateDataValue("illuminated", "This station does not send illuminance data.")
         } else {
             updateDataValue("illuminance", wd.everything.weather.solar.irradiance.wm2.toInteger().toString())
-            updateDataValue("illuminated", String.format("%,4f", wd.everything.weather.solar.irradiance.wm2.toInteger()).toString())
+            updateDataValue("illuminated", String.format("%,4d", wd.everything.weather.solar.irradiance.wm2.toInteger()).toString())
         }
     }
 // >>>>>>>>>> End Process Only If Illumination from WD Is Selected  <<<<<<<<<<
