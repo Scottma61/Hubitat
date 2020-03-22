@@ -55,12 +55,12 @@ The driver exposes both metric and imperial measurements for you to select from.
    on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
    for the specific language governing permissions and limitations under the License.
  
-   Last Update 03/20/2020
+   Last Update 03/22/2020
   { Left room below to document version changes...}
 
 
 
-
+   V4.4.8   Added some debugging helpers and code to remove any spaces in location coordinates- 03/22/2020
    V4.4.7   Allow location override. Corrected forecastHigh/Low to 'number' from 'string'     - 03/20/2020
    V4.4.6   Changed links for they Open in new tabs/windows.                                  - 03/01/2020
    V4.4.5   Enhancements to myTile and threedayfcstTile, NEW alertTile                        - 02/28/2020
@@ -146,7 +146,7 @@ The way the 'optional' attributes work:
    available in the dashboard is to delete the virtual device and create a new one AND DO NOT SELECT the
    attribute you do not want to show.
  */
-public static String version()      {  return "4.4.7"  }
+public static String version()      {  return "4.4.8"  }
 import groovy.transform.Field
 
 metadata {
@@ -579,6 +579,7 @@ void pollDSHandler(resp, data) {
         def ds = parseJson(resp.data)
 		doPollDS(ds)		// parse the data returned by DarkSky
 	} else {
+        log.warn "Weather-Display Driver - WARNING: Calling https://api.darksky.net/forecast/" + apiKey + "/" + altLat + "," + altLon + "?units=us&exclude=minutely,hourly,flags"
 		log.warn "Weather-Display Driver - WARNING: DarkSky.net API did not return data"
 	}
 }
@@ -1338,19 +1339,19 @@ void initialize() {
     boolean altCoord = (settings?.altCoord ?: false)
     if (altCoord) {
         if (altLat == null) {
-            device.updateSetting("altLat", [value:location.latitude.toString(),type:"text"])
+            device.updateSetting("altLat", [value:location.latitude.toString().replace(" ", ""),type:"text"])
         }
         if (altLon == null) {
-            device.updateSetting("altLon", [value:location.longitude.toString(),type:"text"])        
+            device.updateSetting("altLon", [value:location.longitude.toString().replace(" ", ""),type:"text"])        
         }
     } else {
         device.removeSetting("altLat")
         device.removeSetting("altLon")
-        device.updateSetting("altLat", [value:location.latitude.toString(),type:"text"])
-        device.updateSetting("altLon", [value:location.longitude.toString(),type:"text"])                
+        device.updateSetting("altLat", [value:location.latitude.toString().replace(" ", ""),type:"text"])
+        device.updateSetting("altLon", [value:location.longitude.toString().replace(" ", ""),type:"text"])                
     }
-    String altLat = settings?.altLat ?: location.latitude.toString()
-    String altLon = settings?.altLon ?: location.longitude.toString()
+    String altLat = settings?.altLat ?: location.latitude.toString().replace(" ", "")
+    String altLon = settings?.altLon ?: location.longitude.toString().replace(" ", "")
 	int extSource = (settings?.extSource.toInteger() ?: 2).toInteger()
     String pollIntervalStation = (settings?.pollIntervalStation ?: "3 Hours")
     String pollLocationStation = (settings?.pollLocationStation ?: "http://")
