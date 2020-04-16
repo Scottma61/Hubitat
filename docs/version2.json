@@ -6,7 +6,7 @@
 	},
  	"driver": {
 		"DarkSky.net Weather Driver":  {"ver": "1.3.9", "updated": "26/03/2020"},
-		"Weather-Display With DarkSky.net Forecast Driver":  {"ver": "4.4.9", "updated": "26/03/2020"}
+		"Weather-Display With DarkSky.net Forecast Driver":  {"ver": "4.4.9", "updated": "26/03/2020"},
 		"OpenWeatherMap Weather Driver":  {"ver": "0.0.1", "updated": "15/04/2020"}
 	}
 }
