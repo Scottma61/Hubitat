@@ -3,5 +3,14 @@
   "author": "Matthew Scott",
   "version": "1.0",
   "minimumHEVersion": "2.1.9",
-  "dateReleased": "2019-04-20"
+  "dateReleased": "2019-04-20",
+  "drivers": [
+    {
+      "id": "e1c6b958-9b02-4b50-ac5d-5cb64ad545aa",
+      "name": "DarkSky.net Weather Driver",
+      "namespace": "Matthew",
+      "location": "https://raw.githubusercontent.com/HubitatCommunity/DarkSky.net-Weather-Driver/master/DarkSky.net%20Weather%20Driver.groovy",
+      "required": true
+    }
+  ]
 }

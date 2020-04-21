@@ -3,5 +3,14 @@
   "author": "Matthew Scott",
   "version": "1.0",
   "minimumHEVersion": "2.1.9",
-  "dateReleased": "2019-04-20"
+  "dateReleased": "2019-04-20",
+  "drivers": [
+    {
+      "id": "a3cfb9e4-e1e3-4b31-bb4b-315a67359d96",
+      "name": "Weather-Display With DarkSky.net Forecast Driver",
+      "namespace": "Matthew",
+      "location": "https://raw.githubusercontent.com/HubitatCommunity/Weather-Display-With-DarkSky.net-Forecast-Driver/master/Weather-Display%20With%20DarkSky.net%20Forecast%20Driver.groovy",
+      "required": true
+    }
+  ]
 }

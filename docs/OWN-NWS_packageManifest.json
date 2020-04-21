@@ -3,5 +3,14 @@
   "author": "Matthew Scott",
   "version": "1.0",
   "minimumHEVersion": "2.1.9",
-  "dateReleased": "2019-04-20"
+  "dateReleased": "2019-04-20",
+  "drivers": [
+    {
+      "id": "51f62ae2-2e1b-466a-88f3-2c1780a2037d",
+      "name": "OpenWeatherMap-NWS Alerts Weather Driver",
+      "namespace": "Matthew",
+      "location": "https://raw.githubusercontent.com/HubitatCommunity/OpenWeatherMap-NWS-Alerts-Weather-Driver/master/OpenWeatherMap-NWS%2520Alerts%2520Weather%2520Driver.groovy",
+      "required": true
+    }
+  ]
 }
