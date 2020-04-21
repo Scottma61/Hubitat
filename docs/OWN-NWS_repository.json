@@ -1,0 +1,12 @@
+{
+  "author": "Matthew Scott",
+  "gitHubUrl": "https://github.com/HubitatCommunity",
+  "packages": [
+    {
+      "name": "OpenWeatherMap-NWS Alert Driver",
+      "category": "Convenience",
+      "location": "OWN-NWS_packageManifest.json",
+      "description": "OpenWeatherMap-NWS Alert Driver"
+    }
+  ]
+}
