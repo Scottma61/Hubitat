@@ -4,6 +4,7 @@
   "version": "4.4.9",
   "minimumHEVersion": "2.1.9",
   "dateReleased": "2019-04-20",
+  "communityLink": "https://community.hubitat.com/t/release-weather-display-with-darksky-net-forecast-driver/22613",
   "drivers": [
     {
       "id": "a3cfb9e4-e1e3-4b31-bb4b-315a67359d96",
