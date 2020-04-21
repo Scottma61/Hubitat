@@ -1,9 +1,10 @@
 {
   "packageName": "Matthew (@scottm61)",
   "author": "Matthew Scott",
-  "version": "4.4.9",
+  "version": "4.5.0",
   "minimumHEVersion": "2.1.9",
-  "dateReleased": "2019-04-20",
+  "dateReleased": "2019-04-21",
+  "releaseNotes": "Refactored code, improved log messaging",
   "communityLink": "https://community.hubitat.com/t/release-weather-display-with-darksky-net-forecast-driver/22613",
   "drivers": [
     {
