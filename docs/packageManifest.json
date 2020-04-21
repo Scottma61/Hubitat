@@ -1,0 +1,30 @@
+{
+  "packageName": "Matthew (@scottm61)",
+  "author": "Matthew Scott",
+  "version": "1.0",
+  "minimumHEVersion": "2.1.9",
+  "dateReleased": "2019-04-20",
+  "drivers": [
+    {
+      "id": "cd827fc8-5d2b-40d3-adac-93c499dc12fa",
+      "name": "OpenWeatherMap-NWS Alerts Weather Driver",
+      "namespace": "Matthew",
+      "location": "https://raw.githubusercontent.com/HubitatCommunity/OpenWeatherMap-NWS-Alerts-Weather-Driver/master/OpenWeatherMap-NWS%2520Alerts%2520Weather%2520Driver.groovy",
+      "required": false
+    },
+    {
+      "id": "ce0e07c1-b22c-4769-acdb-bc9bfcbd38e0",
+      "name": "DarkSky.net Weather Driver",
+      "namespace": "Matthew",
+      "location": "https://raw.githubusercontent.com/HubitatCommunity/DarkSky.net-Weather-Driver/master/DarkSky.net%20Weather%20Driver.groovy",
+      "required": false
+    },
+    {
+      "id": "41025edb-0c52-490f-a656-d58080a022f4",
+      "name": "Weather-Display With DarkSky.net Forecast Driver",
+      "namespace": "Matthew",
+      "location": "https://raw.githubusercontent.com/HubitatCommunity/Weather-Display-With-DarkSky.net-Forecast-Driver/master/Weather-Display%20With%20DarkSky.net%20Forecast%20Driver.groovy",
+      "required": false
+    }
+  ]
+}
