@@ -1,0 +1,24 @@
+{
+  "author": "Matthew Scott",
+  "gitHubUrl": "https://github.com/HubitatCommunity",
+  "packages": [
+    {
+      "name": "OpenWeatherMap-NWS Alert Driver",
+      "category": "Convenience",
+      "location": "packageManifest.json",
+      "description": "OpenWeatherMap-NWS Alert Driver"
+    },
+    {
+      "name": "DarkSky.net-Weather-Driver",
+      "category": "Convenience",
+      "location": "packageManifest.json",
+      "description": "DarkSky.net-Weather-Driver"
+    },
+    {
+      "name": "Weather-Display With DarkSky.net Forecast Driver",
+      "category": "Convenience",
+      "location": "packageManifest.json",
+      "description": "Weather-Display With DarkSky.net Forecast Driver"
+    }
+  ]
+}
