@@ -4,6 +4,7 @@
   "version": "0.0.6",
   "minimumHEVersion": "2.1.9",
   "dateReleased": "2019-04-20",
+  "communityLink": "https://community.hubitat.com/t/openweathermap-nws-alerts-weather-driver/38249",
   "drivers": [
     {
       "id": "51f62ae2-2e1b-466a-88f3-2c1780a2037d",
