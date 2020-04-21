@@ -1,12 +1,12 @@
 {
 	"author": "Matthew (scottma61)",
  	"comment": "",
-	"copyright": " &#9400; 2019 Matthew (scottma61)",
+	"copyright": " &#9400; 2020 Matthew (scottma61)",
 	"application": {
 	},
  	"driver": {
 		"DarkSky.net Weather Driver":  {"ver": "1.4.1", "updated": "04/20/2020"},
-		"Weather-Display With DarkSky.net Forecast Driver":  {"ver": "4.4.9", "updated": "26/03/2020"},
+		"Weather-Display With DarkSky.net Forecast Driver":  {"ver": "4.5.0", "updated": "04/21/2020"},
 		"OpenWeatherMap-NWS Alerts Weather Driver":  {"ver": "0.0.6", "updated": "04/20/2020"}
 	}
 }
