@@ -1,13 +1,13 @@
 {
   "packageName": "Matthew (@scottm61)",
   "author": "Matthew Scott",
-  "version": "1.0",
+  "version": "0.0.1",
   "minimumHEVersion": "2.1.9",
-  "dateReleased": "2019-04-20",
+  "dateReleased": "2019-04-22",
   "drivers": [
     {
       "id": "4fd45ba6-b980-4e16-8314-b373a766a432",
-      "name": "",
+      "name": "Weather-Display With OWM-NWS Alerts Forecast Driver",
       "namespace": "Matthew",
       "location": "https://raw.githubusercontent.com/HubitatCommunity/Weather-Display-With-OWM-NWS-Alerts-Forecast-Driver/master/Weather-Display%20With%20OWM-NWS%20Alerts%20Forecast%20Driver.groovy",
       "required": true
