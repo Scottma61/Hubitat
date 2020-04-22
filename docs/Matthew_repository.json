@@ -19,6 +19,12 @@
       "category": "Integrations",
       "location": "https://raw.githubusercontent.com/Scottma61/Hubitat/master/docs/WD_packageManifest.json",
       "description": "Weather-Display With DarkSky.net Forecast Driver"
+    },
+     {
+      "name": "Weather-Display With OWM-NWS Alerts Forecast Driver",
+      "category": "Integrations",
+      "location": "WDOWMNWS_packageManifest.json",
+      "description": "Weather-Display With OWM-NWS Alerts Forecast Driver"
     }
   ]
 }
