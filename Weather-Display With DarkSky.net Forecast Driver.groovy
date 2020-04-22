@@ -345,7 +345,7 @@ void doPollWD(Map wd) {
 		}else{
 			log.info('Weather-Display Driver - INFO: Switching to Nighttime schedule.')
 		}
-		initialize()
+		initialize_poll()
 		updateDataValue('is_lightOld', getDataValue('is_light'))
 	}
 // >>>>>>>>>> End Setup Global Variables <<<<<<<<<<  
