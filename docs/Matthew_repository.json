@@ -17,7 +17,7 @@
     {
       "name": "Weather-Display With DarkSky.net Forecast Driver",
       "category": "Integrations",
-      "location": "DS_packageManifest.json",
+      "location": "WD_packageManifest.json",
       "description": "Weather-Display With DarkSky.net Forecast Driver"
     },
     {
