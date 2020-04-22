@@ -56,9 +56,14 @@
 	on an 'AS IS' BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
 	for the specific language governing permissions and limitations under the License.
 
-	Last Update 04/21/2020
+	Last Update 04/22/2020
 	{ Left room below to document version changes...}
 
+
+
+
+
+    V4.5.1   Bug fixes                                                                         - 04/22/2020
 	V4.5.0   Refactored the code, Improved log messaging, bug fixes                            - 04/21/2020
 	V4.4.9   More checks of coordinates to prevent/warn of null values                         - 03/26/2020
 	V4.4.8   Added some debugging helpers and code to remove any spaces in location coordinates- 03/22/2020
@@ -147,7 +152,7 @@ The way the 'optional' attributes work:
 	available in the dashboard is to delete the virtual device and create a new one AND DO NOT SELECT the
 	attribute you do not want to show.
 */
-public static String version()      {  return '4.5.0'  }
+public static String version()      {  return '4.5.1'  }
 import groovy.transform.Field
 
 metadata {
@@ -851,11 +856,7 @@ void doPollDS(Map ds) {
         }
     }
 // >>>>>>>>>> End Setup Forecast Variables <<<<<<<<<<
-
-// <<<<<<<<<< Begin Process Only If Illumination from WD Is NOT Selected  >>>>>>>>>>
-	if(sourceIllumination==false) {
-		updateLux(false)
-	}
+    updateLux(false)
 // >>>>>>>>>> End Process Only If Illumination from WD Is NOT Selected  <<<<<<<<<<
 
 // <<<<<<<<<< Begin Process Only If Ultraviolet Index from WD Is NOT Selected  >>>>>>>>>>                    
@@ -909,12 +910,13 @@ void updateLux(Boolean pollAgain=true) {
 	}
 	if(extSource.toInteger()==1 || sourceIllumination == true){
 		def (holdlux, bwn) = estimateLux(getDataValue('condition_code'), getDataValue('cloud').toInteger())
+        LOGINFO('updateLux Results: holdlux: ' + holdlux + '; bwn: ' + bwn)
 	} else {
 		def (lux, bwn) = estimateLux(getDataValue('condition_code'), getDataValue('cloud').toInteger())
 		updateDataValue('illuminance', !lux ? '0' : lux.toString())
 		updateDataValue('illuminated', String.format('%,4d', !lux ? 0 : lux).toString())
+        LOGINFO('updateLux Results: lux: ' + holdlux + '; bwn: ' + bwn)
 	}
-	updateDataValue('bwn', bwn)
 	if(pollAgain) PostPoll()
     return    
 }
@@ -1475,7 +1477,7 @@ void initialize_poll() {
 	} else {
         myFcstPoll = myFcstPoll.replace(' ','')
         String myFcstSched = "${dsseconds} ${minutes60} ${hours3/3} * * ? *"
-        LOGINFO('pollInterval: ' + myFcstPoll)
+        LOGINFO('myFcstPoll: ' + myFcstPoll)
         switch(myFcstPoll) {
             case '2Minutes':
                 myFcstSched = "${dsseconds} ${minutes2}/2 * * * ? *"
@@ -1628,7 +1630,7 @@ def estimateLux(String condition_code, Integer cloud) {
 	Long lux = 0l
 	Boolean aFCC             = true
 	Double l
-	String bwn
+	String sod
 	def sunRiseSet           = parseJson(getDataValue('sunRiseSet')).results
 	def tZ                   = TimeZone.getDefault() //TimeZone.getTimeZone(tz_id)
 	String lT                = new Date().format('yyyy-MM-dd\'T\'HH:mm:ssXXX', tZ)
@@ -1646,62 +1648,62 @@ def estimateLux(String condition_code, Integer cloud) {
 
 	switch(localeMillis) {
 		case { it < twilight_beginMillis}:
-			bwn = 'Fully Night Time'
+			sod = 'Fully Night Time'
 			lux = 5l
 			aFCC = false
 			break
 		case { it < sunriseTimeMillis}:
-			bwn = 'between twilight and sunrise'
+			sod = 'between twilight and sunrise'
 			l = (((localeMillis - twilight_beginMillis) * 50f) / (sunriseTimeMillis - twilight_beginMillis))
 			lux = (l < 10f ? 10l : l.trunc(0) as Long)
 			break
 		case { it < noonTimeMillis}:
-			bwn = 'between sunrise and noon'
+			sod = 'between sunrise and noon'
 			l = (((localeMillis - sunriseTimeMillis) * 10000f) / (noonTimeMillis - sunriseTimeMillis))
 			lux = (l < 50f ? 50l : l.trunc(0) as Long)
 			break
 		case { it < sunsetTimeMillis}:
-			bwn = 'between noon and sunset'
+			sod = 'between noon and sunset'
 			l = (((sunsetTimeMillis - localeMillis) * 10000f) / (sunsetTimeMillis - noonTimeMillis))
 			lux = (l < 50f ? 50l : l.trunc(0) as Long)
 			break
 		case { it < twilight_endMillis}:
-			bwn = 'between sunset and twilight'
+			sod = 'between sunset and twilight'
 			l = (((twilight_endMillis - localeMillis) * 50f) / (twilight_endMillis - sunsetTimeMillis))
 			lux = (l < 10f ? 10l : l.trunc(0) as Long)
 			break
 		case { it < twiStartNextMillis}:
-			bwn = 'Fully Night Time'
+			sod = 'Fully Night Time'
 			lux = 5l
 			aFCC = false        
 			break
 		case { it < sunriseNextMillis}:
-			bwn = 'between twilight and sunrise'
+			sod = 'between twilight and sunrise'
 			l = (((localeMillis - twiStartNextMillis) * 50f) / (sunriseNextMillis - twiStartNextMillis))
 			lux = (l < 10f ? 10l : l.trunc(0) as Long)
 			break
 		case { it < noonTimeNextMillis}:
-			bwn = 'between sunrise and noon'
+			sod = 'between sunrise and noon'
 			l = (((localeMillis - sunriseNextMillis) * 10000f) / (noonTimeNextMillis - sunriseNextMillis))
 			lux = (l < 50f ? 50l : l.trunc(0) as Long)
 			break
 		case { it < sunsetNextMillis}:
-			bwn = 'between noon and sunset'
+			sod = 'between noon and sunset'
 			l = (((sunsetNextMillis - localeMillis) * 10000f) / (sunsetNextMillis - noonTimeNextMillis))
 			lux = (l < 50f ? 50l : l.trunc(0) as Long)
 			break
 		case { it < twiEndNextMillis}:
-			bwn = 'between sunset and twilight'
+			sod = 'between sunset and twilight'
 			l = (((twiEndNextMillis - localeMillis) * 50f) / (twiEndNextMillis - sunsetNextMillis))
 			lux = (l < 10f ? 10l : l.trunc(0) as Long)
 			break
 		default:
-			bwn = 'Fully Night Time'
+			sod = 'Fully Night Time'
 			lux = 5l
 			aFCC = false
 			break
 	}
-
+    updateDataValue('bwn', sod)
 	String cC = condition_code
 	String cCT = 'not set'
 	Double cCF = (!cloud || cloud=='') ? 0.998d : (1 - (cloud/100 / 3d))
@@ -1738,8 +1740,8 @@ def estimateLux(String condition_code, Integer cloud) {
 		}
 	}
 	lux = Math.max(lux, 5)
-	LOGINFO('estimateLux: condition: ' + cC + ' | condition factor: ' + cCF + ' | condition text: ' + cCT + ' | lux: ' + lux)
-	return [lux, bwn]
+	LOGINFO('estimateLux: condition: ' + cC + ' | condition factor: ' + cCF + ' | condition text: ' + cCT + ' | lux: ' + lux + ' | sod: ' + sod)
+	return [lux, sod]
 }
 
 public Long getEpoch (String aTime) {
