@@ -4,6 +4,8 @@
   "version": "0.0.1",
   "minimumHEVersion": "2.1.9",
   "dateReleased": "2019-04-22",
+  "releaseNotes": "Initial release replaceing DarkSky with OpenWeatherMap plus NWS Alerts",
+  "communityLink": "https://community.hubitat.com/t/release-weather-display-with-owm-nws-alerts-forecast-driver/38557",
   "drivers": [
     {
       "id": "4fd45ba6-b980-4e16-8314-b373a766a432",
