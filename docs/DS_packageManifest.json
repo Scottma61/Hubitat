@@ -5,6 +5,7 @@
   "minimumHEVersion": "2.1.9",
   "dateReleased": "2019-04-20",
   "communityLink": "https://community.hubitat.com/t/release-darksky-net-weather-driver-no-pws-required/22699",
+  "documentationLink":"https://github.com/HubitatCommunity/DarkSky.net-Weather-Driver/wiki/Welcome-to-the-DarkSky.net-Weather-Driver-wiki!",
   "drivers": [
     {
       "id": "e1c6b958-9b02-4b50-ac5d-5cb64ad545aa",
