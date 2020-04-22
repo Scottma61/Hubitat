@@ -1509,6 +1509,9 @@ void initialize_poll() {
         String myStationSched = "${dsseconds} ${minutes60} ${hours3/3} * * ? *"
         LOGINFO('myStationPoll: ' + myStationPoll)
         switch(myStationPoll) {
+            case '1Minute':
+                myStationSched = "${dsseconds} * * * * ? *"
+                break
             case '2Minutes':
                 myStationSched = "${dsseconds} ${minutes2}/2 * * * ? *"
                 break
