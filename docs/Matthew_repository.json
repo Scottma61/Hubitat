@@ -5,22 +5,22 @@
     {
       "name": "OpenWeatherMap-NWS Alert Driver",
       "category": "Integrations",
-      "location": "https://raw.githubusercontent.com/Scottma61/Hubitat/master/docs/OWN-NWS_packageManifest.json",
+      "location": "packageManifest.json",
       "description": "OpenWeatherMap-NWS Alert Driver"
     },
     {
       "name": "DarkSky.net-Weather-Driver",
       "category": "Integrations",
-      "location": "https://raw.githubusercontent.com/Scottma61/Hubitat/master/docs/DS_packageManifest.json",
+      "location": "packageManifest.json",
       "description": "DarkSky.net-Weather-Driver"
     },
     {
       "name": "Weather-Display With DarkSky.net Forecast Driver",
       "category": "Integrations",
-      "location": "https://raw.githubusercontent.com/Scottma61/Hubitat/master/docs/WD_packageManifest.json",
+      "location": "packageManifest.json",
       "description": "Weather-Display With DarkSky.net Forecast Driver"
     },
-     {
+    {
       "name": "Weather-Display With OWM-NWS Alerts Forecast Driver",
       "category": "Integrations",
       "location": "WDOWMNWS_packageManifest.json",
