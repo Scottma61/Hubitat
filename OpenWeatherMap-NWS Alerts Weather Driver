@@ -51,14 +51,14 @@
 
 
 
-
-   V0.0.7   Numerous bug fixes, better handling where alerts are not available                - 04/23/2020
-   V0.0.6   Refactored much of the code, added Hubitat Package Manager compatibility          - 04/20/2020
-   V0.0.5   More code cleanup and optimizations (Thanks @nh.schottfam!)                       - 04/19/2020
-   V0.0.4   Corrected forecast icon to always be 'day' instead of current time                - 04/18/2020
-   V0.0.3   More fixes on Alerts, mapped condition_code, weatherIcon(s)                       - 04/18/2020
-   V0.0.2   Fixed Alerts on myTile and alertTile, Capitalized condition_text                  - 04/17/2020
-   V0.0.1   Initial conversion from Dark Sky to OWM                                           - 04/17/2020
+   V0.0.8   Numerous bug fixes, better handling where alerts are not available, handelng nulls                - 04/23/2020-2
+   V0.0.7   Numerous bug fixes, better handling where alerts are not available                                - 04/23/2020
+   V0.0.6   Refactored much of the code, added Hubitat Package Manager compatibility                          - 04/20/2020
+   V0.0.5   More code cleanup and optimizations (Thanks @nh.schottfam!)                                       - 04/19/2020
+   V0.0.4   Corrected forecast icon to always be 'day' instead of current time                                - 04/18/2020
+   V0.0.3   More fixes on Alerts, mapped condition_code, weatherIcon(s)                                       - 04/18/2020
+   V0.0.2   Fixed Alerts on myTile and alertTile, Capitalized condition_text                                  - 04/17/2020
+   V0.0.1   Initial conversion from Dark Sky to OWM                                                           - 04/17/2020
 =========================================================================================================
 **ATTRIBUTES CAUTION**
 The way the 'optional' attributes work:
@@ -73,7 +73,7 @@ The way the 'optional' attributes work:
    available in the dashboard is to delete the virtual device and create a new one AND DO NOT SELECT the
    attribute you do not want to show.
 */
-public static String version()      {  return '0.0.7'  }
+public static String version()      {  return '0.0.8'  }
 import groovy.transform.Field
 
 metadata {
@@ -399,21 +399,21 @@ void pollOWMHandler(resp, data) {
         updateDataValue('cloud', cloudCover.toString())
         updateDataValue('vis', (dMetric!='MPH' ? Math.round(!owm.current.visibility ? 0.01 : owm.current.visibility.toBigDecimal() * 0.001 * getDataValue('mult_twd').toInteger()) / getDataValue('mult_twd').toInteger() : Math.round(!owm.current.visibility ? 0.00 : owm.current.visibility.toBigDecimal() * 0.0006213712 * getDataValue('mult_twd').toInteger()) / getDataValue('mult_twd').toInteger()).toString())
 
-        BigDecimal t_p0 = (!owm.daily[0].rain && !owm.daily[0].snow) || (owm.daily[0].rain == null && !owm.daily[0].snow == null) ? 0.0000 : Math.max(!owm.daily[0].rain ? 0.0000 : owm.daily[0].rain.toBigDecimal(),!owm.daily[0].snow ? 0.0000 : owm.daily[0].snow.toBigDecimal())
-        BigDecimal t_p1 = (!owm.daily[1].rain && !owm.daily[1].snow) || (owm.daily[1].rain == null && !owm.daily[1].snow == null) ? 0.0000 : Math.max(!owm.daily[1].rain ? 0.0000 : owm.daily[1].rain.toBigDecimal(),!owm.daily[1].snow ? 0.0000 : owm.daily[1].snow.toBigDecimal())
-        BigDecimal t_p2 = (!owm.daily[2].rain && !owm.daily[2].snow) || (owm.daily[2].rain == null && !owm.daily[2].snow == null) ? 0.0000 : Math.max(!owm.daily[2].rain ? 0.0000 : owm.daily[2].rain.toBigDecimal(),!owm.daily[2].snow ? 0.0000 : owm.daily[2].snow.toBigDecimal())
+        BigDecimal t_p0 = Math.max((!owm.daily[0].rain ? 0.00 : owm.daily[0].rain==null ? 0.00 : owm.daily[0].rain) + (!owm.daily[0].snow ? 0.00 : owm.daily[0].snow==null ? 0.00 : owm.daily[0].snow), getDataValue('rainToday').toBigDecimal())
+        BigDecimal t_p1 = Math.max((!owm.daily[1].rain ? 0.00 : owm.daily[0].rain==null ? 0.00 : owm.daily[1].rain) + (!owm.daily[1].snow ? 0.00 : owm.daily[1].snow==null ? 0.00 : owm.daily[1].snow), getDataValue('rainToday').toBigDecimal())
+        BigDecimal t_p2 = Math.max((!owm.daily[2].rain ? 0.00 : owm.daily[0].rain==null ? 0.00 : owm.daily[2].rain) + (!owm.daily[2].snow ? 0.00 : owm.daily[2].snow==null ? 0.00 : owm.daily[2].snow), getDataValue('rainToday').toBigDecimal())
         updateDataValue('rainToday', (Math.round(((rainFormat != 'Inches' ? t_p0 : t_p0 * 0.03937008) * getDataValue('mult_r').toBigDecimal())) / getDataValue('mult_r').toBigDecimal()).toString())
         updateDataValue('Precip0', (Math.round(((rainFormat != 'Inches' ? t_p0 : t_p0 * 0.03937008) * getDataValue('mult_r').toBigDecimal())) / getDataValue('mult_r').toBigDecimal()).toString())
         updateDataValue('Precip1', (Math.round(((rainFormat != 'Inches' ? t_p1 : t_p1 * 0.03937008) * getDataValue('mult_r').toBigDecimal())) / getDataValue('mult_r').toBigDecimal()).toString())
         updateDataValue('Precip2', (Math.round(((rainFormat != 'Inches' ? t_p2 : t_p2 * 0.03937008) * getDataValue('mult_r').toBigDecimal())) / getDataValue('mult_r').toBigDecimal()).toString())
 
         updateDataValue('condition_id', !owm.current.weather[0].id ? '999' : owm.current.weather[0].id.toString())
-        updateDataValue('condition_code', getCondCode(owm.current.weather[0].id, getDataValue('is_day')))
+        updateDataValue('condition_code', getCondCode(getDataValue('condition_id').toInteger(), getDataValue('is_day')))
         updateDataValue('condition_text', !owm.current.weather[0].description ? 'Unknown' : owm.current.weather[0].description.capitalize())
         updateDataValue('OWN_icon', !owm.current.weather[0].icon ? (getDataValue('is_day')=='true' ? '50d' : '50n') : owm.current.weather[0].icon)
 
         updateDataValue('forecast_id', !owm.daily[0].weather[0].id ? '999' : owm.daily[0].weather[0].id.toString())
-        updateDataValue('forecast_code', getCondCode(owm.daily[0].weather[0].id, 'true'))
+        updateDataValue('forecast_code', getCondCode(getDataValue('forecast_id').toInteger(), 'true'))
         updateDataValue('forecast_text', !owm.daily[0].weather[0].description ? 'Unknown' : owm.daily[0].weather[0].description.capitalize())
 
         if(threedayTilePublish) {
@@ -424,11 +424,11 @@ void pollOWMHandler(resp, data) {
             updateDataValue('is_day1', 'true')
             updateDataValue('is_day2', 'true')
             updateDataValue('forecast_id1', !owm.daily[1].weather[0].id ? '999' : owm.daily[1].weather[0].id.toString())
-            updateDataValue('forecast_code1', getCondCode(owm.daily[1].weather[0].id, 'true'))
+            updateDataValue('forecast_code1', getCondCode(getDataValue('forecast_id1').toInteger(), 'true'))
             updateDataValue('forecast_text1', !owm.daily[1].weather[0].description ? 'Unknown' : owm.daily[1].weather[0].description.capitalize())
 
             updateDataValue('forecast_id2', !owm.daily[2].weather[0].id ? '999' : owm.daily[2].weather[0].id.toString())
-            updateDataValue('forecast_code2', getCondCode(owm.daily[2].weather[0].id, 'true'))
+            updateDataValue('forecast_code2', getCondCode(getDataValue('forecast_id2').toInteger(), 'true'))
             updateDataValue('forecast_text2', !owm.daily[2].weather[0].description ? 'Unknown' : owm.daily[2].weather[0].description.capitalize())
 
             updateDataValue('forecastHigh1', (tMetric=='°F' ? (Math.round(!owm.daily[1].temp.max ? 0.00 : owm.daily[1].temp.max.toBigDecimal() * getDataValue('mult_twd').toInteger()) / getDataValue('mult_twd').toInteger()) : (Math.round((!owm.daily[1].temp.max ? 0.00 : owm.daily[1].temp.max.toBigDecimal() - 32) / 1.8 * getDataValue('mult_twd').toInteger()) / getDataValue('mult_twd').toInteger())).toString())
