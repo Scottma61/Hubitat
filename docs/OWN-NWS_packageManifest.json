@@ -1,7 +1,7 @@
 {
   "packageName": "OpenWeatherMap-NWS Alerts Weather Driver",
   "author": "Matthew Scott",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "minimumHEVersion": "2.1.9",
   "dateReleased": "2019-04-20",
   "communityLink": "https://community.hubitat.com/t/openweathermap-nws-alerts-weather-driver/38249",
