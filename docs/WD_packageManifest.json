@@ -6,6 +6,7 @@
   "dateReleased": "2019-04-22",
   "releaseNotes": "Bug fixes",
   "communityLink": "https://community.hubitat.com/t/release-weather-display-with-darksky-net-forecast-driver/22613",
+  "documentationLink": "https://github.com/HubitatCommunity/Weather-Display-With-DarkSky.net-Forecast-Driver/wiki/Weather-Display-with-DarkSky.net-Forecast-Driver-Wiki",
   "drivers": [
     {
       "id": "a3cfb9e4-e1e3-4b31-bb4b-315a67359d96",
