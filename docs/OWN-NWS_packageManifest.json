@@ -6,6 +6,7 @@
   "dateReleased": "2019-04-24",
   "releaseNotes": "Continue to work on improving null handling, various bug fixes",
   "communityLink": "https://community.hubitat.com/t/openweathermap-nws-alerts-weather-driver/38249",
+  "documentationLink": "https://github.com/HubitatCommunity/OpenWeatherMap-NWS-Alerts-Weather-Driver/wiki/OpenWeatherMap-NWS-Alerts-Weather-Driver-wiki!",
   "drivers": [
     {
       "id": "51f62ae2-2e1b-466a-88f3-2c1780a2037d",
