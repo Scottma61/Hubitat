@@ -61,7 +61,7 @@
 	{ Left room below to document version changes...}
 
 
-
+   V0.0.4   Corrected update time on dashboard tile attributes                                                  - 04/24/2020-2
    V0.0.3   Continue to work on improving null handling, various bug fixes                                      - 04/24/2020
    V0.0.2   Numerous bug fixes, checking for null and scheduling corrections.                                   - 04/23/2020
    V0.0.1   Initial conversion from DarkSky.net to OWM-NWS Alerts                                               - 04/22/2020
@@ -79,7 +79,7 @@ The way the 'optional' attributes work:
 	available in the dashboard is to delete the virtual device and create a new one AND DO NOT SELECT the
 	attribute you do not want to show.
 */
-public static String version()      {  return '0.0.3'  }
+public static String version()      {  return '0.0.4'  }
 import groovy.transform.Field
 
 metadata {
@@ -518,9 +518,8 @@ void pollOWMHandler(resp, data) {
         updateDataValue('fotime', fotime.toString())
         futime = new Date()
         updateDataValue('futime', futime.toString())
-        updateDataValue('fotime', fotime.toString())
-        updateDataValue('Summary_last_poll_time', futime.format(timeFormat, TimeZone.getDefault()).toString())
-        updateDataValue('Summary_last_poll_date', futime.format(dateFormat, TimeZone.getDefault()).toString())
+        updateDataValue('futimetf', futime.format(timeFormat, TimeZone.getDefault()).toString())
+        updateDataValue('futimedf', futime.format(dateFormat, TimeZone.getDefault()).toString())
 
         pollAlerts()
         updateDataValue('currDate', new Date().format('yyyy-MM-dd', TimeZone.getDefault()))
@@ -792,7 +791,7 @@ void pollAlertsHandler(resp, data) {
              }
          }
         //  <<<<<<<<<< Begin Built alertTile >>>>>>>>>>
-             String alertTile = 'Weather Alerts for ' + '<a href="https://forecast.weather.gov/MapClick.php?lat=' + altLat + '&lon=' + altLon + '" target="_blank">' + getDataValue('city') + '</a><br>updated at ' + getDataValue('Summary_last_poll_time') + ' on ' + getDataValue('Summary_last_poll_date') + '.<br>'
+             String alertTile = 'Weather Alerts for ' + '<a href="https://forecast.weather.gov/MapClick.php?lat=' + altLat + '&lon=' + altLon + '" target="_blank">' + getDataValue('city') + '</a><br>updated at ' + getDataValue('futimetf').toString() + ' on ' + getDataValue('futimedf') + '.<br>'
              alertTile+= getDataValue('alertTileLink') + '<br>'
              alertTile+= '<a href=\"https://forecast.weather.gov/MapClick.php?lat=' + altLat + '&lon=' + altLon + '\" target=\'_blank\'><img src=' + getDataValue('iconLocation') + 'NWS_240px.png' + ' style=\"height:2.0em;display:inline;\"></a>'
              updateDataValue('alertTile', alertTile)
@@ -909,9 +908,10 @@ void PostPoll() {
 	sendEventPublish(name: 'wind_cardinal', value: getDataValue('wind_cardinal'))
 	sendEventPublish(name: 'wind_gust', value: Math.round(getDataValue('wind_gust').toBigDecimal() * getDataValue('mult_twd').toInteger()) / getDataValue('mult_twd').toInteger(), unit: dMetric)
 	sendEventPublish(name: 'wind_string', value: getDataValue('wind_string'))
-//  <<<<<<<<<< Begin Built Weather Summary text >>>>>>>>>>
+
     Summary_last_poll_time = (getDataValue('sutime') > getDataValue('futime') ? new Date().parse('EEE MMM dd HH:mm:ss z yyyy', getDataValue('sutime')).format(timeFormat, TimeZone.getDefault()) : new Date().parse('EEE MMM dd HH:mm:ss z yyyy', getDataValue('futime')).format(timeFormat, TimeZone.getDefault()))
-	Summary_last_poll_date = (getDataValue('sutime') > getDataValue('futime') ? new Date().parse('EEE MMM dd HH:mm:ss z yyyy', getDataValue('sutime')).format(dateFormat, TimeZone.getDefault()) : new Date().parse('EEE MMM dd HH:mm:ss z yyyy', getDataValue('futime')).format(dateFormat, TimeZone.getDefault()))
+    Summary_last_poll_date = (getDataValue('sutime') > getDataValue('futime') ? new Date().parse('EEE MMM dd HH:mm:ss z yyyy', getDataValue('sutime')).format(dateFormat, TimeZone.getDefault()) : new Date().parse('EEE MMM dd HH:mm:ss z yyyy', getDataValue('futime')).format(dateFormat, TimeZone.getDefault()))
+//  <<<<<<<<<< Begin Built Weather Summary text >>>>>>>>>>
     if(weatherSummaryPublish){ // don't bother setting these values if it's not enabled
 		String Summary_forecastTemp
 		String Summary_precip
@@ -935,9 +935,6 @@ void PostPoll() {
     String OWMIcon2 = '<a href="https://openweathermap.org" target="_blank"><img src=' + getDataValue('iconLocation') + 'OWM.png style="height:2em;"></a>'
     String OWMText = '<a href="https://openweathermap.org" target="_blank">OpenWeatherMap.org</a>'
 //  <<<<<<<<<< Begin Built 3dayfcstTile >>>>>>>>>>
-    Summary_last_fcst_poll_time = new Date().parse('EEE MMM dd HH:mm:ss z yyyy', getDataValue('futime')).format(timeFormat, TimeZone.getDefault())
-	Summary_last_fcst_poll_date = new Date().parse('EEE MMM dd HH:mm:ss z yyyy', getDataValue('futime')).format(dateFormat, TimeZone.getDefault())
-
     if(threedayTilePublish) {
         String my3day = '<style type="text/css">'
         my3day += '.centerImage'
@@ -985,13 +982,13 @@ void PostPoll() {
         if(my3day.length() + 33 > 1024) {
             my3day = 'Too much data to display.</br></br>Exceeds maximum tile length by ' + 1024 - my3day.length() - 33 + ' characters.'
         }else if((my3day.length() + OWMIcon.length() + 11) < 1025) {
-            my3day += OWMIcon + '@ ' + Summary_last_fcst_poll_time
+            my3day += OWMIcon + '@ ' + getDataValue('futimetf').toString()
         }else if((my3day.length() + OWMText.length() + 11) < 1025) {
-            my3day += OWMIcon2 + '@ ' + Summary_last_fcst_poll_time
+            my3day += OWMIcon2 + '@ ' + getDataValue('futimetf').toString()
         }else if((my3day.length() + OWMText2.length() + 11) < 1025) {
-            my3day += OWMText + ' @ ' + Summary_last_fcst_poll_time
+            my3day += OWMText + ' @ ' + getDataValue('futimetf').toString()
         }else{
-            my3day += 'OpenWeatherMap.org @ ' + getDataValue('Summary_last_fcst_poll_time')
+            my3day += 'OpenWeatherMap.org @ ' + getDataValue('futimetf').toString()
         }
         sendEvent(name: 'threedayfcstTile', value: my3day.take(1024))
     }
@@ -1023,7 +1020,7 @@ void PostPoll() {
         mytexte+= '<img src=' + getDataValue('iconLocation') + 'wb.png' + iconCloseStyled + String.format(ddisp_p, getDataValue('pressure').toBigDecimal()) + ' ' + pMetric + '     <img src=' + getDataValue('iconLocation') + 'wh.png' + iconCloseStyled
         mytexte+= getDataValue('humidity') + '%     ' + '<img src=' + getDataValue('iconLocation') + 'wu.png' + iconCloseStyled + (getDataValue('rainToday').toBigDecimal() > 0 ? String.format(ddisp_r, getDataValue('rainToday').toBigDecimal()) + ' ' + rMetric : 'None') + '<br>'
         mytexte+= '<img src=' + getDataValue('iconLocation') + 'wsr.png' + iconCloseStyled + getDataValue('localSunrise') + '     <img src=' + getDataValue('iconLocation') + 'wss.png' + iconCloseStyled
-        mytexte+= getDataValue('localSunset') + '     Updated: ' + getDataValue('Summary_last_poll_time')
+        mytexte+= getDataValue('localSunset') + '     Updated: ' + Summary_last_poll_time
 
         String mytext = mytextb + mytextm1 + mytexte
         if((mytext.length() + OWMIcon.length() + 10) < 1025) {
@@ -1081,7 +1078,7 @@ void PostPoll() {
                 mytext+= (removeicons < 3 ? '<img src=' + getDataValue('iconLocation') + 'wu.png' + iconCloseStyled : ' | Precip: ') + (getDataValue('rainToday').toBigDecimal() > 0 ? String.format(ddisp_r, getDataValue('rainToday').toBigDecimal()) + ' ' + rMetric : '') + '<br>'
                 mytext+= (removeicons < 2 ? '<img src=' + getDataValue('iconLocation') + 'wsr.png' + iconCloseStyled : 'Sunrise: ') + getDataValue('localSunrise') + '  '
                 mytext+= (removeicons < 1 ? '<img src=' + getDataValue('iconLocation') + 'wss.png' + iconCloseStyled : ' | Sunset: ') + getDataValue('localSunset')
-                mytext+= '     Updated ' + getDataValue('Summary_last_poll_time') + '</span>'
+                mytext+= '     Updated ' + Summary_last_poll_time + '</span>'
             }else{
                 LOGINFO('myTile still exceeds 1,024 characters (' + mytext.length() + ') ... removing all formatting.')
                 mytext = getDataValue('city') + '<br>'
@@ -1092,7 +1089,7 @@ void PostPoll() {
                 mytext+= ', gusts ' + ((wgust < 1.0) ? 'calm' :  '@ ' + String.format(ddisp_twd, wgust) + ' ' + dMetric) + '<br>'
                 mytext+= 'Bar: ' + String.format(ddisp_p, getDataValue('pressure').toBigDecimal()) + ' ' + pMetric
                 mytext+= ' | Hum: ' + getDataValue('humidity') + '%  ' + ' | Precip: ' + (getDataValue('rainToday').toBigDecimal() > 0 ? String.format(ddisp_r, getDataValue('rainToday').toBigDecimal()) + ' ' + rMetric : '') + '<br>'
-                mytext+= 'Sunrise: ' + getDataValue('localSunrise') + ' | Sunset:' + getDataValue('localSunset') + ' |  Updated:' + getDataValue('Summary_last_poll_time')
+                mytext+= 'Sunrise: ' + getDataValue('localSunrise') + ' | Sunset:' + getDataValue('localSunset') + ' |  Updated:' + Summary_last_poll_time
                 if(mytext.length() > 1024) {
                     LOGWARN('myTile exceeds 1,024 characters (' + mytext.length() + ') ... truncating.')
                 }
