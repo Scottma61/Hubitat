@@ -1,10 +1,10 @@
 {
   "packageName": "OpenWeatherMap-NWS Alerts Weather Driver",
   "author": "Matthew Scott",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "minimumHEVersion": "2.1.9",
-  "dateReleased": "2019-05-07",
-  "releaseNotes": "Improved Alert handeling for dashboard tiles, various bug fixes",
+  "dateReleased": "2019-06-06",
+  "releaseNotes": "Bug fix to exclude minutely and hourly data in poll.",
   "communityLink": "https://community.hubitat.com/t/openweathermap-nws-alerts-weather-driver/38249",
   "documentationLink": "https://github.com/HubitatCommunity/OpenWeatherMap-NWS-Alerts-Weather-Driver/wiki/OpenWeatherMap-NWS-Alerts-Weather-Driver-wiki!",
   "drivers": [
