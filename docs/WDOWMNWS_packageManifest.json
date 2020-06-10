@@ -4,7 +4,7 @@
   "version": "0.0.5",
   "minimumHEVersion": "2.1.9",
   "dateReleased": "2019-05-07",
-  "releaseNotes": "Improved Alert handeling for dashboard tiles, various bug fixes",
+  "releaseNotes": "Improved Alert handeling for dashboard tiles, various bug fixes.  PLEASE NOTE: after any update of the driver code, even if you use Hubitat Package Manager, you should open the virtual device, click 'Save Device', then click 'Save Preferences'.",
   "communityLink": "https://community.hubitat.com/t/release-weather-display-with-owm-nws-alerts-forecast-driver/38557",
   "documentationLink": "https://github.com/HubitatCommunity/Weather-Display-With-OWM-NWS-Alerts-Forecast-Driver/wiki",
   "drivers": [
