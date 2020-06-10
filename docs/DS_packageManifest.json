@@ -4,6 +4,7 @@
   "version": "1.4.1",
   "minimumHEVersion": "2.1.9",
   "dateReleased": "2019-04-20",
+  "releaseNotes": "Bug fixes.  PLEASE NOTE: after any update of the driver code, even if you use Hubitat Package Manager, you should open the virtual device, click 'Save Device', then click 'Save Preferences'.",
   "communityLink": "https://community.hubitat.com/t/release-darksky-net-weather-driver-no-pws-required/22699",
   "documentationLink":"https://github.com/HubitatCommunity/DarkSky.net-Weather-Driver/wiki/Welcome-to-the-DarkSky.net-Weather-Driver-wiki!",
   "drivers": [
