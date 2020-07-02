@@ -1,10 +1,10 @@
 {
   "packageName": "OpenWeatherMap-NWS Alerts Weather Driver",
   "author": "Matthew Scott",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "minimumHEVersion": "2.1.9",
-  "dateReleased": "2019-06-06",
-  "releaseNotes": "Bug fix to exclude minutely and hourly data in poll.  PLEASE NOTE : after any update of the driver code, even if you use Hubitat Package Manager, you should open the virtual device, click 'Save Device', then click 'Save Preferences'.",
+  "dateReleased": "2019-07-02",
+  "releaseNotes": "Bug fix sync MyTile and weatherSummary tiles upon alert update.  PLEASE NOTE : after any update of the driver code, even if you use Hubitat Package Manager, you should open the virtual device, click 'Save Device', then click 'Save Preferences'.",
   "communityLink": "https://community.hubitat.com/t/openweathermap-nws-alerts-weather-driver/38249",
   "documentationLink": "https://github.com/HubitatCommunity/OpenWeatherMap-NWS-Alerts-Weather-Driver/wiki/OpenWeatherMap-NWS-Alerts-Weather-Driver-wiki!",
   "drivers": [
