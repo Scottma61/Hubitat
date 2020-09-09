@@ -1,10 +1,10 @@
 {
   "packageName": "Weather-Display With OWM-NWS Alerts Forecast Driver",
   "author": "Matthew Scott",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "minimumHEVersion": "2.1.9",
   "dateReleased": "2019-09-08",
-  "releaseNotes": "Removed 'certainty' from weather.gov alert poll.  PLEASE NOTE: after any update of the driver code, even if you use Hubitat Package Manager, you should open the virtual device, click 'Save Device', then click 'Save Preferences'.",
+  "releaseNotes": "Restoring 'certainty' to the weather.gov alert poll.  The is a known issue with the weather.gov API right now.  See the community lik for more info.  PLEASE NOTE: after any update of the driver code, even if you use Hubitat Package Manager, you should open the virtual device, click 'Save Device', then click 'Save Preferences'.",
   "communityLink": "https://community.hubitat.com/t/release-weather-display-with-owm-nws-alerts-forecast-driver/38557",
   "documentationLink": "https://github.com/HubitatCommunity/Weather-Display-With-OWM-NWS-Alerts-Forecast-Driver/wiki",
   "drivers": [
