@@ -1,10 +1,10 @@
 {
   "packageName": "OpenWeatherMap-NWS Alerts Weather Driver",
   "author": "Matthew Scott",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "minimumHEVersion": "2.1.9",
-  "dateReleased": "2019-09-08",
-  "releaseNotes": "Restoring 'certainty' to the weather.gov alert poll.  The is a known issue with the weather.gov API right now.  See the community lik for more info.  PLEASE NOTE : after any update of the driver code, even if you use Hubitat Package Manager, you should open the virtual device, click 'Save Device', then click 'Save Preferences'.",
+  "dateReleased": "2019-09-12",
+  "releaseNotes": "Remove most DB accesses and string cleanup (by @nh.schottfam)  Redesigned the threedayfcstTile.  There is a known issue with the weather.gov API right now.  See the community lik for more info.  PLEASE NOTE : after any update of the driver code, even if you use Hubitat Package Manager, you should open the virtual device, click 'Save Device', then click 'Save Preferences'.",
   "communityLink": "https://community.hubitat.com/t/openweathermap-nws-alerts-weather-driver/38249",
   "documentationLink": "https://github.com/HubitatCommunity/OpenWeatherMap-NWS-Alerts-Weather-Driver/wiki/OpenWeatherMap-NWS-Alerts-Weather-Driver-wiki!",
   "drivers": [
