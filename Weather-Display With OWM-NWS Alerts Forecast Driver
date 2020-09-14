@@ -1136,7 +1136,7 @@ void PostPoll() {
 			Summary_vis = sBLK
 			mtprecip = 'N/A'
 		}
-		SummaryMessage(summaryType, Summary_last_poll_date, Summary_last_poll_time, Summary_forecastTemp, Summary_precip, Summary_vis)
+		SummaryMessage(summaryType, Summary_last_poll_date, myGetData(sSUMLST), Summary_forecastTemp, Summary_precip, Summary_vis)
 	}
 //  >>>>>>>>>> End Built Weather Summary text <<<<<<<<<<
 //    https://tinyurl.com/h7pp5yn points to https://openweathermap.org/weathermap
