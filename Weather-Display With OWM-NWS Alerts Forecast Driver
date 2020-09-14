@@ -798,7 +798,7 @@ void alertErr(String msg){
 	myUpdData('alertFails', (myGetData('alertFails').toInteger() + 1).toString())
        	if(myGetData('alertFails').toInteger() < 3) {
        		runIn(5, pollAlerts)
-		log.debug('NWS Alert Data Poll Failed, Will try again in 5 seconds.')
+		LOGINFO('NWS Alert Data Poll Failed, Will try again in 5 seconds.')
 	} else {
 		clearAlerts()
 		myUpdData('alert', 'Weather alerts are not available')
