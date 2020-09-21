@@ -1,10 +1,10 @@
 {
   "packageName": "OpenWeatherMap-NWS Alerts Weather Driver",
   "author": "Matthew Scott",
-  "version": "0.1.9",
+  "version": "0.2.0",
   "minimumHEVersion": "2.1.9",
-  "dateReleased": "2019-09-16",
-  "releaseNotes": "Removing 'severity' and 'certainty' restrictions from alerts poll.",
+  "dateReleased": "2019-09-21",
+  "releaseNotes": "Added forecast High/Low temp attributes for tomorrow and day-after-tomorrow.",
   "communityLink": "https://community.hubitat.com/t/openweathermap-nws-alerts-weather-driver/38249",
   "documentationLink": "https://github.com/HubitatCommunity/OpenWeatherMap-NWS-Alerts-Weather-Driver/wiki/OpenWeatherMap-NWS-Alerts-Weather-Driver-wiki!",
   "drivers": [
