@@ -58,9 +58,10 @@
 	on an 'AS IS' BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
 	for the specific language governing permissions and limitations under the License.
 
-	Last Update 09/16/2020
+	Last Update 09/21/2020
 	{ Left room below to document version changes...}
 
+   V0.1.3   Added forecast High/Low temp attributes for tomorrow and day-after-tomorrow                         - 09/21/2020
    V0.1.2   Removing 'severity' and 'certainty' restrictions from alerts poll                                   - 09/16/2020
    V0.1.1   Re-worked Alerts to not be dependent on api.weather.gov returning a valid response code             - 09/13/2020
    V0.1.0   Remove most DB accesses and string cleanup (by @nh.schottfam)                                       - 09/12/2020
@@ -87,7 +88,7 @@ The way the 'optional' attributes work:
 	available in the dashboard is to delete the virtual device and create a new one AND DO NOT SELECT the
 	attribute you do not want to show.
 */
-public static String version()      {  return '0.1.2'  }
+public static String version()      {  return '0.1.3'  }
 import groovy.transform.Field
 
 metadata {
@@ -134,7 +135,11 @@ metadata {
 
 //fcstHighLow
         attribute 'forecastHigh', 'number'
+        attribute 'forecastHigh+1', 'number'
+        attribute 'forecastHigh+2', 'number'
         attribute 'forecastLow', 'number'
+        attribute 'forecastLow+1', 'number'
+        attribute 'forecastLow+2', 'number'
 
 // controlled with localSunrise
         attribute 'tw_begin', 'string'
@@ -613,7 +618,7 @@ void pollOWMHandler(resp, data) {
             myUpdData('Precip1', (Math.round((myGetData(sRMETR) == 'in' ? t_p1 * 0.03937008 : t_p1) * mult_r) / mult_r).toString())
             myUpdData('Precip2', (Math.round((myGetData(sRMETR) == 'in' ? t_p2 * 0.03937008 : t_p2) * mult_r) / mult_r).toString())
         }
-        if(owmDaily && threedayTilePublish) {
+        if(owmDaily && (threedayTilePublish || fcstHighLowPublish)) {
             myUpdData('day1', owmDaily[1]?.dt==null ? sBLK : new Date(owmDaily[1].dt * 1000L).format('EEEE'))
             myUpdData('day2', owmDaily[2]?.dt==null ? sBLK : new Date(owmDaily[2].dt * 1000L).format('EEEE'))
 
@@ -1086,7 +1091,11 @@ void PostPoll() {
     sendEventPublish(name: 'forecast_text', value: myGetData('forecast_text'))
     if(fcstHighLowPublish){ // don't bother setting these values if it's not enabled
         sendEvent(name: 'forecastHigh', value: Math.round(myGetData('forecastHigh').toBigDecimal() * mult_twd) / mult_twd, unit: myGetData(sTMETR))
+        sendEvent(name: 'forecastHigh+1', value: Math.round(myGetData('forecastHigh1').toBigDecimal() * mult_twd) / mult_twd, unit: myGetData(sTMETR))
+        sendEvent(name: 'forecastHigh+2', value: Math.round(myGetData('forecastHigh2').toBigDecimal() * mult_twd) / mult_twd, unit: myGetData(sTMETR))
     	sendEvent(name: 'forecastLow', value: Math.round(myGetData('forecastLow').toBigDecimal() * mult_twd) / mult_twd, unit: myGetData(sTMETR))
+        sendEvent(name: 'forecastLow+1', value: Math.round(myGetData('forecastLow1').toBigDecimal() * mult_twd) / mult_twd, unit: myGetData(sTMETR))
+        sendEvent(name: 'forecastLow+2', value: Math.round(myGetData('forecastLow2').toBigDecimal() * mult_twd) / mult_twd, unit: myGetData(sTMETR))
     }
     sendEventPublish(name: 'illuminated', value: myGetData('illuminated') + ' lx')
     sendEventPublish(name: 'is_day', value: myGetData('is_day'))
