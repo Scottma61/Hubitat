@@ -1,10 +1,10 @@
 {
   "packageName": "OpenWeatherMap-NWS Alerts Weather Driver",
   "author": "Matthew Scott",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "minimumHEVersion": "2.1.9",
-  "dateReleased": "2019-09-22",
-  "releaseNotes": "Added forecast icon url attributes for tomorrow and day-after-tomorrow.",
+  "dateReleased": "2019-09-23",
+  "releaseNotes": "Removing 'urgency' restrictions from alerts poll .",
   "communityLink": "https://community.hubitat.com/t/openweathermap-nws-alerts-weather-driver/38249",
   "documentationLink": "https://github.com/HubitatCommunity/OpenWeatherMap-NWS-Alerts-Weather-Driver/wiki/OpenWeatherMap-NWS-Alerts-Weather-Driver-wiki!",
   "drivers": [
