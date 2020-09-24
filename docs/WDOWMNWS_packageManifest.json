@@ -1,10 +1,10 @@
 {
   "packageName": "Weather-Display With OWM-NWS Alerts Forecast Driver",
   "author": "Matthew Scott",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "minimumHEVersion": "2.1.9",
-  "dateReleased": "2019-09-21",
-  "releaseNotes": "Removing 'urgency' restrictions from alerts poll.",
+  "dateReleased": "2019-09-24",
+  "releaseNotes": "More string constant optimizations, and removal of white space characters (by @nh.schottfam)",
   "communityLink": "https://community.hubitat.com/t/release-weather-display-with-owm-nws-alerts-forecast-driver/38557",
   "documentationLink": "https://github.com/HubitatCommunity/Weather-Display-With-OWM-NWS-Alerts-Forecast-Driver/wiki",
   "drivers": [
