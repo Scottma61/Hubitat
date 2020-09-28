@@ -1,10 +1,10 @@
 {
   "packageName": "Weather-Display With OWM-NWS Alerts Forecast Driver",
   "author": "Matthew Scott",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "minimumHEVersion": "2.1.9",
   "dateReleased": "2019-09-27",
-  "releaseNotes": "Fix to allow for use of multiple virtual devices, More string constant optimizations (by @nh.schottfam).",
+  "releaseNotes": "Bug fix preventing polling I introduced in V0.1.7.",
   "communityLink": "https://community.hubitat.com/t/release-weather-display-with-owm-nws-alerts-forecast-driver/38557",
   "documentationLink": "https://github.com/HubitatCommunity/Weather-Display-With-OWM-NWS-Alerts-Forecast-Driver/wiki",
   "drivers": [
