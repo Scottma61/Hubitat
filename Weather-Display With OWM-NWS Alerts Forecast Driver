@@ -61,6 +61,7 @@
 	Last Update 09/27/2020
 	{ Left room below to document version changes...}
 
+	V0.1.8	09/24/2020	Bug fix preventing polling I introduced in V0.1.7
 	V0.1.7	09/24/2020	Fix to allow for use of multiple virtual devices, More string constant optimizations (by @nh.schottfam)
 	V0.1.6	09/24/2020	More string constant optimizations, and removal of white space characters (by @nh.schottfam)
 	V0.1.5	09/23/2020	Removing 'urgency' restrictions from alerts poll
@@ -92,7 +93,7 @@ The way the 'optional' attributes work:
 	available in the dashboard is to delete the virtual device and create a new one AND DO NOT SELECT the
 	attribute you do not want to show.
 */
-public static String version()	  {  return '0.1.7'  }
+public static String version()	  {  return '0.1.8'  }
 import groovy.transform.Field
 
 metadata {
@@ -843,67 +844,67 @@ void alertErr(String msg){
 
 // <<<<<<<<<< Begin NWS Active Alert Poll Routines >>>>>>>>>>
 void pollAlerts() {
-	if(ifreInstalled()) { updated(); return }
-	if(myGetData('alertFails')==sNULL) {myUpdData('alertFails',sZERO)}
-	Integer pollTimeout = settings.pollIntervalStation == '1 Minute' ? 15 : 30
-	Map result = null
-/*  for testing weather alerts in a different area
-	altLat = 30.6941667
-	altLon = -88.0430556 
+    if(ifreInstalled()) { updated(); return }
+    if(myGetData('alertFails')==sNULL) {myUpdData('alertFails',sZERO)}
+    Integer pollTimeout = settings.pollIntervalStation == '1 Minute' ? 15 : 30
+    Map result = null
+/*for testing weather alerts in a different area
+    altLat = 47.126230
+    altLon = -88.602726
 */
-	Map ParamsAlerts = [ uri: 'https://api.weather.gov/alerts/active?status=actual&message_type=alert,update&point=' + altLat + sCOMMA + altLon, // + '&urgency=unknown,future,expected,immediate&severity=unknown,moderate,severe,extreme&certainty=unknown,possible,likely,observed',
-					requestContentType:'application/json',
-					contentType:'application/json',
-					timeout: pollTimeout
-				   ]
-	LOGINFO('Poll api.weather.gov/alerts/active: ' + ParamsAlerts)
+    Map ParamsAlerts = [ uri: 'https://api.weather.gov/alerts/active?status=actual&message_type=alert,update&point=' + altLat + sCOMMA + altLon, // + '&urgency=unknown,future,expected,immediate&severity=unknown,moderate,severe,extreme&certainty=unknown,possible,likely,observed',
+		    requestContentType:'application/json',
+		    contentType:'application/json',
+		    timeout: pollTimeout
+		   ]
+    LOGINFO('Poll api.weather.gov/alerts/active: ' + ParamsAlerts)
+    try {
+	httpGet(ParamsAlerts) { response -> result = response.data }
+    }
+	catch (SocketTimeoutException e) {
+	    alertErr('NWS Alerts - Connection to weather.gov API timed out. This is a NWS API website issue, the website is busy.')
+	}
+
+	catch (e) {
+	    alertErr('NWS Alerts - Connection to weather.gov API failed. This is a NWS API website issue, the website is down or not responding as expected.')
+	}
+
+    if(result!=null) {
+//    if(response?.status == 200) {
+	String curAl = result.features[0]?.properties?.event==null ? sNULL : result.features[0].properties.event.replaceAll('[{}\\[\\]]', sBLK).split(/,/)[0]
+	LOGINFO('NWS Alert - response: ' + result + '; Alert: ' + curAl)
+	myUpdData('alertFails', sZERO)
 	try {
-		httpGet(ParamsAlerts) { response -> result = response.data }
-	}
-		catch (SocketTimeoutException e) {
-			alertErr('NWS Alerts - Connection to weather.gov API timed out. This is a NWS API website issue, the website is busy.')
-		}
-	
-		catch (e) {
-			alertErr('NWS Alerts - Connection to weather.gov API failed. This is a NWS API website issue, the website is down or not responding as expected.')
-		}
+	    if(curAl==sNULL) {
+		clearAlerts()
+	    } else {
+		myUpdData('noAlert',sFLS)
+		myUpdData('alert', curAl)
+		myUpdData('alertTileLink', '<a style="font-style:italic;color:red" href="https://forecast.weather.gov/MapClick.php?lat=' + altLat + '&lon=' + altLon +'" target=\'_blank\'>'+myGetData('alert')+sACB)
+		myUpdData('alertLink', '<a style="font-style:italic;color:red" href="https://forecast.weather.gov/MapClick.php?lat=' + altLat + '&lon=' + altLon + '" target=\'_blank\'>'+myGetData('alert')+sACB)
+		String al3 = '<a style="font-style:italic;color:red" href="https://forecast.weather.gov/MapClick.php?lat=' + altLat + '&lon=' + altLon + '" target="_blank">'
+		myUpdData('alertLink2', al3 + myGetData('alert')+sACB)
+		myUpdData('alertLink3', '<a style="font-style:italic;color:red" target=\'_blank\'>' + myGetData('alert')+sACB)
+		myUpdData('possAlert', sTRU)
+	    }
+	    myUpdData('alertFails', sZERO)
 
-	if(result!=null) {
-//	if(response?.status == 200) {
-		String curAl = result.features[0]?.properties?.event==null ? null: result.features[0].properties.event.replaceAll('[{}\\[\\]]', sBLK).split(/,/)[0]
-		LOGINFO('NWS Alert - response: ' + result + '; Alert: ' + curAl)
-		myUpdData('alertFails', sZERO)
-		try {
-			if(curAl==null) {
-				clearAlerts()
-			} else {
-				myUpdData('noAlert',sFLS)
-				myUpdData('alert', curAl)
-				myUpdData('alertTileLink', '<a style="font-style:italic;color:red" href="https://forecast.weather.gov/MapClick.php?lat=' + altLat + '&lon=' + altLon +'" target=\'_blank\'>'+myGetData('alert')+sACB)
-				myUpdData('alertLink', '<a style="font-style:italic;color:red" href="https://forecast.weather.gov/MapClick.php?lat=' + altLat + '&lon=' + altLon + '" target=\'_blank\'>'+myGetData('alert')+sACB)
-				String al3 = '<a style="font-style:italic;color:red" href="https://forecast.weather.gov/MapClick.php?lat=' + altLat + '&lon=' + altLon + '" target="_blank">'
-				myUpdData('alertLink2', al3 + myGetData('alert')+sACB)
-				myUpdData('alertLink3', '<a style="font-style:italic;color:red" target=\'_blank\'>' + myGetData('alert')+sACB)
-				myUpdData('possAlert', sTRU)
-			}
-			myUpdData('alertFails', sZERO)
-			
-		} catch (e) {
-			alertErr('NWS Alert Poll Failed Three Times. This is a NWS API website issue.')
-		}
-	} else {
-		alertErr('NWS Alert Poll Failed Three Times. This is a NWS API website issue.')
+	} catch (e) {
+	    alertErr('NWS Alert Poll Failed Three Times. This is a NWS API website issue.')
 	}
+    } else {
+	alertErr('NWS Alert Poll Failed Three Times. This is a NWS API website issue.')
+    }
 
-	
-	//  <<<<<<<<<< Begin Built alertTile >>>>>>>>>>
-	String alertTile = 'Weather Alerts for ' + '<a href="https://forecast.weather.gov/MapClick.php?lat=' + altLat + '&lon=' + altLon + '" target="_blank">' + myGetData('city') + '</a><br>updated at ' + myGetData(sSUMLST) + ' on ' + myGetData('Summary_last_poll_date') + '.<br>'
-	alertTile+= myGetData('alertTileLink') + sBR
-	alertTile+= '<a href=\"https://forecast.weather.gov/MapClick.php?lat=' + altLat + '&lon=' + altLon + '\" target=\'_blank\'><img src=' + myGetData(sICON) + 'NWS_240px.png' + ' style=\"height:2.0em;display:inline;\"></a>'
-	myUpdData('alertTile', alertTile)
-	sendEvent(name: 'alert', value: myGetData('alert'))
-	sendEvent(name: 'alertTile', value: myGetData('alertTile'))
-	//  >>>>>>>>>> End Built alertTile <<<<<<<<<<   
+
+    //  <<<<<<<<<< Begin Built alertTile >>>>>>>>>>
+    String alertTile = 'Weather Alerts for ' + '<a href="https://forecast.weather.gov/MapClick.php?lat=' + altLat + '&lon=' + altLon + '" target="_blank">' + myGetData('city') + '</a><br>updated at ' + myGetData(sSUMLST) + ' on ' + myGetData('Summary_last_poll_date') + '.<br>'
+    alertTile+= myGetData('alertTileLink') + sBR
+    alertTile+= '<a href=\"https://forecast.weather.gov/MapClick.php?lat=' + altLat + '&lon=' + altLon + '\" target=\'_blank\'><img src=' + myGetData(sICON) + 'NWS_240px.png' + ' style=\"height:2.0em;display:inline;\"></a>'
+    myUpdData('alertTile', alertTile)
+    sendEvent(name: 'alert', value: myGetData('alert'))
+    sendEvent(name: 'alertTile', value: myGetData('alertTile'))
+    //  >>>>>>>>>> End Built alertTile <<<<<<<<<<
 }
 // >>>>>>>>>> End NWS Active Alert Poll Routines <<<<<<<<<<
 
@@ -1374,14 +1375,16 @@ void installed() {
 
 @Field static Map<String,String> verFLD=[:]
 
-static Boolean ifreInstalled(){
-	if(verFLD!=version()) return true
+Boolean ifreInstalled(){
+	String mc=device.id.toString()
+	if(verFLD[mc]!=version()) return true
 	return false
 }
 
 void updated()   {
 	LOGINFO("running updated()")
 	unschedule()
+	String mc=device.id.toString()
 	verFLD[mc]=version()
 	initMe()
 	updateCheck()
