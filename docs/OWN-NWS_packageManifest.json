@@ -1,10 +1,10 @@
 {
   "packageName": "OpenWeatherMap-NWS Alerts Weather Driver",
   "author": "Matthew Scott",
-  "version": "0.2.6",
+  "version": "0.2.7",
   "minimumHEVersion": "2.1.9",
-  "dateReleased": "2019-10-07",
-  "releaseNotes": "Change to use asynchttp for NWS alerts (by @nh.schottfam).",
+  "dateReleased": "2019-10-19",
+  "releaseNotes": "Added forecast 'Morn', 'Day', 'Eve' and 'Night' temperatures for current day and tomorrow.",
   "communityLink": "https://community.hubitat.com/t/openweathermap-nws-alerts-weather-driver/38249",
   "documentationLink": "https://github.com/HubitatCommunity/OpenWeatherMap-NWS-Alerts-Weather-Driver/wiki/OpenWeatherMap-NWS-Alerts-Weather-Driver-wiki!",
   "drivers": [
