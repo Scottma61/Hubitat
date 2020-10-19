@@ -7,7 +7,7 @@
  	"driver": {
 		"DarkSky.net Weather Driver":  {"ver": "NLS", "updated": "09/14/2020"},
 		"Weather-Display With DarkSky.net Forecast Driver":  {"ver": "NLS", "updated": "09/14/2020"},
-		"OpenWeatherMap-NWS Alerts Weather Driver":  {"ver": "0.2.6", "updated": "10/07/2020"},
-		"Weather-Display With OWM-NWS Alerts Forecast Driver":  {"ver": "0.2.0", "updated": "10/07/2020"}
+		"OpenWeatherMap-NWS Alerts Weather Driver":  {"ver": "0.2.7", "updated": "10/19/2020"},
+		"Weather-Display With OWM-NWS Alerts Forecast Driver":  {"ver": "0.2.1", "updated": "10/19/2020"}
 	}
 }
