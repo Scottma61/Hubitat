@@ -7,6 +7,10 @@
   "releaseNotes": "Better OWM URLs in the dashboard tiles.",
   "communityLink": "https://community.hubitat.com/t/openweathermap-nws-alerts-weather-driver/38249",
   "documentationLink": "https://github.com/HubitatCommunity/OpenWeatherMap-NWS-Alerts-Weather-Driver/wiki/OpenWeatherMap-NWS-Alerts-Weather-Driver-wiki!",
+   "tags": [
+        "Integrations",
+        "Weather"
+      ]
   "drivers": [
     {
       "id": "51f62ae2-2e1b-466a-88f3-2c1780a2037d",
