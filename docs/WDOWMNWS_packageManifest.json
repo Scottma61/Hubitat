@@ -1,10 +1,10 @@
 {
   "packageName": "Weather-Display With OWM-Alerts Forecast Driver",
   "author": "Matthew Scott",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "minimumHEVersion": "2.1.9",
   "dateReleased": "2019-10-21",
-  "releaseNotes": "Better OWM URLs in the dashboard tiles.",
+  "releaseNotes": "Improved OWM URLs in the dashboard tiles to pull in location's city code (if available).",
   "communityLink": "https://community.hubitat.com/t/release-weather-display-with-owm-nws-alerts-forecast-driver/38557",
   "documentationLink": "https://github.com/HubitatCommunity/Weather-Display-With-OWM-NWS-Alerts-Forecast-Driver/wiki",
   "drivers": [
