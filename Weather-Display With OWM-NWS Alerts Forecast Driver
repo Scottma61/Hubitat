@@ -61,6 +61,7 @@
 	Last Update 10/20/2020
 { Left room below to document version changes...}
 
+	V0.2.3	10/20/2020	Correcting some Tile displays from the last update.
 	V0.2.2	10/20/2020	Pulling Alerts from OWM instead of NWS.
 	V0.2.1	10/19/2020	Added forecast 'Morn', 'Day', 'Eve' and 'Night' temperatures for current day and tomorrow.
 	V0.2.0	10/07/2020	Change to use asynchttp for NWS alerts (by @nh.schottfam).
@@ -97,7 +98,7 @@ The way the 'optional' attributes work:
 	available in the dashboard is to delete the virtual device and create a new one AND DO NOT SELECT the
 	attribute you do not want to show.
 */
-public static String version()	  {  return '0.2.2'  }
+public static String version()	  {  return '0.2.3'  }
 import groovy.transform.Field
 
 metadata {
@@ -834,31 +835,31 @@ void pollOWMHandler(resp, data) {
 // >>>>>>>>>> End Process Only If feelsLike from WD Is NOT Selected  <<<<<<<<<<
 		if(alertPublish) {
 			if(!owm?.alerts) {
-	    		clearAlerts()
+				clearAlerts()
 			} else {			
 				String curAl = owm?.alerts[0]?.event==null ? 'No current weather alerts for this area' : owm?.alerts[0]?.event.replaceAll('\n', sSPC).replaceAll('[{}\\[\\]]', sBLK)
 				String curAlSender = owm?.alerts[0]?.sender_name==null ? sNULL : owm?.alerts[0]?.sender_name.replaceAll('\n',sSPC).replaceAll('[{}\\[\\]]', sBLK)
 				String curAlDescr = owm?.alerts[0]?.description==null ? sNULL : owm?.alerts[0]?.description.replaceAll('\n',sSPC).replaceAll('[{}\\[\\]]', sBLK).take(1024)
 				LOGINFO('OWM Weather Alert: ' + curAl + '; Description: ' + curAlDescr.length() + ' ' +curAlDescr)
-		    	if(curAl=='No current weather alerts for this area') {
+				if(curAl=='No current weather alerts for this area') {
 					clearAlerts()
-	    		} else {
+				} else {
 					myUpdData('noAlert',sFLS)
 					myUpdData('alert', curAl)
 					myUpdData('alertDescr', curAlDescr)
 					myUpdData('alertSender', curAlSender)
 					//    https://tinyurl.com/h7pp5yn points to https://openweathermap.org/weathermap
-					String al3 = '<a style="font-style:italic;color:red" href="https://tinyurl.com/h7pp5yn?lat=' + (String)altLat + '&lon=' + (String)altLon + '&zoom=12" target="_blank">'+myGetData('alert')+sACB+sBR
-					myUpdData('alertTileLink', al3+sIMGS + myGetData(sICON) + 'OWM.png style="height:2em"></a>')
-					myUpdData('alertLink',  al3+sIMGS + myGetData(sICON) + 'OWM.png style="height:2em"></a>')
-					myUpdData('alertLink2',  al3+sIMGS + myGetData(sICON) + 'OWM.png style="height:2em"></a>')
-					myUpdData('alertLink3', sIMGS + myGetData(sICON) + 'OWM.png style="height:2em"></a>')
+					String al3 = '<a style="font-style:italic;color:red" href="https://tinyurl.com/h7pp5yn?lat=' + (String)altLat + '&lon=' + (String)altLon + '&zoom=12" target="_blank">'
+					myUpdData('alertTileLink', al3+myGetData('alert')+sACB)
+					myUpdData('alertLink',  al3+myGetData('alert')+sACB)
+					myUpdData('alertLink2',  al3+myGetData('alert')+sACB)
+					myUpdData('alertLink3', '<a style="font-style:italic;color:red" target=\'_blank\'>' + myGetData('alert')+sACB)
 					myUpdData('possAlert', sTRU)
-		    	}
+				}
 			}
 			//  <<<<<<<<<< Begin Built alertTile >>>>>>>>>>
 			String alertTile = (myGetData('alert')== 'No current weather alerts for this area' ? 'No Weather Alerts for ' : 'Weather Alert for ') + myGetData('city') + (myGetData('alertSender')==null ? '' : ' issued by ' + myGetData('alertSender')) + ' updated at ' + myGetData(sSUMLST) + ' on ' + myGetData('Summary_last_poll_date') + '.<br>'
-			alertTile+= myGetData('alertTileLink') + sBR
+			alertTile+= myGetData('alertTileLink') + sBR + sIMGS + myGetData(sICON) + 'OWM.png style="height:2em"></a>'
 			myUpdData('alertTile', alertTile)
 			sendEvent(name: 'alert', value: myGetData('alert'))
 			sendEvent(name: 'alertDescr', value: myGetData('alertDescr'))
