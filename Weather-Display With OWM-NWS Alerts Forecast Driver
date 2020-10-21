@@ -61,6 +61,7 @@
 	Last Update 10/21/2020
 { Left room below to document version changes...}
 
+	V0.2.5	10/21/2020	Improved OWM URLs in the dashboard tiles to pull in location's city code (if available).
 	V0.2.4	10/21/2020	Better OWM URLs in the dashboard tiles.
 	V0.2.3	10/20/2020	Correcting some Tile displays from the last update.
 	V0.2.2	10/20/2020	Pulling Alerts from OWM instead of NWS.
@@ -99,7 +100,7 @@ The way the 'optional' attributes work:
 	available in the dashboard is to delete the virtual device and create a new one AND DO NOT SELECT the
 	attribute you do not want to show.
 */
-public static String version()	  {  return '0.2.4'  }
+public static String version()	  {  return '0.2.5'  }
 import groovy.transform.Field
 
 metadata {
@@ -281,11 +282,11 @@ void pollSunRiseSet() {
 }
 
 void sunRiseSetHandler(resp, data) {
-	if(ifreInstalled()) { updated(); return }
 	if(resp.getStatus() == 200 || resp.getStatus() == 207) {
 		sunRiseSet = resp.getJson().results
 		myUpdData('sunRiseSet', resp.data)
 		LOGINFO('Sunrise-Sunset Data: ' + sunRiseSet)
+		if(ifreInstalled()) { updated(); return }
 		String tfmt='yyyy-MM-dd\'T\'HH:mm:ssXXX'
 		String tfmt1='HH:mm'
 		myUpdData('riseTime', new Date().parse(tfmt, (String)sunRiseSet.sunrise).format(tfmt1, TimeZone.getDefault()))
@@ -602,9 +603,9 @@ void pollOWMHandler(resp, data) {
 		Map owm = parseJson(resp.data)
 		LOGINFO('OpenWeatherMap Data: ' + owm.toString())
 // <<<<<<<<<< Begin Setup Global Variables >>>>>>>>>>
-		fotime = new Date((Long)owm.current.dt * 1000L)
+		Date fotime = new Date((Long)owm.current.dt * 1000L)
 		myUpdData('fotime', fotime.toString())
-		futime = new Date()
+		Date futime = new Date()
 		myUpdData('futime', futime.toString())
 		myUpdData(sSUMLST, futime.format(myGetData('timeFormat'), TimeZone.getDefault()).toString())
 		myUpdData('Summary_last_poll_date', futime.format(myGetData('dateFormat'), TimeZone.getDefault()).toString())
@@ -850,7 +851,7 @@ void pollOWMHandler(resp, data) {
 					myUpdData('alertDescr', curAlDescr)
 					myUpdData('alertSender', curAlSender)
 					//    https://tinyurl.com/y42s2ndy points to https://openweathermap.org/city/
-					String al3 = '<a style="font-style:italic;color:red" href="https://tinyurl.com/y42s2ndy" target="_blank">'
+					String al3 = '<a style="font-style:italic;color:red" href="https://tinyurl.com/y42s2ndy/' + myGetData('OWML') + '" target="_blank">'
 					myUpdData('alertTileLink', al3+myGetData('alert')+sACB)
 					myUpdData('alertLink',  al3+myGetData('alert')+sACB)
 					myUpdData('alertLink2',  al3+myGetData('alert')+sACB)
@@ -898,7 +899,7 @@ void clearAlerts(){
 	myUpdData('noAlert',sTRU)
 	myUpdData('alert', 'No current weather alerts for this area')
 	//    https://tinyurl.com/y42s2ndy points to https://openweathermap.org/city/
-	String al3 = '<a style="font-style:italic;color:red" href="https://tinyurl.com/y42s2ndy" target="_blank">'
+	String al3 = '<a style="font-style:italic;color:red" href="https://tinyurl.com/y42s2ndy/' + myGetData('OWML') + '" target="_blank">'
 	myUpdData('alertTileLink', al3+myGetData('alert')+sACB)
 	myUpdData('alertLink', sAB + myGetData('condition_text') + sACB)
 	myUpdData('alertLink2', sAB + myGetData('condition_text') + sACB)
@@ -1189,8 +1190,8 @@ void PostPoll() {
 	}
 //  >>>>>>>>>> End Built Weather Summary text <<<<<<<<<<
 //    https://tinyurl.com/y42s2ndy points to https://openweathermap.org/city/
-	String OWMIcon = '<a href="https://tinyurl.com/y42s2ndy" target="_blank">' + sIMGS + myGetData(sICON) + 'OWM.png style="height:2em"></a>'
-	String OWMIcon2 = '<a href="https://tinyurl.com/y42s2ndy" target="_blank">' + sIMGS + myGetData(sICON) + 'OWM.png style="height:2em"></a>'
+	String OWMIcon = '<a href="https://tinyurl.com/y42s2ndy/' + myGetData('OWML') + '" target="_blank">' + sIMGS + myGetData(sICON) + 'OWM.png style="height:2em"></a>'
+	String OWMIcon2 = '<a href="https://tinyurl.com/y42s2ndy/' + myGetData('OWML') + '" target="_blank">' + sIMGS + myGetData(sICON) + 'OWM.png style="height:2em"></a>'
 	String OWMText = '<a href="https://openweathermap.org" target="_blank">OpenWeatherMap.org</a>'
 //  <<<<<<<<<< Begin Built 3dayfcstTile >>>>>>>>>>
 	if(threedayTilePublish) {
@@ -1271,7 +1272,7 @@ void PostPoll() {
 			wgust = myGetData('wind_gust').toBigDecimal()
 		}
 //    https://tinyurl.com/y42s2ndy points to https://openweathermap.org/city/
-		String mytextb = '<span style="display:inline"><a href="https://tinyurl.com/y42s2ndy" target="_blank">' + myGetData('city') + '</a><br>'
+		String mytextb = '<span style="display:inline"><a href="https://tinyurl.com/y42s2ndy/' + myGetData('OWML') + '" target="_blank">' + myGetData('city') + '</a><br>'
 		String mytextm1 = myGetData('condition_text') + (noAlert ? sBLK : ' | ') + alertStyleOpen + (noAlert ? sBLK : myGetData('alertLink')) + alertStyleClose
 		String mytextm2 = myGetData('condition_text') + (noAlert ? sBLK : ' | ') + alertStyleOpen + (noAlert ? sBLK : myGetData('alertLink2')) + alertStyleClose
 		String mytexte = String.format(myGetData('ddisp_twd'), myGetData(sTEMP).toBigDecimal()) + myGetData(sTMETR) + sIMGS + myGetData('condition_icon_url') + iconClose + ' style="height:2.2em;display:inline">'
@@ -1479,7 +1480,25 @@ void initMe() {
 	Boolean sourceIllumination = (settings.sourceIllumination ?: false)
 	Boolean sourceUV = (settings.sourceUV ?: false)
 	Boolean sourceWind = (settings.sourceWind ?: false)
+	ParamsOWMl = [ uri: 'https://api.openweathermap.org/data/2.5/find?lat=' + (String)altLat + '&lon=' + (String)altLon + '&cnt=1&appid=' + (String)apiKey ]
+	LOGINFO('Poll OpenWeatherMap.org Location: ' + ParamsOWMl)
+	asynchttpGet('pollOWMlHandler', ParamsOWMl)
 }
+
+void pollOWMlHandler(resp, data) {
+	LOGINFO('Polling OpenWeatherMap.org Location')
+	if(resp.getStatus() != 200 && resp.getStatus() != 207) {
+		LOGWARN('Calling https://api.openweathermap.org/data/2.5/find?lat=' + (String)altLat + '&lon=' + (String)altLon + '&cnt=1&appid=' + (String)apiKey)
+		LOGWARN(resp.getStatus() + sCOLON + resp.getErrorMessage())
+		myUpdData('OWML',sSPC)
+	} else {
+		Map owml = parseJson(resp.data)
+		LOGINFO('OpenWeatherMap Location Data: ' + owml.toString())
+		myUpdData('OWML',(owml?.list[0]?.id==null ? sSPC : owml?.list[0]?.id.toString()))
+		LOGINFO('OWM Location City Code: ' + myGetData('OWML'))
+	}
+}
+
 
 void initialize_poll() {
 	unschedule(pollWD)
@@ -1692,7 +1711,7 @@ def estimateLux(Integer condition_id, Integer cloud)	 {
 	Boolean aFCC = true
 	Double l
 	String bwn
-	def sunRiseSet			= parseJson(myGetData('sunRiseSet')).results
+	Map sunRiseSet			= parseJson(myGetData('sunRiseSet')).results
 	def tZ					= TimeZone.getDefault() //TimeZone.getTimeZone(tz_id)
 	String lT				 = new Date().format('yyyy-MM-dd\'T\'HH:mm:ssXXX', tZ)
 	Long localeMillis		 = getEpoch(lT)
@@ -1800,7 +1819,7 @@ def estimateLux(Integer condition_id, Integer cloud)	 {
 
 private Long getEpoch (String aTime) {
 	def tZ = TimeZone.getDefault()
-	def localeTime = new Date().parse('yyyy-MM-dd\'T\'HH:mm:ssXXX', aTime, tZ)
+	Date localeTime = new Date().parse('yyyy-MM-dd\'T\'HH:mm:ssXXX', aTime, tZ)
 	Long localeMillis = localeTime.getTime()
 	return (localeMillis)
 }
@@ -1997,7 +2016,7 @@ void sendEventPublish(evt)	{
 ]
 	state.InternalName = 'Weather-Display With OWM-NWS Alerts Forecast Driver'
 // Check Version   ***** with great thanks and acknowledgment to Cobra (CobraVmax) for his original code ****
-def updateCheck()
+void updateCheck()
 {
 	def paramsUD = [uri: 'https://raw.githubusercontent.com/Scottma61/Hubitat/master/docs/version2.json'] //https://hubitatcommunity.github.io/???/version2.json"]
 	
@@ -2010,7 +2029,7 @@ void updateCheckHandler(resp, data) {
 	Boolean descTextEnable = settings.logSet ?: false
 
 	if (resp.getStatus() == 200 || resp.getStatus() == 207) {
-		def respUD = parseJson(resp.data)
+		Map respUD = parseJson(resp.data)
 		// log.warn ' Version Checking - Response Data: $respUD'   // Troubleshooting Debug Code - Uncommenting this line should show the JSON response from your webserver
 		state.Copyright = respUD.copyright
 		// uses reformattted 'version2.json'
