@@ -58,9 +58,10 @@
 	on an 'AS IS' BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
 	for the specific language governing permissions and limitations under the License.
 
-	Last Update 10/20/2020
+	Last Update 10/21/2020
 { Left room below to document version changes...}
 
+	V0.2.4	10/21/2020	Better OWM URLs in the dashboard tiles.
 	V0.2.3	10/20/2020	Correcting some Tile displays from the last update.
 	V0.2.2	10/20/2020	Pulling Alerts from OWM instead of NWS.
 	V0.2.1	10/19/2020	Added forecast 'Morn', 'Day', 'Eve' and 'Night' temperatures for current day and tomorrow.
@@ -98,7 +99,7 @@ The way the 'optional' attributes work:
 	available in the dashboard is to delete the virtual device and create a new one AND DO NOT SELECT the
 	attribute you do not want to show.
 */
-public static String version()	  {  return '0.2.3'  }
+public static String version()	  {  return '0.2.4'  }
 import groovy.transform.Field
 
 metadata {
@@ -848,8 +849,8 @@ void pollOWMHandler(resp, data) {
 					myUpdData('alert', curAl)
 					myUpdData('alertDescr', curAlDescr)
 					myUpdData('alertSender', curAlSender)
-					//    https://tinyurl.com/h7pp5yn points to https://openweathermap.org/weathermap
-					String al3 = '<a style="font-style:italic;color:red" href="https://tinyurl.com/h7pp5yn?lat=' + (String)altLat + '&lon=' + (String)altLon + '&zoom=12" target="_blank">'
+					//    https://tinyurl.com/y42s2ndy points to https://openweathermap.org/city/
+					String al3 = '<a style="font-style:italic;color:red" href="https://tinyurl.com/y42s2ndy" target="_blank">'
 					myUpdData('alertTileLink', al3+myGetData('alert')+sACB)
 					myUpdData('alertLink',  al3+myGetData('alert')+sACB)
 					myUpdData('alertLink2',  al3+myGetData('alert')+sACB)
@@ -896,9 +897,9 @@ static String adjTemp(temp, Boolean isF, Integer mult_twd){
 void clearAlerts(){
 	myUpdData('noAlert',sTRU)
 	myUpdData('alert', 'No current weather alerts for this area')
-	myUpdData('alertDescr', sBLK)
-	myUpdData('alertSender', sBLK)
-	myUpdData('alertTileLink', '<a No current weather alerts for this area.'+sBR+sIMGS + myGetData(sICON) + 'OWM.png style="height:2em"></a>')
+	//    https://tinyurl.com/y42s2ndy points to https://openweathermap.org/city/
+	String al3 = '<a style="font-style:italic;color:red" href="https://tinyurl.com/y42s2ndy" target="_blank">'
+	myUpdData('alertTileLink', al3+myGetData('alert')+sACB)
 	myUpdData('alertLink', sAB + myGetData('condition_text') + sACB)
 	myUpdData('alertLink2', sAB + myGetData('condition_text') + sACB)
 	myUpdData('alertLink3', sAB + myGetData('condition_text') + sACB)
@@ -1187,9 +1188,9 @@ void PostPoll() {
 		SummaryMessage(summaryType, Summary_last_poll_date, myGetData(sSUMLST), Summary_forecastTemp, Summary_precip, Summary_vis)
 	}
 //  >>>>>>>>>> End Built Weather Summary text <<<<<<<<<<
-//	https://tinyurl.com/h7pp5yn points to https://openweathermap.org/weathermap
-	String OWMIcon = '<a href="https://tinyurl.com/h7pp5yn?lat=' + (String)altLat + '&lon=' + (String)altLon + '&zoom=12" target="_blank">' + sIMGS + myGetData(sICON) + 'OWM.png style="height:2em"></a>'
-	String OWMIcon2 = '<a href="https://openweathermap.org" target="_blank">' + sIMGS + myGetData(sICON) + 'OWM.png style="height:2em"></a>'
+//    https://tinyurl.com/y42s2ndy points to https://openweathermap.org/city/
+	String OWMIcon = '<a href="https://tinyurl.com/y42s2ndy" target="_blank">' + sIMGS + myGetData(sICON) + 'OWM.png style="height:2em"></a>'
+	String OWMIcon2 = '<a href="https://tinyurl.com/y42s2ndy" target="_blank">' + sIMGS + myGetData(sICON) + 'OWM.png style="height:2em"></a>'
 	String OWMText = '<a href="https://openweathermap.org" target="_blank">OpenWeatherMap.org</a>'
 //  <<<<<<<<<< Begin Built 3dayfcstTile >>>>>>>>>>
 	if(threedayTilePublish) {
@@ -1269,8 +1270,8 @@ void PostPoll() {
 		} else {
 			wgust = myGetData('wind_gust').toBigDecimal()
 		}
-
-		String mytextb = '<span style="display:inline"><a href="https://tinyurl.com/h7pp5yn?lat=' + (String)altLat + '&lon=' + (String)altLon + '&zoom=12" target="_blank">' + myGetData('city') + '</a><br>'
+//    https://tinyurl.com/y42s2ndy points to https://openweathermap.org/city/
+		String mytextb = '<span style="display:inline"><a href="https://tinyurl.com/y42s2ndy" target="_blank">' + myGetData('city') + '</a><br>'
 		String mytextm1 = myGetData('condition_text') + (noAlert ? sBLK : ' | ') + alertStyleOpen + (noAlert ? sBLK : myGetData('alertLink')) + alertStyleClose
 		String mytextm2 = myGetData('condition_text') + (noAlert ? sBLK : ' | ') + alertStyleOpen + (noAlert ? sBLK : myGetData('alertLink2')) + alertStyleClose
 		String mytexte = String.format(myGetData('ddisp_twd'), myGetData(sTEMP).toBigDecimal()) + myGetData(sTMETR) + sIMGS + myGetData('condition_icon_url') + iconClose + ' style="height:2.2em;display:inline">'
