@@ -7,40 +7,28 @@
       "category": "Integrations",
       "location": "https://raw.githubusercontent.com/Scottma61/Hubitat/master/docs/OWN-NWS_packageManifest.json",
       "description": "OpenWeatherMap-NWS Alert Driver",
-      "tags": [
-        "Integrations",
-        "Weather"
-      ]
+      "tags": ["Integrations" "Weather"]
     },
     {
       "name": "DarkSky.net-Weather-Driver",
       "category": "Integrations",
       "location": "https://raw.githubusercontent.com/Scottma61/Hubitat/master/docs/DS_packageManifest.json",
       "description": "DarkSky.net-Weather-Driver",
-      "tags": [
-        "Integrations",
-        "Weather"
-      ]
+      "tags": ["Integrations" "Weather"]
     },
     {
       "name": "Weather-Display With DarkSky.net Forecast Driver",
       "category": "Integrations",
       "location": "https://raw.githubusercontent.com/Scottma61/Hubitat/master/docs/WD_packageManifest.json",
       "description": "Weather-Display With DarkSky.net Forecast Driver",
-      "tags": [
-        "Integrations",
-        "Weather"
-      ]
+      "tags": ["Integrations" "Weather"]
     },
     {
       "name": "Weather-Display With OWM-NWS Alerts Forecast Driver",
       "category": "Integrations",
       "location": "https://raw.githubusercontent.com/Scottma61/Hubitat/master/docs/WDOWMNWS_packageManifest.json",
       "description": "Weather-Display With OWM-NWS Alerts Forecast Driver",
-      "tags": [
-        "Integrations",
-        "Weather"
-      ]
+      "tags": ["Integrations" "Weather"]
     }
   ]
 }
