@@ -1,10 +1,10 @@
 {
   "packageName": "OpenWeatherMap-Alerts Weather Driver",
   "author": "Matthew Scott",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "minimumHEVersion": "2.1.9",
   "dateReleased": "2019-10-21",
-  "releaseNotes": "Better OWM URLs in the dashboard tiles.",
+  "releaseNotes": "Improved OWM URLs in the dashboard tiles to pull in location's city code (if available).",
   "communityLink": "https://community.hubitat.com/t/openweathermap-nws-alerts-weather-driver/38249",
   "documentationLink": "https://github.com/HubitatCommunity/OpenWeatherMap-NWS-Alerts-Weather-Driver/wiki/OpenWeatherMap-NWS-Alerts-Weather-Driver-wiki!",
   "drivers": [
