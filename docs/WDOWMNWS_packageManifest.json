@@ -7,6 +7,10 @@
   "releaseNotes": "Better OWM URLs in the dashboard tiles.",
   "communityLink": "https://community.hubitat.com/t/release-weather-display-with-owm-nws-alerts-forecast-driver/38557",
   "documentationLink": "https://github.com/HubitatCommunity/Weather-Display-With-OWM-NWS-Alerts-Forecast-Driver/wiki",
+   "tags": [
+        "Integrations",
+        "Weather"
+      ]
   "drivers": [
     {
       "id": "4fd45ba6-b980-4e16-8314-b373a766a432",
