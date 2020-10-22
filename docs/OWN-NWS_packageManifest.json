@@ -4,7 +4,7 @@
   "version": "0.3.1",
   "minimumHEVersion": "2.1.9",
   "dateReleased": "2019-10-21",
-  "releaseNotes": "Improved OWM URLs in the dashboard tiles to pull in location's city code (if available).",
+  "releaseNotes": "Removed 'NWS' from driver name, minor bug fixes.",
   "communityLink": "https://community.hubitat.com/t/openweathermap-nws-alerts-weather-driver/38249",
   "documentationLink": "https://github.com/HubitatCommunity/OpenWeatherMap-Alerts-Weather-Driver/wiki/OpenWeatherMap-Alerts-Weather-Driver-wiki!",
   "drivers": [
