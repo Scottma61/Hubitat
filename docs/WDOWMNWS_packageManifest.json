@@ -10,7 +10,7 @@
   "drivers": [
     {
       "id": "4fd45ba6-b980-4e16-8314-b373a766a432",
-      "name": "Weather-Display With OWM-NWS Alerts Forecast Driver",
+      "name": "Weather-Display With OWM-Alerts Forecast Driver",
       "namespace": "Matthew",
       "location": "https://raw.githubusercontent.com/HubitatCommunity/Weather-Display-With-OWM-NWS-Alerts-Forecast-Driver/master/Weather-Display%20With%20OWM-NWS%20Alerts%20Forecast%20Driver.groovy",
       "required": true
