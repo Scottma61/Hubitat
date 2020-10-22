@@ -5,7 +5,7 @@
     {
       "name": "OpenWeatherMap-Alert Driver",
       "category": "Integrations",
-      "location": "https://raw.githubusercontent.com/Scottma61/Hubitat/master/docs/OWN-Alert_packageManifest.json",
+      "location": "https://raw.githubusercontent.com/Scottma61/Hubitat/master/docs/OWN-Alerts_packageManifest.json",
       "description": "OpenWeatherMap-Alert Driver",
       "tags": ["Integrations","Weather"]
     },
