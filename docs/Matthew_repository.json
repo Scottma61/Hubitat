@@ -5,7 +5,7 @@
     {
       "name": "OpenWeatherMap-Alert Driver",
       "category": "Integrations",
-      "location": "https://raw.githubusercontent.com/Scottma61/Hubitat/master/docs/OWN-NWS_packageManifest.json",
+      "location": "https://raw.githubusercontent.com/Scottma61/Hubitat/master/docs/OWN-Alert_packageManifest.json",
       "description": "OpenWeatherMap-Alert Driver",
       "tags": ["Integrations","Weather"]
     },
@@ -26,7 +26,7 @@
     {
       "name": "Weather-Display With OWM-Alerts Forecast Driver",
       "category": "Integrations",
-      "location": "https://raw.githubusercontent.com/Scottma61/Hubitat/master/docs/WDOWMNWS_packageManifest.json",
+      "location": "https://raw.githubusercontent.com/Scottma61/Hubitat/master/docs/WDOWMAlert_packageManifest.json",
       "description": "Weather-Display With OWM-Alerts Forecast Driver",
       "tags": ["Integrations","Weather"]
     }
