@@ -4,15 +4,15 @@
   "version": "0.2.5",
   "minimumHEVersion": "2.1.9",
   "dateReleased": "2019-10-21",
-  "releaseNotes": "Improved OWM URLs in the dashboard tiles to pull in location's city code (if available).",
+  "releaseNotes": "Removed 'NWS' from driver name, minor bug fixes.",
   "communityLink": "https://community.hubitat.com/t/release-weather-display-with-owm-nws-alerts-forecast-driver/38557",
-  "documentationLink": "https://github.com/HubitatCommunity/Weather-Display-With-OWM-NWS-Alerts-Forecast-Driver/wiki",
+  "documentationLink": "https://github.com/HubitatCommunity/Weather-Display-With-OWM-Alerts-Forecast-Driver/wiki",
   "drivers": [
     {
       "id": "4fd45ba6-b980-4e16-8314-b373a766a432",
       "name": "Weather-Display With OWM-Alerts Forecast Driver",
       "namespace": "Matthew",
-      "location": "https://raw.githubusercontent.com/HubitatCommunity/Weather-Display-With-OWM-NWS-Alerts-Forecast-Driver/master/Weather-Display%20With%20OWM-NWS%20Alerts%20Forecast%20Driver.groovy",
+      "location": "https://raw.githubusercontent.com/HubitatCommunity/Weather-Display-With-OWM-Alerts-Forecast-Driver/master/Weather-Display%20With%20OWM-Alerts%20Forecast%20Driver.groovy",
       "required": true
     }
   ]
