@@ -26,7 +26,7 @@
     {
       "name": "Weather-Display With OWM-Alerts Forecast Driver",
       "category": "Integrations",
-      "location": "https://raw.githubusercontent.com/Scottma61/Hubitat/master/docs/WDOWMAlert_packageManifest.json",
+      "location": "https://raw.githubusercontent.com/Scottma61/Hubitat/master/docs/WDOWMAlerts_packageManifest.json",
       "description": "Weather-Display With OWM-Alerts Forecast Driver",
       "tags": ["Integrations","Weather"]
     }
