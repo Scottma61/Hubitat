@@ -6,13 +6,13 @@
   "dateReleased": "2019-10-21",
   "releaseNotes": "Improved OWM URLs in the dashboard tiles to pull in location's city code (if available).",
   "communityLink": "https://community.hubitat.com/t/openweathermap-nws-alerts-weather-driver/38249",
-  "documentationLink": "https://github.com/HubitatCommunity/OpenWeatherMap-NWS-Alerts-Weather-Driver/wiki/OpenWeatherMap-NWS-Alerts-Weather-Driver-wiki!",
+  "documentationLink": "https://github.com/HubitatCommunity/OpenWeatherMap-Alerts-Weather-Driver/wiki/OpenWeatherMap-Alerts-Weather-Driver-wiki!",
   "drivers": [
     {
       "id": "51f62ae2-2e1b-466a-88f3-2c1780a2037d",
       "name": "OpenWeatherMap-Alerts Weather Driver",
       "namespace": "Matthew",
-      "location": "https://raw.githubusercontent.com/HubitatCommunity/OpenWeatherMap-NWS-Alerts-Weather-Driver/master/OpenWeatherMap-NWS%2520Alerts%2520Weather%2520Driver.groovy",
+      "location": "https://raw.githubusercontent.com/HubitatCommunity/OpenWeatherMap-Alerts-Weather-Driver/master/OpenWeatherMap-Alerts%2520Weather%2520Driver.groovy",
       "required": true
     }
   ]
