@@ -3,7 +3,7 @@
   "gitHubUrl": "https://github.com/HubitatCommunity",
   "packages": [
     {
-      "name": "OpenWeatherMap-Alert Driver",
+      "name": "OpenWeatherMap-Alerts Weather Driver",
       "category": "Integrations",
       "location": "https://raw.githubusercontent.com/Scottma61/Hubitat/master/docs/OWN-Alerts_packageManifest.json",
       "description": "OpenWeatherMap-Alert Driver",
