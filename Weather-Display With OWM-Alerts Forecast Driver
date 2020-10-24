@@ -61,7 +61,7 @@
 	Last Update 10/24/2020
 { Left room below to document version changes...}
 
-	V0.2.8	10/24/2020	Added indicate of multiple alerts in tiles. Minor bug fixes (by @nh.schottfam).
+	V0.2.8	10/24/2020	Added indicator of multiple alerts in tiles. Minor bug fixes (by @nh.schottfam).
 	V0.2.7	10/23/2020	Code optimizations and minor bug fixes (by @nh.schottfam).
 	V0.2.6	10/22/2020	Removed 'NWS' from driver name, minor bug fixes.
 	V0.2.5	10/21/2020	Improved OWM URLs in the dashboard tiles to pull in location's city code (if available).
