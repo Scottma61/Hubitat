@@ -4,7 +4,7 @@
   "version": "0.2.7",
   "minimumHEVersion": "2.1.9",
   "dateReleased": "2019-10-23",
-  "releaseNotes": "Code optimizations and minor bug fixes (by @nh.schottfam).",
+  "releaseNotes": "Added indicator of multiple alerts in tiles. Minor bug fixes (by @nh.schottfam).",
   "communityLink": "https://community.hubitat.com/t/release-weather-display-with-owm-nws-alerts-forecast-driver/38557",
   "documentationLink": "https://github.com/HubitatCommunity/Weather-Display-With-OWM-Alerts-Forecast-Driver/wiki",
   "drivers": [
