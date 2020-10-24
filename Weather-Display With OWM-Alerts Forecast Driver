@@ -58,9 +58,10 @@
 	on an 'AS IS' BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
 	for the specific language governing permissions and limitations under the License.
 
-	Last Update 10/23/2020
+	Last Update 10/24/2020
 { Left room below to document version changes...}
 
+	V0.2.8	10/24/2020	Added indicate of multiple alerts in tiles. Minor bug fixes (by @nh.schottfam).
 	V0.2.7	10/23/2020	Code optimizations and minor bug fixes (by @nh.schottfam).
 	V0.2.6	10/22/2020	Removed 'NWS' from driver name, minor bug fixes.
 	V0.2.5	10/21/2020	Improved OWM URLs in the dashboard tiles to pull in location's city code (if available).
@@ -102,7 +103,7 @@ The way the 'optional' attributes work:
 	available in the dashboard is to delete the virtual device and create a new one AND DO NOT SELECT the
 	attribute you do not want to show.
 */
-static String version()	{  return '0.2.7'  }
+static String version()	{  return '0.2.8'  }
 import groovy.transform.Field
 
 metadata {
@@ -322,7 +323,7 @@ void pollWD() {
 void pollWDHandler(resp, data) {
 	if(resp.getStatus() == 200 || resp.getStatus() == 207) {
 		Map wd = parseJson(resp.data)
-		LOGINFO('Weather-Display Data: ' + wd)
+		LOGINFO('Weather-Display Data: ' + wd.toString())
 		doPollWD(wd)		// parse the data returned by Weather-Display
 	}else{
 		LOGWARN('Weather-Display API did not return data')
@@ -353,9 +354,9 @@ void doPollWD(Map wd) {
 		initialize_poll()
 		myUpdData('is_lightOld', myGetData('is_light'))
 	}
-	Integer mult_twd = myGetData('mult_twd').toInteger()
-	Integer mult_p = myGetData('mult_p').toInteger()
-	Integer mult_r = myGetData('mult_r').toInteger()
+	Integer mult_twd = myGetData('mult_twd')==sNULL ? 1 : myGetData('mult_twd').toInteger()
+	Integer mult_p = myGetData('mult_p')==sNULL ? 1 : myGetData('mult_p').toInteger()
+	Integer mult_r = myGetData('mult_r')==sNULL ? 1 : myGetData('mult_r').toInteger()
 	Boolean isF = myGetData(sTMETR) == sDF
 // >>>>>>>>>> End Setup Global Variables <<<<<<<<<<  
 
@@ -850,8 +851,14 @@ void pollOWMHandler(resp, data) {
 				if(curAl=='No current weather alerts for this area') {
 					clearAlerts()
 				}else{
+					Integer alertCnt = 0
+					for(int i = 1;i<10;i++) {
+						if(owm?.alerts[i]?.event!=null) {
+							alertCnt = i
+						}
+					}
 					myUpdData('noAlert',sFLS)
-					myUpdData('alert', curAl)
+					myUpdData('alert', curAl + (alertCnt>0 ? ' +' + alertCnt.toString() : sBLK))
 					myUpdData('alertDescr', curAlDescr)
 					myUpdData('alertSender', curAlSender)
 					//	https://tinyurl.com/y42s2ndy points to https://openweathermap.org/city/
@@ -1103,13 +1110,13 @@ void PostPoll() {
 	Integer mult_p = myGetData('mult_p').toInteger()
 	Integer mult_twd = myGetData('mult_twd').toInteger()
 /*  Weather-Display Data Elements */
-	sendEvent(name: 'humidity', value: myGetData('humidity').toBigDecimal(), unit: '%')
-	sendEvent(name: 'illuminance', value: myGetData('illuminance').toInteger(), unit: 'lx')
-	sendEvent(name: 'pressure', value: Math.round(myGetData('pressure').toBigDecimal() * mult_p) / mult_p, unit: myGetData(sPMETR))
-	sendEvent(name: 'pressured', value: String.format(myGetData('ddisp_p'), myGetData('pressure').toBigDecimal()), unit: myGetData(sPMETR))
-	sendEvent(name: 'temperature', value: Math.round(myGetData('temperature').toBigDecimal() * mult_twd) / mult_twd, unit: myGetData(sTMETR))
-	sendEvent(name: 'ultravioletIndex', value: myGetData('ultravioletIndex').toBigDecimal(), unit: 'uvi')
-	sendEvent(name: 'feelsLike', value: Math.round(myGetData('feelsLike').toBigDecimal() * mult_twd) / mult_twd, unit: myGetData(sTMETR))
+	sendEvent(name: 'humidity', value: myGetData('humidity')==sNULL ? 0 : myGetData('humidity').toBigDecimal(), unit: '%')
+	sendEvent(name: 'illuminance', value: myGetData('illuminance')==sNULL ? 5 : myGetData('illuminance').toInteger(), unit: 'lx')
+	sendEvent(name: 'pressure', value: myGetData('pressure')==sNULL ? 0 : Math.round(myGetData('pressure').toBigDecimal() * mult_p) / mult_p, unit: myGetData(sPMETR))
+	sendEvent(name: 'pressured', value: myGetData('pressure')==sNULL ? sZERO : String.format(myGetData('ddisp_p'), myGetData('pressure').toBigDecimal()), unit: myGetData(sPMETR))
+	sendEvent(name: 'temperature', value: myGetData('temperature')==sNULL ? 0 : Math.round(myGetData('temperature').toBigDecimal() * mult_twd) / mult_twd, unit: myGetData(sTMETR))
+	sendEvent(name: 'ultravioletIndex', value: myGetData('ultravioletIndex')==sNULL ? 0 : myGetData('ultravioletIndex').toBigDecimal(), unit: 'uvi')
+	sendEvent(name: 'feelsLike', value: myGetData('feelsLike')==sNULL ? 0 : Math.round(myGetData('feelsLike').toBigDecimal() * mult_twd) / mult_twd, unit: myGetData(sTMETR))
 
 /*  'Required for Dashboards' Data Elements */
 	if(dashHubitatOWMPublish || dashSharpToolsPublish || dashSmartTilesPublish) { sendEvent(name: 'city', value: myGetData('city')) }
@@ -1118,7 +1125,7 @@ void PostPoll() {
 	if(dashSharpToolsPublish || dashSmartTilesPublish) { sendEvent(name: 'weather', value: myGetData('condition_text')) }
 	if(dashSharpToolsPublish || dashSmartTilesPublish) { sendEvent(name: 'weatherIcon', value: getCondCode(myGetData('condition_id').toInteger(), myGetData('is_day'))) }
 	if(dashHubitatOWMPublish) { sendEvent(name: "weatherIcons", value: myGetData('OWN_icon')) }
-	if(dashHubitatOWMPublish || dashSharpToolsPublish || windPublish) { sendEvent(name: 'wind', value: Math.round(myGetData('wind').toBigDecimal() * mult_twd) / mult_twd, unit: myGetData(sDMETR)) }
+	if(dashHubitatOWMPublish || dashSharpToolsPublish || windPublish) { sendEvent(name: 'wind', value: myGetData('wind')==sNULL ? 0 : Math.round(myGetData('wind').toBigDecimal() * mult_twd) / mult_twd, unit: myGetData(sDMETR)) }
 	if(dashHubitatOWMPublish) { sendEvent(name: 'windSpeed', value: Math.round(myGetData('wind').toBigDecimal() * mult_twd) / mult_twd, unit: myGetData(sDMETR)) }
 	if(dashHubitatOWMPublish) { sendEvent(name: 'windDirection', value: myGetData('wind_degree').toInteger(), unit: 'DEGREE') }
 
@@ -1486,7 +1493,7 @@ void initMe() {
 	Boolean sourceUV = (settings.sourceUV ?: false)
 	Boolean sourceWind = (settings.sourceWind ?: false)
 	Map ParamsOWMl = [ uri: 'https://api.openweathermap.org/data/2.5/find?lat=' + (String)altLat + '&lon=' + (String)altLon + '&cnt=1&appid=' + (String)apiKey ]
-	LOGINFO('Poll OpenWeatherMap.org Location: ' + ParamsOWMl)
+	LOGINFO('Poll OpenWeatherMap.org Location: ' + ParamsOWMl.toString())
 	asynchttpGet('pollOWMlHandler', ParamsOWMl)
 }
 
