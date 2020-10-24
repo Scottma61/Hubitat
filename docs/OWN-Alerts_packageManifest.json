@@ -1,10 +1,10 @@
 {
   "packageName": "OpenWeatherMap-Alerts Weather Driver",
   "author": "Matthew Scott",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "minimumHEVersion": "2.1.9",
-  "dateReleased": "2019-10-23",
-  "releaseNotes": "Code optimizations and minor bug fixes (by @nh.schottfam).",
+  "dateReleased": "2019-10-24",
+  "releaseNotes": "Added indicator of multiple alerts in tiles. Minor bug fixes (by @nh.schottfam).",
   "communityLink": "https://community.hubitat.com/t/openweathermap-nws-alerts-weather-driver/38249",
   "documentationLink": "https://github.com/HubitatCommunity/OpenWeatherMap-Alerts-Weather-Driver/wiki/OpenWeatherMap-Alerts-Weather-Driver-wiki!",
   "drivers": [
