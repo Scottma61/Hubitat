@@ -58,9 +58,10 @@
 	on an 'AS IS' BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
 	for the specific language governing permissions and limitations under the License.
 
-	Last Update 10/24/2020
+	Last Update 10/25/2020
 { Left room below to document version changes...}
 
+	V0.2.9	10/25/2020	Bug fixes for null JSON returns.
 	V0.2.8	10/24/2020	Added indicator of multiple alerts in tiles. Minor bug fixes (by @nh.schottfam).
 	V0.2.7	10/23/2020	Code optimizations and minor bug fixes (by @nh.schottfam).
 	V0.2.6	10/22/2020	Removed 'NWS' from driver name, minor bug fixes.
@@ -103,7 +104,7 @@ The way the 'optional' attributes work:
 	available in the dashboard is to delete the virtual device and create a new one AND DO NOT SELECT the
 	attribute you do not want to show.
 */
-static String version()	{  return '0.2.8'  }
+static String version()	{  return '0.2.9'  }
 import groovy.transform.Field
 
 metadata {
@@ -280,18 +281,22 @@ void pollSunRiseSet() {
 	if(ifreInstalled()) { updated(); return }
 	String currDate = new Date().format('yyyy-MM-dd', TimeZone.getDefault())
 	LOGINFO('Polling Sunrise-Sunset.org')
-	Map requestParams = [ uri: 'https://api.sunrise-sunset.org/json?lat=' + (String)altLat + '&lng=' + (String)altLon + '&formatted=0' ]
-	if (currDate) {requestParams = [ uri: 'https://api.sunrise-sunset.org/json?lat=' + (String)altLat + '&lng=' + (String)altLon + '&formatted=0&date=' + currDate ]}
-	LOGINFO('Poll Sunrise-Sunset: ' + requestParams)
+	Map requestParams = [ uri: 'https://api.sunrise-sunset.org/json?lat=' + (String)altLat + '&lng=' + (String)altLon + '&formatted=0&date=' + currDate ]
+//	if (currDate) {requestParams = [ uri: 'https://api.sunrise-sunset.org/json?lat=' + (String)altLat + '&lng=' + (String)altLon + '&formatted=0&date=' + currDate ]}
+	LOGINFO('Poll Sunrise-Sunset: ' + requestParams.toString())
 	asynchttpGet('sunRiseSetHandler', requestParams)
 }
 
 void sunRiseSetHandler(resp, data) {
 	if(resp.getStatus() == 200 || resp.getStatus() == 207) {
 		Map sunRiseSet = resp.getJson().results
-		myUpdData('sunRiseSet', resp.data)
-		LOGINFO('Sunrise-Sunset Data: ' + sunRiseSet)
+		myUpdData('sunRiseSet', resp.data.toString())
+		LOGINFO('Sunrise-Sunset Data: ' + sunRiseSet.toString())
 		if(ifreInstalled()) { updated(); return }
+		if(myGetData('sunRiseSet')==sNULL) {
+			pauseExecution(1000)
+			pollSunRiseSet()
+		}
 		String tfmt='yyyy-MM-dd\'T\'HH:mm:ssXXX'
 		String tfmt1='HH:mm'
 		myUpdData('riseTime', new Date().parse(tfmt, (String)sunRiseSet.sunrise).format(tfmt1, TimeZone.getDefault()))
@@ -315,7 +320,7 @@ void sunRiseSetHandler(resp, data) {
 void pollWD() {
 	if(ifreInstalled()) { updated(); return }	
 	Map ParamsWD = [ uri: pollLocationStation+'everything.php' ]
-	LOGINFO('Polling Weather-Display: ' + ParamsWD)
+	LOGINFO('Polling Weather-Display: ' + ParamsWD.toString())
 	asynchttpGet('pollWDHandler', ParamsWD)
 	return
 }
@@ -323,12 +328,17 @@ void pollWD() {
 void pollWDHandler(resp, data) {
 	if(resp.getStatus() == 200 || resp.getStatus() == 207) {
 		Map wd = parseJson(resp.data)
+		myUpdData('wd', wd.toString())
 		LOGINFO('Weather-Display Data: ' + wd.toString())
+		if(wd.toString()==sNULL) {
+			pauseExecution(1000)
+			pollWD()
+		}
 		doPollWD(wd)		// parse the data returned by Weather-Display
 	}else{
 		LOGWARN('Weather-Display API did not return data')
 	}
-	return
+//	return
 }
 
 void doPollWD(Map wd) {
@@ -606,7 +616,12 @@ void pollOWMHandler(resp, data) {
 		LOGWARN(resp.getStatus() + sCOLON + resp.getErrorMessage())
 	}else{
 		Map owm = parseJson(resp.data)
+		myUpdData('owm', owm.toString())
 		LOGINFO('OpenWeatherMap Data: ' + owm.toString())
+		if(owm.toString()==sNULL) {
+			pauseExecution(1000)
+			pollOWM()
+		}
 // <<<<<<<<<< Begin Setup Global Variables >>>>>>>>>>
 		Date fotime = new Date((Long)owm.current.dt * 1000L)
 		myUpdData('fotime', fotime.toString())
@@ -1126,15 +1141,15 @@ void PostPoll() {
 	if(dashSharpToolsPublish || dashSmartTilesPublish) { sendEvent(name: 'weatherIcon', value: getCondCode(myGetData('condition_id').toInteger(), myGetData('is_day'))) }
 	if(dashHubitatOWMPublish) { sendEvent(name: "weatherIcons", value: myGetData('OWN_icon')) }
 	if(dashHubitatOWMPublish || dashSharpToolsPublish || windPublish) { sendEvent(name: 'wind', value: myGetData('wind')==sNULL ? 0 : Math.round(myGetData('wind').toBigDecimal() * mult_twd) / mult_twd, unit: myGetData(sDMETR)) }
-	if(dashHubitatOWMPublish) { sendEvent(name: 'windSpeed', value: Math.round(myGetData('wind').toBigDecimal() * mult_twd) / mult_twd, unit: myGetData(sDMETR)) }
-	if(dashHubitatOWMPublish) { sendEvent(name: 'windDirection', value: myGetData('wind_degree').toInteger(), unit: 'DEGREE') }
+	if(dashHubitatOWMPublish) { sendEvent(name: 'windSpeed', value: myGetData('wind')==sNULL ? 0 : Math.round(myGetData('wind').toBigDecimal() * mult_twd) / mult_twd, unit: myGetData(sDMETR)) }
+	if(dashHubitatOWMPublish) { sendEvent(name: 'windDirection', value: myGetData('wind_degree')==sNULL ? 0 : myGetData('wind_degree').toInteger(), unit: 'DEGREE') }
 
 /*  Selected optional Data Elements */
 	sendEventPublish(name: 'betwixt', value: myGetData('bwn'))
 	sendEventPublish(name: 'cloud', value: myGetData('cloud').toInteger(), unit: '%')
 	sendEventPublish(name: 'condition_code', value: myGetData('condition_code'))
 	sendEventPublish(name: 'condition_text', value: myGetData('condition_text'))
-	sendEventPublish(name: 'dewpoint', value: myGetData('dewpoint').toBigDecimal(), unit: myGetData(sTMETR))
+	sendEventPublish(name: 'dewpoint', value: myGetData('dewpoint')==sNULL ? 0 : myGetData('dewpoint').toBigDecimal(), unit: myGetData(sTMETR))
 
 	sendEventPublish(name: 'forecast_code', value: myGetData('forecast_code'))
 	sendEventPublish(name: 'forecast_text', value: myGetData('forecast_text'))
@@ -1168,16 +1183,12 @@ void PostPoll() {
 	}
 	sendEventPublish(name: 'solarradiation', value: myGetData('solarradiation'))
 	sendEventPublish(name: 'state', value: myGetData('state'))
-	if(extSource.toInteger()==1){
-		sendEventPublish(name: 'vis', value: myGetData('vis'))
-	}else{
-		sendEventPublish(name: 'vis', value: Math.round(myGetData('vis').toBigDecimal() * mult_twd) / mult_twd, unit: (myGetData(sDMETR)=='MPH' ? 'miles' : 'kilometers'))
-	}
-	sendEventPublish(name: 'wind_degree', value: myGetData('wind_degree').toInteger(), unit: 'DEGREE')
-	sendEventPublish(name: 'wind_direction', value: myGetData('wind_direction'))
-	sendEventPublish(name: 'wind_cardinal', value: myGetData('wind_cardinal'))
-	sendEventPublish(name: 'wind_gust', value: Math.round(myGetData('wind_gust').toBigDecimal() * mult_twd) / mult_twd, unit: myGetData(sDMETR))
-	sendEventPublish(name: 'wind_string', value: myGetData('wind_string'))
+	sendEventPublish(name: 'vis', value: myGetData('vis')==sNULL ? 0 : Math.round(myGetData('vis').toBigDecimal() * mult_twd) / mult_twd, unit: (myGetData(sDMETR)=='MPH' ? 'miles' : 'kilometers'))
+	sendEventPublish(name: 'wind_degree', value: myGetData('wind_degree')==sNULL ? 0 : myGetData('wind_degree').toInteger(), unit: 'DEGREE')
+	sendEventPublish(name: 'wind_direction', value: myGetData('wind_direction')==sNULL ? 'North' : myGetData('wind_direction'))
+	sendEventPublish(name: 'wind_cardinal', value: myGetData('wind_cardinal')==sNULL ? sZERO : myGetData('wind_cardinal'))
+	sendEventPublish(name: 'wind_gust', value: myGetData('wind_gust')==sNULL ? 0 : Math.round(myGetData('wind_gust').toBigDecimal() * mult_twd) / mult_twd, unit: myGetData(sDMETR))
+	sendEventPublish(name: 'wind_string', value: myGetData('wind_string')==sNULL ? sBLK : myGetData('wind_string'))
 
 	myUpdData(sSUMLST,(myGetData('sutime') > myGetData('futime') ? new Date().parse(tfmt2, myGetData('sutime')).format(tfmt1, TimeZone.getDefault()) : new Date().parse(tfmt2, myGetData('futime')).format(tfmt1, TimeZone.getDefault())))
 	Summary_last_poll_date = (myGetData('sutime') > myGetData('futime') ? new Date().parse(tfmt2, myGetData('sutime')).format(dfmt1, TimeZone.getDefault()) : new Date().parse(tfmt2, myGetData('futime')).format(dfmt1, TimeZone.getDefault()))
@@ -1492,11 +1503,13 @@ void initMe() {
 	Boolean sourceIllumination = (settings.sourceIllumination ?: false)
 	Boolean sourceUV = (settings.sourceUV ?: false)
 	Boolean sourceWind = (settings.sourceWind ?: false)
+	pollOWMl()
+}
+void pollOWMl() {
 	Map ParamsOWMl = [ uri: 'https://api.openweathermap.org/data/2.5/find?lat=' + (String)altLat + '&lon=' + (String)altLon + '&cnt=1&appid=' + (String)apiKey ]
 	LOGINFO('Poll OpenWeatherMap.org Location: ' + ParamsOWMl.toString())
 	asynchttpGet('pollOWMlHandler', ParamsOWMl)
 }
-
 void pollOWMlHandler(resp, data) {
 	LOGINFO('Polling OpenWeatherMap.org Location')
 	if(resp.getStatus() != 200 && resp.getStatus() != 207) {
@@ -1505,6 +1518,10 @@ void pollOWMlHandler(resp, data) {
 		myUpdData('OWML',sSPC)
 	}else{
 		Map owml = parseJson(resp.data)
+		if(owml.toString()==sNULL) {
+			pauseExecution(1000)
+			pollOWMl()
+		}
 		LOGINFO('OpenWeatherMap Location Data: ' + owml.toString())
 		myUpdData('OWML',(owml?.list[0]?.id==null ? sSPC : owml?.list[0]?.id.toString()))
 		LOGINFO('OWM Location City Code: ' + myGetData('OWML'))
