@@ -1,10 +1,10 @@
 {
   "packageName": "Weather-Display With OWM-Alerts Forecast Driver",
   "author": "Matthew Scott",
-  "version": "0.2.9",
+  "version": "0.3.0",
   "minimumHEVersion": "2.1.9",
-  "dateReleased": "2019-10-25",
-  "releaseNotes": "Bug fixes for null JSON returns.",
+  "dateReleased": "2019-10-26",
+  "releaseNotes": "More bug fixes on the Weather-Display JSON returns for nulls.",
   "communityLink": "https://community.hubitat.com/t/release-weather-display-with-owm-nws-alerts-forecast-driver/38557",
   "documentationLink": "https://github.com/HubitatCommunity/Weather-Display-With-OWM-Alerts-Forecast-Driver/wiki",
   "drivers": [
