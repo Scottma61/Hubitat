@@ -58,9 +58,10 @@
 	on an 'AS IS' BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
 	for the specific language governing permissions and limitations under the License.
 
-	Last Update 10/25/2020
+	Last Update 10/26/2020
 { Left room below to document version changes...}
 
+	V0.3.0	10/26/2020	More bug fixes on the Weather-Display JSON returns for nulls.
 	V0.2.9	10/25/2020	Bug fixes for null JSON returns.
 	V0.2.8	10/24/2020	Added indicator of multiple alerts in tiles. Minor bug fixes (by @nh.schottfam).
 	V0.2.7	10/23/2020	Code optimizations and minor bug fixes (by @nh.schottfam).
@@ -104,7 +105,7 @@ The way the 'optional' attributes work:
 	available in the dashboard is to delete the virtual device and create a new one AND DO NOT SELECT the
 	attribute you do not want to show.
 */
-static String version()	{  return '0.2.9'  }
+static String version()	{  return '0.3.0'  }
 import groovy.transform.Field
 
 metadata {
@@ -296,6 +297,7 @@ void sunRiseSetHandler(resp, data) {
 		if(myGetData('sunRiseSet')==sNULL) {
 			pauseExecution(1000)
 			pollSunRiseSet()
+			return
 		}
 		String tfmt='yyyy-MM-dd\'T\'HH:mm:ssXXX'
 		String tfmt1='HH:mm'
@@ -437,7 +439,7 @@ void doPollWD(Map wd) {
 		}
 		myUpdData('condition_id', c_code.toString())
 		myUpdData('condition_code', getCondCode(myGetData('condition_id').toInteger(),myGetData('is_day')))
-		myUpdData('condition_text', wd.everything.forecast.icon.text)
+		myUpdData('condition_text', !wd.everything.forecast.icon.text ? sBLK : wd.everything.forecast.icon.text)
 		updateLux(false)
 // <<<<<<<<<< Begin Icon processing >>>>>>>>>>
 		String imgName = getImgName(myGetData('condition_id').toInteger(), myGetData('is_day'))
@@ -453,17 +455,17 @@ void doPollWD(Map wd) {
 // >>>>>>>>>> End Process Only If No External Forecast Is Selected  <<<<<<<<<<
 
 // <<<<<<<<<< Begin Process Standard Weather-Station Variables (Regardless of Forecast Selection)  >>>>>>>>>>
-	myUpdData('dewpoint', (myGetData(sTMETR)==sDF ? wd.everything.weather.dew_point.current.f.toBigDecimal() : wd.everything.weather.dew_point.current.c.toBigDecimal()).toString())
-	myUpdData('humidity', wd.everything.weather.humidity.current.toBigDecimal().toString())
-	myUpdData('rainToday', (myGetData(sRMETR)=='in' ? wd.everything.weather.rainfall.daily.in.toBigDecimal() : wd.everything.weather.rainfall.daily.mm.toBigDecimal()).toString())
-	myUpdData('pressure', (myGetData(sPMETR)=='inHg' ? wd.everything.weather.pressure.current.inhg.toBigDecimal() : wd.everything.weather.pressure.current.mb.toBigDecimal()).toString())
-	myUpdData('temperature', (myGetData(sTMETR)==sDF ? wd.everything.weather.temperature.current.f.toBigDecimal() : wd.everything.weather.temperature.current.c.toBigDecimal()).toString())
+	myUpdData('dewpoint', (myGetData(sTMETR)==sDF ? !wd.everything.weather.dew_point.current.f ? 0 : wd.everything.weather.dew_point.current.f.toBigDecimal() : !wd.everything.weather.dew_point.current.c==sNULL ? 0 : wd.everything.weather.dew_point.current.c.toBigDecimal()).toString())
+	myUpdData('humidity', (!wd.everything.weather.humidity.current ? 0 : wd.everything.weather.humidity.current.toBigDecimal()).toString())
+	myUpdData('rainToday', (myGetData(sRMETR)=='in' ? !wd.everything.weather.rainfall.daily.in ? 0 : wd.everything.weather.rainfall.daily.in.toBigDecimal() : !wd.everything.weather.rainfall.daily.mm ? 0 : wd.everything.weather.rainfall.daily.mm.toBigDecimal()).toString())
+	myUpdData('pressure', (myGetData(sPMETR)=='inHg' ? !wd.everything.weather.pressure.current.inhg ? 0 : wd.everything.weather.pressure.current.inhg.toBigDecimal() : !wd.everything.weather.pressure.current.mb ? 0 : wd.everything.weather.pressure.current.mb.toBigDecimal()).toString())
+	myUpdData('temperature', (myGetData(sTMETR)==sDF ? !wd.everything.weather.temperature.current.f ? 0 : wd.everything.weather.temperature.current.f.toBigDecimal() : !wd.everything.weather.temperature.current.c ? 0 : wd.everything.weather.temperature.current.c.toBigDecimal()).toString())
 
 // <<<<<<<<<< Begin Process Only If Wind from WD Is Selected  >>>>>>>>>>
 	if(sourceWind==true){
-		myUpdData('wind_bft_icon', 'wb' + wd.everything.weather.wind.avg_speed.bft.toInteger().toString() + '.png')
+		myUpdData('wind_bft_icon', 'wb' + (!wd.everything.weather.wind.avg_speed.bft ? sZERO : wd.everything.weather.wind.avg_speed.bft.toInteger().toString()) + '.png')
 		String w_string_bft
-		switch(wd.everything.weather.wind.avg_speed.bft.toInteger()){
+		switch(!wd.everything.weather.wind.avg_speed.bft ? 0 : wd.everything.weather.wind.avg_speed.bft.toInteger()){
 			case 0: w_string_bft = 'Calm'; break;
 			case 1: w_string_bft = 'Light air'; break;
 			case 2: w_string_bft = 'Light breeze'; break;
@@ -482,24 +484,24 @@ void doPollWD(Map wd) {
 		BigDecimal t_wd
 		BigDecimal t_wg
 		if(myGetData(sDMETR) == 'MPH') {
-			t_wd = Math.round(wd.everything.weather.wind.avg_speed.mph.toBigDecimal() * mult_twd) / mult_twd
-			t_wg = Math.round(wd.everything.weather.wind.gust_speed.mph.toBigDecimal() *  mult_twd) / mult_twd
+			t_wd = !wd.everything.weather.wind.avg_speed.mph ? 0 : Math.round(wd.everything.weather.wind.avg_speed.mph.toBigDecimal() * mult_twd) / mult_twd
+			t_wg = !wd.everything.weather.wind.gust_speed.mph ? 0 : Math.round(wd.everything.weather.wind.gust_speed.mph.toBigDecimal() *  mult_twd) / mult_twd
 		} else if(myGetData(sDMETR) == 'KPH') {
-			t_wd = Math.round(wd.everything.weather.wind.avg_speed.kmh.toBigDecimal() * mult_twd) / mult_twd
-			t_wg = Math.round(wd.everything.weather.wind.gust_speed.kmh.toBigDecimal() * 1.609344 * mult_twd) / mult_twd
+			t_wd = !wd.everything.weather.wind.avg_speed.kmh ? 0 : Math.round(wd.everything.weather.wind.avg_speed.kmh.toBigDecimal() * mult_twd) / mult_twd
+			t_wg = !wd.everything.weather.wind.gust_speed.kmh ? 0 : Math.round(wd.everything.weather.wind.gust_speed.kmh.toBigDecimal() * 1.609344 * mult_twd) / mult_twd
 		} else if(myGetData(sDMETR) == 'knots') {
-			t_wd = Math.round(wd.everything.weather.wind.avg_speed.mph.toBigDecimal() * 0.868976 * mult_twd) / mult_twd
-			t_wg = Math.round(wd.everything.weather.wind.gust_speed.mph.toBigDecimal() * 0.868976 * mult_twd) / mult_twd
+			t_wd = !wd.everything.weather.wind.avg_speed.mph ? 0 : Math.round(wd.everything.weather.wind.avg_speed.mph.toBigDecimal() * 0.868976 * mult_twd) / mult_twd
+			t_wg = !wd.everything.weather.wind.gust_speed.mph ? 0 : Math.round(wd.everything.weather.wind.gust_speed.mph.toBigDecimal() * 0.868976 * mult_twd) / mult_twd
 		}else{  //  this leave only m/s
-			t_wd = Math.round(wd.everything.weather.wind.avg_speed.mph.toBigDecimal() *  0.44704 * mult_twd) / mult_twd
-			t_wg = Math.round(wd.everything.weather.wind.gust_speed.mph.toBigDecimal()  * 0.44704 * mult_twd) / mult_twd
+			t_wd = !wd.everything.weather.wind.avg_speed.mph ? 0 : Math.round(wd.everything.weather.wind.avg_speed.mph.toBigDecimal() *  0.44704 * mult_twd) / mult_twd
+			t_wg = !wd.everything.weather.wind.gust_speed.mph ? 0 : Math.round(wd.everything.weather.wind.gust_speed.mph.toBigDecimal()  * 0.44704 * mult_twd) / mult_twd
 		}
 		myUpdData('wind', t_wd.toString())
 		myUpdData('wind_gust', t_wg.toString())
 
-		myUpdData('wind_degree', wd.everything.weather.wind.direction.degrees.toInteger().toString())
+		myUpdData('wind_degree', !wd.everything.weather.wind.direction.degrees ? sZERO : wd.everything.weather.wind.direction.degrees.toInteger().toString())
 		String w_direction
-		switch(wd.everything.weather.wind.direction.cardinal.toUpperCase()){
+		switch(!wd.everything.weather.wind.direction.cardinal ? 'N' : wd.everything.weather.wind.direction.cardinal.toUpperCase()){
 			case 'N': w_direction = 'North'; break;
 			case 'NNE': w_direction = 'North-Northeast'; break;
 			case 'NE': w_direction = 'Northeast'; break;
@@ -519,18 +521,18 @@ void doPollWD(Map wd) {
 			default: w_direction = 'Unknown'; break;
 		}
 		myUpdData('wind_direction', w_direction)
-		myUpdData('wind_cardinal', wd.everything.weather.wind.direction.cardinal.toUpperCase())
+		myUpdData('wind_cardinal', !wd.everything.weather.wind.direction.cardinal ? 'N' : wd.everything.weather.wind.direction.cardinal.toUpperCase())
 		myUpdData('wind_string', w_string_bft + ' from the ' + myGetData('wind_direction') + (myGetData('wind').toBigDecimal() < 1.0 ? sBLK: ' at ' + String.format(myGetData('ddisp_twd'), myGetData('wind').toBigDecimal()) + sSPC + myGetData(sDMETR)))
 	}
 // >>>>>>>>>> End Process Only If Wind from WD Is Selected <<<<<<<<<<
 
-	myUpdData('city', wd.station.name.split(/ /)[0])
-	myUpdData('state', wd.station.name.split(/ /)[1])
-	myUpdData('country', wd.station.name.split(/ /)[2])
+	myUpdData('city', !wd.station.name ? sBLK : wd.station.name.split(/ /)[0])
+	myUpdData('state', !wd.station.name ? sBLK : wd.station.name.split(/ /)[1])
+	myUpdData('country', !wd.station.name ? sBLK : wd.station.name.split(/ /)[2])
 
-	myUpdData('moonAge', wd.everything.astronomy.moon.moon_age.toBigDecimal().toString())
+	myUpdData('moonAge', !wd.everything.astronomy.moon.moon_age ? sZERO : wd.everything.astronomy.moon.moon_age.toBigDecimal().toString())
 	String mPhase
-	BigDecimal tma = wd.everything.astronomy.moon.moon_age.toBigDecimal()
+	BigDecimal tma = !wd.everything.astronomy.moon.moon_age ? 0 : wd.everything.astronomy.moon.moon_age.toBigDecimal()
 	if (tma >= 0 && tma < 4) {mPhase = 'New Moon'}
 	else if (tma >= 4 && tma < 7) {mPhase = 'Waxing Crescent'}
 	else if (tma >= 7 && tma < 10) {mPhase = 'First Quarter'}
@@ -576,9 +578,9 @@ void doPollWD(Map wd) {
 	if(sourcefeelsLike==true){
 		BigDecimal t_fl
 		if(myGetData(sTMETR) == sDF) {
-			t_fl = Math.round(wd.everything.weather.apparent_temperature.current.f.toBigDecimal() * mult_twd) / mult_twd
+			t_fl = !wd.everything.weather.apparent_temperature.current.f ? 0 : Math.round(wd.everything.weather.apparent_temperature.current.f.toBigDecimal() * mult_twd) / mult_twd
 		}else{
-			t_fl = Math.round(wd.everything.weather.apparent_temperature.current.c.toBigDecimal() * mult_twd) / mult_twd
+			t_fl = !wd.everything.weather.apparent_temperature.current.c ? 0 : Math.round(wd.everything.weather.apparent_temperature.current.c.toBigDecimal() * mult_twd) / mult_twd
 		}
 		myUpdData('feelsLike', t_fl.toString())
 	}
@@ -621,6 +623,7 @@ void pollOWMHandler(resp, data) {
 		if(owm.toString()==sNULL) {
 			pauseExecution(1000)
 			pollOWM()
+			return
 		}
 // <<<<<<<<<< Begin Setup Global Variables >>>>>>>>>>
 		Date fotime = new Date((Long)owm.current.dt * 1000L)
@@ -867,7 +870,7 @@ void pollOWMHandler(resp, data) {
 					clearAlerts()
 				}else{
 					Integer alertCnt = 0
-					for(int i = 1;i<10;i++) {
+					for(Integer i = 1;i<10;i++) {
 						if(owm?.alerts[i]?.event!=null) {
 							alertCnt = i
 						}
@@ -1136,7 +1139,7 @@ void PostPoll() {
 /*  'Required for Dashboards' Data Elements */
 	if(dashHubitatOWMPublish || dashSharpToolsPublish || dashSmartTilesPublish) { sendEvent(name: 'city', value: myGetData('city')) }
 	if(dashSharpToolsPublish) { sendEvent(name: 'forecastIcon', value: getCondCode(myGetData('condition_id').toInteger(), myGetData('is_day'))) }
-	if(dashSharpToolsPublish || dashSmartTilesPublish || rainTodayPublish) { sendEvent(name: 'rainToday', value: Math.round(myGetData('rainToday').toBigDecimal() * mult_r) / mult_r, unit: myGetData(sRMETR)) }
+	if(dashSharpToolsPublish || dashSmartTilesPublish || rainTodayPublish) { sendEvent(name: 'rainToday', value: myGetData('rainToday')==sNULL ? 0 : Math.round(myGetData('rainToday').toBigDecimal() * mult_r) / mult_r, unit: myGetData(sRMETR)) }
 	if(dashSharpToolsPublish || dashSmartTilesPublish) { sendEvent(name: 'weather', value: myGetData('condition_text')) }
 	if(dashSharpToolsPublish || dashSmartTilesPublish) { sendEvent(name: 'weatherIcon', value: getCondCode(myGetData('condition_id').toInteger(), myGetData('is_day'))) }
 	if(dashHubitatOWMPublish) { sendEvent(name: "weatherIcons", value: myGetData('OWN_icon')) }
@@ -1200,7 +1203,7 @@ void PostPoll() {
 		String mtprecip
 		if(extSource.toInteger() == 2){
 			Summary_forecastTemp = ' with a high of ' + String.format(myGetData('ddisp_twd'), myGetData('forecastHigh').toBigDecimal()) + myGetData(sTMETR) + ' and a low of ' + String.format(myGetData('ddisp_twd'), myGetData('forecastLow').toBigDecimal()) + myGetData(sTMETR) + '. '
-			Summary_precip = 'There has been ' + (myGetData('rainToday').toBigDecimal() > 0 ? String.format(myGetData('ddisp_r'), myGetData('rainToday').toBigDecimal()) + (myGetData(sRMETR) == 'in' ? ' inches' : ' millimeters') + ' of ' : ' no ') + 'precipitation today. '
+			Summary_precip = 'There has been ' + (myGetData('rainToday')==sNULL ? 0 : myGetData('rainToday').toBigDecimal() > 0 ? String.format(myGetData('ddisp_r'), myGetData('rainToday').toBigDecimal()) + (myGetData(sRMETR) == 'in' ? ' inches' : ' millimeters') + ' of ' : ' no ') + 'precipitation today. '
 			Summary_vis = 'Visibility is around ' + String.format(myGetData('ddisp_twd'), myGetData('vis').toBigDecimal()) + (myGetData(sDMETR)=='MPH' ? ' miles.' : ' kilometers.')
 			mtprecip = myGetData('percentPrecip') + '%'
 		}else{
@@ -1521,6 +1524,7 @@ void pollOWMlHandler(resp, data) {
 		if(owml.toString()==sNULL) {
 			pauseExecution(1000)
 			pollOWMl()
+			return
 		}
 		LOGINFO('OpenWeatherMap Location Data: ' + owml.toString())
 		myUpdData('OWML',(owml?.list[0]?.id==null ? sSPC : owml?.list[0]?.id.toString()))
