@@ -1,10 +1,10 @@
 {
   "packageName": "Weather-Display With OWM-Alerts Forecast Driver",
   "author": "Matthew Scott",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "minimumHEVersion": "2.1.9",
-  "dateReleased": "2019-10-27",
-  "releaseNotes": "Bug fixes.",
+  "dateReleased": "2019-10-28",
+  "releaseNotes": "Added Probability of Precipitation (PoP) from OWM.  Bug fixes and code and string reductions by @nh.schottfam).",
   "communityLink": "https://community.hubitat.com/t/release-weather-display-with-owm-nws-alerts-forecast-driver/38557",
   "documentationLink": "https://github.com/HubitatCommunity/Weather-Display-With-OWM-Alerts-Forecast-Driver/wiki",
   "drivers": [
