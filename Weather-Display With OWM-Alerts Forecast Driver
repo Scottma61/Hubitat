@@ -61,6 +61,7 @@
 	Last Update 10/27/2020
 { Left room below to document version changes...}
 
+	V0.3.2	10/27/2020	Bug fixes.
 	V0.3.1	10/27/2020	Removed '+' from attribute names.  Three Day Tile now has optional 'Low/High' or 'High/Low' setting.
 	V0.3.0	10/26/2020	More bug fixes on the Weather-Display JSON returns for nulls.
 	V0.2.9	10/25/2020	Bug fixes for null JSON returns.
@@ -106,7 +107,7 @@ The way the 'optional' attributes work:
 	available in the dashboard is to delete the virtual device and create a new one AND DO NOT SELECT the
 	attribute you do not want to show.
 */
-static String version()	{  return '0.3.1'  }
+static String version()	{  return '0.3.2'  }
 import groovy.transform.Field
 
 metadata {
@@ -727,14 +728,14 @@ void pollOWMHandler(resp, data) {
 			
 			String imgT= '<img class="centerImage" src=' + myGetData(sICON)
 			myUpdData('imgName0', imgT + getImgName(myGetData('condition_id').toInteger(), myGetData('is_day')) + imgT1 + sRB)
-			myUpdData('imgName1', imgT + getImgName((owmDaily[1]?.weather[0]?.id==null ? 999 : owmDaily[1].weather[0].id), sTRU) + imgT1 + sRB)
-			myUpdData('imgName2', imgT + getImgName((owmDaily[2]?.weather[0]?.id==null ? 999 : owmDaily[2].weather[0].id), sTRU) + imgT1 + sRB)
+			myUpdData('imgName1', imgT + getImgName((!owmDaily[1].weather[0].id ? 999 : owmDaily[1].weather[0].id.toInteger()), sTRU) + imgT1 + sRB)
+			myUpdData('imgName2', imgT + getImgName((!owmDaily[2].weather[0].id ? 999 : owmDaily[2].weather[0].id.toInteger()), sTRU) + imgT1 + sRB)
 		}
 		if(condition_icon_urlPublish) {
 			String imgName1 = getImgName(myGetData('forecast_id1').toInteger(), myGetData('is_day'))
 			String imgName2 = getImgName(myGetData('forecast_id2').toInteger(), myGetData('is_day'))
-			sendEvent(name: 'condition_icon_url1', value: myGetData(sICON) + imgName1 + imgT1)
-			sendEvent(name: 'condition_icon_url2', value: myGetData(sICON) + imgName2 + imgT1)
+			sendEvent(name: 'condition_icon_url1', value: myGetData(sICON) + getImgName((!owmDaily[1].weather[0].id ? 999 : owmDaily[1].weather[0].id.toInteger()), sTRU) + imgT1)
+			sendEvent(name: 'condition_icon_url2', value: myGetData(sICON) + getImgName((!owmDaily[2].weather[0].id ? 999 : owmDaily[2].weather[0].id.toInteger()), sTRU) + imgT1)
 		}
 
 		myUpdData('forecastHigh', adjTemp(owmDaily[0]?.temp?.max, isF, mult_twd))
@@ -861,7 +862,7 @@ void pollOWMHandler(resp, data) {
 		}
 // >>>>>>>>>> End Process Only If feelsLike from WD Is NOT Selected  <<<<<<<<<<
 		if(alertPublish) {
-			if(!owm?.alerts) {
+			if(!owm.alerts) {
 				clearAlerts()
 			}else{			
 				String curAl = owm?.alerts[0]?.event==null ? 'No current weather alerts for this area' : owm?.alerts[0]?.event.replaceAll('\n', sSPC).replaceAll('[{}\\[\\]]', sBLK)
@@ -929,8 +930,8 @@ static String adjTemp(temp, Boolean isF, Integer mult_twd){
 void clearAlerts(){
 	myUpdData('noAlert',sTRU)
 	myUpdData('alert', 'No current weather alerts for this area')
-	myUpdData('alertDescr', sBLK)
-	myUpdData('alertSender', sBLK)
+	myUpdData('alertDescr', 'No current weather alerts for this area')
+	myUpdData('alertSender', sSPC)
 	//	https://tinyurl.com/y42s2ndy points to https://openweathermap.org/city/
 	String al3 = '<a style="font-style:italic" href="https://tinyurl.com/y42s2ndy/' + myGetData('OWML') + '" target="_blank">'
 	myUpdData('alertTileLink', al3+myGetData('alert')+sACB)
