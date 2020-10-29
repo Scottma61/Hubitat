@@ -47,7 +47,7 @@
 	Last Update 10/29/2020
 	{ Left room below to document version changes...}
 
-	V0.4.1	10/29/2020	Move todays's precip back to 'Daily'.  More bux fixes.
+	V0.4.1	10/29/2020	Move today's precip back to 'Daily'.  More bux fixes.
 	V0.4.0	10/28/2020	More Bux fixes for new Probability of Precipitation (PoP) from OWM.
 	V0.3.9	10/28/2020	Bux fixes for new Probability of Precipitation (PoP) from OWM.
 	V0.3.8	10/28/2020	Added Probability of Precipitation (PoP) from OWM.  Bug fixes and code and string reductions by @nh.schottfam).
