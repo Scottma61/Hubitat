@@ -61,6 +61,7 @@
 	Last Update 10/28/2020
 { Left room below to document version changes...}
 
+	V0.3.5	10/28/2020	More Bux fixes for new Probability of Precipitation (PoP) from OWM.
 	V0.3.4	10/28/2020	Bux fixes for new Probability of Precipitation (PoP) from OWM.
 	V0.3.3	10/28/2020	Added Probability of Precipitation (PoP) from OWM.  Bug fixes and code and string reductions by @nh.schottfam).
 	V0.3.2	10/27/2020	Bug fixes.
@@ -109,7 +110,7 @@ The way the 'optional' attributes work:
 	available in the dashboard is to delete the virtual device and create a new one AND DO NOT SELECT the
 	attribute you do not want to show.
 */
-static String version()	{  return '0.3.4'  }
+static String version()	{  return '0.3.5'  }
 import groovy.transform.Field
 
 metadata {
@@ -608,9 +609,9 @@ void pollOWM() {
 		LOGWARN('OpenWeatherMap API Key not found.  Please configure in preferences.')
 		return
 	}
-/*  for testing different Lat/Lon location uncommnent the two lines below */
-//	String altLat = "42.8666667"
-//	String altLon = "-106.3125"
+/*  for testing a different Lat/Lon location uncommnent the two lines below */
+//	String altLat = "40.6" //"38.627003" //"30.6953657"
+//	String altLon = "-74.53" //"-90.199402" //-88.0398912"
 
 	Map ParamsOWM
 	ParamsOWM = [ uri: 'https://api.openweathermap.org/data/2.5/onecall?lat=' + (String)altLat + '&lon=' + (String)altLon + '&exclude=minutely,hourly&mode=json&units=imperial&appid=' + apiKey ]
@@ -673,21 +674,21 @@ void pollOWMHandler(resp, data) {
 		myUpdData('cloud', cloudCover.toString())
 		myUpdData('vis', (myGetData(sDMETR)!='MPH' ? Math.round(owm?.current?.visibility==null ? 0.01 : owm.current.visibility.toBigDecimal() * 0.001 * myGetData('mult_twd').toInteger()) / myGetData('mult_twd').toInteger() : Math.round(owm?.current?.visibility==null ? 0.00 : owm.current.visibility.toBigDecimal() * 0.0006213712 * myGetData('mult_twd').toInteger()) / myGetData('mult_twd').toInteger()).toString())
 		myUpdData('percentPrecip', (!owm.daily[0].pop ? 0 : owm.daily[0].pop.toInteger() * 100).toString())
-		myUpdData('PoP', (!owm.daily[0].pop ? 0 : owm.daily[0].pop.toInteger() * 100).toString())
 
 		List owmCweat = owm?.current?.weather
 		myUpdData('condition_id', owmCweat==null || owmCweat[0]?.id==null ? '999' : owmCweat[0].id.toString())
 		myUpdData('condition_code', getCondCode(myGetData('condition_id').toInteger(), myGetData('is_day')))
 		myUpdData('condition_text', owmCweat==null || owmCweat[0]?.description==null ? 'Unknown' : owmCweat[0].description.capitalize())
 		myUpdData('OWN_icon', owmCweat == null || owmCweat[0]?.icon==null ? (myGetData('is_day')==sTRU ? '50d' : '50n') : owmCweat[0].icon)
-
+		myUpdData('PoP', (!owmCweat[0].pop ? 0 : owmCweat[0].pop.toInteger() * 100).toString())
+		BigDecimal t_p0 = (!owmCweat[0].rain ? 0 : owmCweat[0].rain) + (!owmCweat[0].snow ? 0 : owmCweat[0].snow)
+		
 		List owmDaily = owm?.daily != null && ((List)owm.daily)[0]?.weather != null ? ((List)owm?.daily)[0].weather : null
 		myUpdData('forecast_id', owmDaily==null || owmDaily[0]?.id==null ? '999' : owmDaily[0].id.toString())
 		myUpdData('forecast_code', getCondCode(myGetData('forecast_id').toInteger(), sTRU))
 		myUpdData('forecast_text', owmDaily==null || owmDaily[0]?.description==null ? 'Unknown' : owmDaily[0].description.capitalize())
 
 		owmDaily = owm?.daily != null ? (List)owm.daily : null
-		BigDecimal t_p0 = (!owmDaily[0].rain ? 0.00 : owmDaily[0].rain) + (!owmDaily[0].snow ? 0.00 : owmDaily[0].snow)
 
 		Integer mult_twd = myGetData('mult_twd')==sNULL ? 1 : myGetData('mult_twd').toInteger()
 		Integer mult_p = myGetData('mult_p')==sNULL ? 1 : myGetData('mult_p').toInteger()
@@ -696,13 +697,13 @@ void pollOWMHandler(resp, data) {
 		String imgT1=(myGetData(sICON).toLowerCase().contains('://github.com/') && myGetData(sICON).toLowerCase().contains('/blob/master/') ? '?raw=true' : sBLK)
 		
 		if(owmDaily && (threedayTilePublish || precipExtendedPublish)) {
-			BigDecimal t_p1 = (!owmDaily[1].rain ? 0.00 : owmDaily[1].rain) + (!owmDaily[1].snow ? 0.00 : owmDaily[1].snow)
-			BigDecimal t_p2 = (!owmDaily[2].rain ? 0.00 : owmDaily[2].rain) + (!owmDaily[2].snow ? 0.00 : owmDaily[2].snow)
+			BigDecimal t_p1 = (!owmDaily[1].rain ? 0 : owmDaily[1].rain) + (!owmDaily[1].snow ? 0 : owmDaily[1].snow)
+			BigDecimal t_p2 = (!owmDaily[2].rain ? 0 : owmDaily[2].rain) + (!owmDaily[2].snow ? 0 : owmDaily[2].snow)
 			myUpdData('Precip0', (Math.round((myGetData(sRMETR) == 'in' ? t_p0 * 0.03937008 : t_p0) * mult_r) / mult_r).toString())
 			myUpdData('Precip1', (Math.round((myGetData(sRMETR) == 'in' ? t_p1 * 0.03937008 : t_p1) * mult_r) / mult_r).toString())
 			myUpdData('Precip2', (Math.round((myGetData(sRMETR) == 'in' ? t_p2 * 0.03937008 : t_p2) * mult_r) / mult_r).toString())
-			myUpdData('PoP1', (!owm.daily[1].pop ? 0 : owm.daily[1].pop.toInteger() * 100).toString())
-			myUpdData('PoP2', (!owm.daily[2].pop ? 0 : owm.daily[2].pop.toInteger() * 100).toString())
+			myUpdData('PoP1', (!owm.daily[1].pop ? 0 : (owm.daily[1].pop.toBigDecimal() * 100).toInteger()).toString())
+			myUpdData('PoP2', (!owm.daily[3].pop ? 0 : (owm.daily[3].pop.toBigDecimal() * 100).toInteger()).toString())
 		}
 		if(owmDaily && owmDaily[1] && owmDaily[2] && (threedayTilePublish || myTile2Publish || fcstHighLowPublish)) {
 			myUpdData('day1', owmDaily[1]?.dt==null ? sBLK : new Date((Long)owmDaily[1].dt * 1000L).format('EEEE'))
@@ -1530,6 +1531,9 @@ void initMe() {
 	pollOWMl()
 }
 void pollOWMl() {
+/*  for testing a different Lat/Lon location uncommnent the two lines below */
+//	String altLat = "40.6" //"38.627003" //"30.6953657"
+//	String altLon = "-74.53" //"-90.199402" //-88.0398912"	
 	Map ParamsOWMl = [ uri: 'https://api.openweathermap.org/data/2.5/find?lat=' + (String)altLat + '&lon=' + (String)altLon + '&cnt=1&appid=' + (String)apiKey ]
 	LOGINFO('Poll OpenWeatherMap.org Location: ' + ParamsOWMl.toString())
 	asynchttpGet('pollOWMlHandler', ParamsOWMl)
