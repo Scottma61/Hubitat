@@ -1,10 +1,10 @@
 {
   "packageName": "OpenWeatherMap-Alerts Weather Driver",
   "author": "Matthew Scott",
-  "version": "0.3.9",
+  "version": "0.4.0",
   "minimumHEVersion": "2.1.9",
   "dateReleased": "2019-10-28",
-  "releaseNotes": "Bug fixes for new Probability of Precipitation (PoP) from OWM",
+  "releaseNotes": "More Bug fixes for new Probability of Precipitation (PoP) from OWM",
   "communityLink": "https://community.hubitat.com/t/openweathermap-nws-alerts-weather-driver/38249",
   "documentationLink": "https://github.com/HubitatCommunity/OpenWeatherMap-Alerts-Weather-Driver/wiki/OpenWeatherMap-Alerts-Weather-Driver-wiki!",
   "drivers": [
