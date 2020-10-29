@@ -61,6 +61,7 @@
 	Last Update 10/28/2020
 { Left room below to document version changes...}
 
+	V0.3.4	10/28/2020	Bux fixes for new Probability of Precipitation (PoP) from OWM.
 	V0.3.3	10/28/2020	Added Probability of Precipitation (PoP) from OWM.  Bug fixes and code and string reductions by @nh.schottfam).
 	V0.3.2	10/27/2020	Bug fixes.
 	V0.3.1	10/27/2020	Removed '+' from attribute names.  Three Day Tile now has optional 'Low/High' or 'High/Low' setting.
@@ -108,7 +109,7 @@ The way the 'optional' attributes work:
 	available in the dashboard is to delete the virtual device and create a new one AND DO NOT SELECT the
 	attribute you do not want to show.
 */
-static String version()	{  return '0.3.3'  }
+static String version()	{  return '0.3.4'  }
 import groovy.transform.Field
 
 metadata {
@@ -196,45 +197,45 @@ metadata {
 		String settingDescr = settingEnable ? '<br><i>Hide many of the optional attributes to reduce the clutter, if needed, by turning OFF this toggle.</i><br>' : '<br><i>Many optional attributes are available to you, if needed, by turning ON this toggle.</i><br>'
 		String logDescr = '<br><i>Extended logging will turn off automatically after 30 minutes.</i><br>'
 		section('Query Inputs'){
-			input 'extSource', 'enum', t: 'Select Forecast Source', required:true, defaultValue: 1, options: [1:'Weather-Display', 2:'OpenWeatherMap']
-			input 'apiKey', 'text', required: true, defaultValue: 'Type OpenWeatherMap.org API Key Here', t: 'API Key'
-			input 'pollIntervalStation', 'enum', t: 'Station Poll Interval', required: true, defaultValue: '3 Hours', options: ['Manual Poll Only', '1 Minute', '2 Minutes', '5 Minutes', '10 Minutes', '15 Minutes', '30 Minutes', '1 Hour', '3 Hours']
-			input 'pollLocationStation', 'text', required: true, t: 'Station Data File Location:', defaultValue: 'http://', description: '<i>Enter location of \'everything.php\' with a trailing \'/\'</i><br>'
-			input 'pollIntervalForecast', 'enum', t: 'External Source Poll Interval (daylight)', required: true, defaultValue: '3 Hours', options: ['Manual Poll Only', '2 Minutes', '5 Minutes', '10 Minutes', '15 Minutes', '30 Minutes', '1 Hour', '3 Hours']
-			input 'pollIntervalForecastnight', 'enum', t: 'External Source Poll Interval (nighttime)', required: true, defaultValue: '3 Hours', options: ['Manual Poll Only', '2 Minutes', '5 Minutes', '10 Minutes', '15 Minutes', '30 Minutes', '1 Hour', '3 Hours']
-			input 'logSet', 'bool', t: 'Enable Extended Logging', description: '<i>Extended logging will turn off automatically after 30 minutes.</i>', required: true, defaultValue: false
-			input 'tempFormat', 'enum', required: true, defaultValue: 'Fahrenheit (°F)', t: 'Display Unit - Temperature: Fahrenheit (°F) or Celsius (°C)',  options: ['Fahrenheit (°F)', 'Celsius (°C)']
-			input 'TWDDecimals', 'enum', required: true, defaultValue: sZERO, t: 'Display decimals for Temp, Wind & Distance', options: [0:sZERO, 1:sONE, 2:'2', 3:'3', 4:'4']
-			input 'PDecimals', 'enum', required: true, defaultValue: sZERO, t: 'Display decimals for Pressure', options: [0:sZERO, 1:sONE, 2:'2', 3:'3', 4:'4']
-			input 'RDecimals', 'enum', required: true, defaultValue: sZERO, t: 'Display decimals for Rain volume', options: [0:sZERO, 1:sONE, 2:'2', 3:'3', 4:'4']			
-			input 'datetimeFormat', 'enum', required: true, defaultValue: sONE, t: 'Display Unit - Date-Time Format',  options: [1:'m/d/yyyy 12 hour (am|pm)', 2:'m/d/yyyy 24 hour', 3:'mm/dd/yyyy 12 hour (am|pm)', 4:'mm/dd/yyyy 24 hour', 5:'d/m/yyyy 12 hour (am|pm)', 6:'d/m/yyyy 24 hour', 7:'dd/mm/yyyy 12 hour (am|pm)', 8:'dd/mm/yyyy 24 hour', 9:'yyyy/mm/dd 24 hour']
-			input 'distanceFormat', 'enum', required: true, defaultValue: 'Miles (mph)', t: 'Display Unit - Distance/Speed: Miles, Kilometers or knots',  options: ['Miles (mph)', 'Kilometers (kph)', 'knots', 'meters (m/s)']
-			input 'pressureFormat', 'enum', required: true, defaultValue: 'Inches', t: 'Display Unit - Pressure: Inches or Millibar',  options: ['Inches', 'Millibar', 'Hectopascal']
-			input 'rainFormat', 'enum', required: true, defaultValue: 'Inches', t: 'Display Unit - Precipitation: Inches or Millimeters',  options: ['Inches', 'Millimeters']
-			input 'luxjitter', 'bool', t: 'Use lux jitter control (rounding)?', required: true, defaultValue: false
-			input 'iconLocation', 'text', required: true, defaultValue: 'https://tinyurl.com/y6xrbhpf/', t: 'Alternative Icon Location:'
-			input 'iconType', 'bool', t: 'Condition Icon: ON = Current - OFF = Forecast', required: true, defaultValue: false
-			input 'sourcefeelsLike', 'bool', required: true, t: 'Feelslike from Weather-Display?', defaultValue: false
-			input 'sourceIllumination', 'bool', required: true, t: 'Illuminance from Weather-Display?', defaultValue: true
-			input 'sourceUV', 'bool', required: true, t: 'UV from Weather-Display?', defaultValue: true
-			input 'sourceWind', 'bool', required: true, t: 'Wind from Weather-Display?', defaultValue: true
-			input 'altCoord', 'bool', required: true, defaultValue: false, t: 'Override Hub\'s location coordinates'
+			input 'extSource', 'enum', title: 'Select Forecast Source', required:true, defaultValue: 1, options: [1:'Weather-Display', 2:'OpenWeatherMap']
+			input 'apiKey', 'text', required: true, defaultValue: 'Type OpenWeatherMap.org API Key Here', title: 'API Key'
+			input 'pollIntervalStation', 'enum', title: 'Station Poll Interval', required: true, defaultValue: '3 Hours', options: ['Manual Poll Only', '1 Minute', '2 Minutes', '5 Minutes', '10 Minutes', '15 Minutes', '30 Minutes', '1 Hour', '3 Hours']
+			input 'pollLocationStation', 'text', required: true, title: 'Station Data File Location:', defaultValue: 'http://', description: '<i>Enter location of \'everything.php\' with a trailing \'/\'</i><br>'
+			input 'pollIntervalForecast', 'enum', title: 'External Source Poll Interval (daylight)', required: true, defaultValue: '3 Hours', options: ['Manual Poll Only', '2 Minutes', '5 Minutes', '10 Minutes', '15 Minutes', '30 Minutes', '1 Hour', '3 Hours']
+			input 'pollIntervalForecastnight', 'enum', title: 'External Source Poll Interval (nighttime)', required: true, defaultValue: '3 Hours', options: ['Manual Poll Only', '2 Minutes', '5 Minutes', '10 Minutes', '15 Minutes', '30 Minutes', '1 Hour', '3 Hours']
+			input 'logSet', 'bool', title: 'Enable Extended Logging', description: '<i>Extended logging will turn off automatically after 30 minutes.</i>', required: true, defaultValue: false
+			input 'tempFormat', 'enum', required: true, defaultValue: 'Fahrenheit (°F)', title: 'Display Unit - Temperature: Fahrenheit (°F) or Celsius (°C)',  options: ['Fahrenheit (°F)', 'Celsius (°C)']
+			input 'TWDDecimals', 'enum', required: true, defaultValue: sZERO, title: 'Display decimals for Temp, Wind & Distance', options: [0:sZERO, 1:sONE, 2:'2', 3:'3', 4:'4']
+			input 'PDecimals', 'enum', required: true, defaultValue: sZERO, title: 'Display decimals for Pressure', options: [0:sZERO, 1:sONE, 2:'2', 3:'3', 4:'4']
+			input 'RDecimals', 'enum', required: true, defaultValue: sZERO, title: 'Display decimals for Rain volume', options: [0:sZERO, 1:sONE, 2:'2', 3:'3', 4:'4']			
+			input 'datetimeFormat', 'enum', required: true, defaultValue: sONE, title: 'Display Unit - Date-Time Format',  options: [1:'m/d/yyyy 12 hour (am|pm)', 2:'m/d/yyyy 24 hour', 3:'mm/dd/yyyy 12 hour (am|pm)', 4:'mm/dd/yyyy 24 hour', 5:'d/m/yyyy 12 hour (am|pm)', 6:'d/m/yyyy 24 hour', 7:'dd/mm/yyyy 12 hour (am|pm)', 8:'dd/mm/yyyy 24 hour', 9:'yyyy/mm/dd 24 hour']
+			input 'distanceFormat', 'enum', required: true, defaultValue: 'Miles (mph)', title: 'Display Unit - Distance/Speed: Miles, Kilometers or knots',  options: ['Miles (mph)', 'Kilometers (kph)', 'knots', 'meters (m/s)']
+			input 'pressureFormat', 'enum', required: true, defaultValue: 'Inches', title: 'Display Unit - Pressure: Inches or Millibar',  options: ['Inches', 'Millibar', 'Hectopascal']
+			input 'rainFormat', 'enum', required: true, defaultValue: 'Inches', title: 'Display Unit - Precipitation: Inches or Millimeters',  options: ['Inches', 'Millimeters']
+			input 'luxjitter', 'bool', title: 'Use lux jitter control (rounding)?', required: true, defaultValue: false
+			input 'iconLocation', 'text', required: true, defaultValue: 'https://tinyurl.com/y6xrbhpf/', title: 'Alternative Icon Location:'
+			input 'iconType', 'bool', title: 'Condition Icon: ON = Current - OFF = Forecast', required: true, defaultValue: false
+			input 'sourcefeelsLike', 'bool', required: true, title: 'Feelslike from Weather-Display?', defaultValue: false
+			input 'sourceIllumination', 'bool', required: true, title: 'Illuminance from Weather-Display?', defaultValue: true
+			input 'sourceUV', 'bool', required: true, title: 'UV from Weather-Display?', defaultValue: true
+			input 'sourceWind', 'bool', required: true, title: 'Wind from Weather-Display?', defaultValue: true
+			input 'altCoord', 'bool', required: true, defaultValue: false, title: 'Override Hub\'s location coordinates'
 			if (altCoord) {
-				input 'altLat', sSTR, t: 'Override location Latitude', required: true, defaultValue: location.latitude.toString(), description: '<br>Enter location Latitude<br>'
-				input 'altLon', sSTR, t: 'Override location Longitude', required: true, defaultValue: location.longitude.toString(), description: '<br>Enter location Longitude<br>'
+				input 'altLat', sSTR, title: 'Override location Latitude', required: true, defaultValue: location.latitude.toString(), description: '<br>Enter location Latitude<br>'
+				input 'altLon', sSTR, title: 'Override location Longitude', required: true, defaultValue: location.longitude.toString(), description: '<br>Enter location Longitude<br>'
 			}
-			input 'settingEnable', 'bool', t: '<b>Display All Optional Attributes</b>', description: settingDescr, defaultValue: true
+			input 'settingEnable', 'bool', title: '<b>Display All Optional Attributes</b>', description: settingDescr, defaultValue: true
 //build a Selector for each mapped Attribute or group of attributes
 			attributesMap.each {
 				keyname, attribute ->
 				if (settingEnable) {
-					input keyname+'Publish', 'bool', t: attribute.title, required: true, defaultValue: attribute.default, description: sBR+(String)attribute.d+sBR
-					if(keyname == 'threedayTile') input 'threedayLH', 'bool', t: 'Three Day Temp Display', description: '<br>High/Low: On or Low/High: Off<br>', required: true, defaultValue: false
-					if(keyname == 'weatherSummary') input 'summaryType', 'bool', t: 'Full Weather Summary', description: '<br>Full: on or short: off summary?<br>', required: true, defaultValue: false
+					input keyname+'Publish', 'bool', title: attribute.title, required: true, defaultValue: attribute.default, description: sBR+(String)attribute.d+sBR
+					if(keyname == 'threedayTile') input 'threedayLH', 'bool', title: 'Three Day Temp Display', description: '<br>High/Low: On or Low/High: Off<br>', required: true, defaultValue: false
+					if(keyname == 'weatherSummary') input 'summaryType', 'bool', title: 'Full Weather Summary', description: '<br>Full: on or short: off summary?<br>', required: true, defaultValue: false
 				}
 			}
 			if (settingEnable) {
-				input 'windPublish', 'bool', t: 'Wind Speed', required: true, defaultValue: sFLS, description: '<br>Display wind speed<br>'
+				input 'windPublish', 'bool', title: 'Wind Speed', required: true, defaultValue: sFLS, description: '<br>Display wind speed<br>'
 			}
 		}
 	}
@@ -671,8 +672,8 @@ void pollOWMHandler(resp, data) {
 		 }
 		myUpdData('cloud', cloudCover.toString())
 		myUpdData('vis', (myGetData(sDMETR)!='MPH' ? Math.round(owm?.current?.visibility==null ? 0.01 : owm.current.visibility.toBigDecimal() * 0.001 * myGetData('mult_twd').toInteger()) / myGetData('mult_twd').toInteger() : Math.round(owm?.current?.visibility==null ? 0.00 : owm.current.visibility.toBigDecimal() * 0.0006213712 * myGetData('mult_twd').toInteger()) / myGetData('mult_twd').toInteger()).toString())
-		myUpdData('percentPrecip', !owm.daily[0].pop ? sZERO : owm.daily[0].pop.toString())
-		myUpdData('PoP', !owm.daily[0].pop ? sZERO : owm.daily[0].pop.toString())
+		myUpdData('percentPrecip', (!owm.daily[0].pop ? 0 : owm.daily[0].pop.toInteger() * 100).toString())
+		myUpdData('PoP', (!owm.daily[0].pop ? 0 : owm.daily[0].pop.toInteger() * 100).toString())
 
 		List owmCweat = owm?.current?.weather
 		myUpdData('condition_id', owmCweat==null || owmCweat[0]?.id==null ? '999' : owmCweat[0].id.toString())
@@ -686,7 +687,7 @@ void pollOWMHandler(resp, data) {
 		myUpdData('forecast_text', owmDaily==null || owmDaily[0]?.description==null ? 'Unknown' : owmDaily[0].description.capitalize())
 
 		owmDaily = owm?.daily != null ? (List)owm.daily : null
-		BigDecimal t_p0 = (owmDaily==null || owmDaily[0]?.rain==null ? 0.00 : owmDaily[0].rain) + (owmDaily==null || owmDaily[0]?.snow==null ? 0.00 : owmDaily[0].snow)
+		BigDecimal t_p0 = (!owmDaily[0].rain ? 0.00 : owmDaily[0].rain) + (!owmDaily[0].snow ? 0.00 : owmDaily[0].snow)
 
 		Integer mult_twd = myGetData('mult_twd')==sNULL ? 1 : myGetData('mult_twd').toInteger()
 		Integer mult_p = myGetData('mult_p')==sNULL ? 1 : myGetData('mult_p').toInteger()
@@ -695,13 +696,13 @@ void pollOWMHandler(resp, data) {
 		String imgT1=(myGetData(sICON).toLowerCase().contains('://github.com/') && myGetData(sICON).toLowerCase().contains('/blob/master/') ? '?raw=true' : sBLK)
 		
 		if(owmDaily && (threedayTilePublish || precipExtendedPublish)) {
-			BigDecimal t_p1 = (owmDaily[1]?.rain==null ? 0.00 : owmDaily[1].rain) + (owmDaily[1]?.snow==null ? 0.00 : owmDaily[1].snow)
-			BigDecimal t_p2 = (owmDaily[2]?.rain==null ? 0.00 : owmDaily[2].rain) + (owmDaily[2]?.snow==null ? 0.00 : owmDaily[2].snow)
+			BigDecimal t_p1 = (!owmDaily[1].rain ? 0.00 : owmDaily[1].rain) + (!owmDaily[1].snow ? 0.00 : owmDaily[1].snow)
+			BigDecimal t_p2 = (!owmDaily[2].rain ? 0.00 : owmDaily[2].rain) + (!owmDaily[2].snow ? 0.00 : owmDaily[2].snow)
 			myUpdData('Precip0', (Math.round((myGetData(sRMETR) == 'in' ? t_p0 * 0.03937008 : t_p0) * mult_r) / mult_r).toString())
 			myUpdData('Precip1', (Math.round((myGetData(sRMETR) == 'in' ? t_p1 * 0.03937008 : t_p1) * mult_r) / mult_r).toString())
 			myUpdData('Precip2', (Math.round((myGetData(sRMETR) == 'in' ? t_p2 * 0.03937008 : t_p2) * mult_r) / mult_r).toString())
-			myUpdData('PoP1', (!owm.daily[1].pop ? sZERO : owm.daily[1].pop).toString())
-			myUpdData('PoP2', (!owm.daily[2].pop ? sZERO : owm.daily[2].pop).toString())
+			myUpdData('PoP1', (!owm.daily[1].pop ? 0 : owm.daily[1].pop.toInteger() * 100).toString())
+			myUpdData('PoP2', (!owm.daily[2].pop ? 0 : owm.daily[2].pop.toInteger() * 100).toString())
 		}
 		if(owmDaily && owmDaily[1] && owmDaily[2] && (threedayTilePublish || myTile2Publish || fcstHighLowPublish)) {
 			myUpdData('day1', owmDaily[1]?.dt==null ? sBLK : new Date((Long)owmDaily[1].dt * 1000L).format('EEEE'))
@@ -1275,9 +1276,9 @@ void PostPoll() {
 		my3day += '</tr>'
 		my3day += '<tr>'
 		my3day += sTD+'PoP/Precip:'+sTDE
-		my3day += sTD + myGetData('PoP') + '%/' + (myGetData('Precip0').toBigDecimal() > 0 ? String.format(ddisp_r, myGetData('Precip0').toBigDecimal()) + sSPC + myGetData(sRMETR) : 'None') + sTDE
-		my3day += sTD + myGetData('PoP1') + '%/' + (myGetData('Precip1').toBigDecimal() > 0 ? String.format(ddisp_r, myGetData('Precip0').toBigDecimal()) + sSPC + myGetData(sRMETR) : 'None') + sTDE
-		my3day += sTD + myGetData('PoP2') + '%/' + (myGetData('Precip2').toBigDecimal() > 0 ? String.format(ddisp_r, myGetData('Precip0').toBigDecimal()) + sSPC + myGetData(sRMETR) : 'None') + sTDE
+		my3day += sTD + myGetData('PoP') + '%/' + (myGetData('Precip0').toBigDecimal() > 0 ? String.format(ddisp_r, myGetData('Precip0').toBigDecimal()) + myGetData(sRMETR) : 'None') + sSPC + sTDE
+		my3day += sTD + myGetData('PoP1') + '%/' + (myGetData('Precip1').toBigDecimal() > 0 ? String.format(ddisp_r, myGetData('Precip0').toBigDecimal()) + myGetData(sRMETR) : 'None') + sSPC + sTDE
+		my3day += sTD + myGetData('PoP2') + '%/' + (myGetData('Precip2').toBigDecimal() > 0 ? String.format(ddisp_r, myGetData('Precip0').toBigDecimal()) + myGetData(sRMETR) : 'None') + sSPC + sTDE
 		my3day += '</tr>'
 		my3day += '</table>'
 		my3day += '<table align="center">'
@@ -1325,8 +1326,8 @@ void PostPoll() {
 		mytexte+= '<span style="font-size:.9em">' + sIMGS + myGetData(sICON) + myGetData('wind_bft_icon') + iconClose + '>' + myGetData('wind_direction') + sSPC
 		mytexte+= (myGetData('wind').toBigDecimal() < 1.0 ? 'calm' : '@ ' + String.format(myGetData('ddisp_twd'), myGetData('wind').toBigDecimal()) + sSPC + myGetData(sDMETR))
 		mytexte+= ', gusts ' + ((wgust < 1.0) ? 'calm' :  '@ ' + String.format(myGetData('ddisp_twd'), wgust) + sSPC + myGetData(sDMETR)) + sBR
-		mytexte+= sIMGS + myGetData(sICON) + 'wb.png' + iconClose + '>' + String.format(myGetData('ddisp_p'), myGetData('pressure').toBigDecimal()) + sSPC + myGetData(sPMETR) + '   ' + sIMGS + myGetData(sICON) + 'wh.png' + iconClose + '>'
-		mytexte+= myGetData('humidity') + '%    ' + sIMGS + myGetData(sICON) + 'wu.png' + iconClose + '>' + myGetData('percentPrecip') + '%    ' + sIMGS + myGetData(sICON) + 'wr.png' + iconClose + '>' + (myGetData('rainToday').toBigDecimal() > 0 ? String.format(myGetData('ddisp_r'), myGetData('rainToday').toBigDecimal()) + sSPC + myGetData(sRMETR) : 'None') + sBR
+		mytexte+= sIMGS + myGetData(sICON) + 'wb.png' + iconClose + '>' + String.format(myGetData('ddisp_p'), myGetData('pressure').toBigDecimal()) + sSPC + myGetData(sPMETR) + ' ' + sIMGS + myGetData(sICON) + 'wh.png' + iconClose + '>'
+		mytexte+= myGetData('humidity') + '% ' + sIMGS + myGetData(sICON) + 'wu.png' + iconClose + '>' + myGetData('percentPrecip') + '%' + sIMGS + myGetData(sICON) + 'wr.png' + iconClose + '>' + (myGetData('rainToday').toBigDecimal() > 0 ? String.format(myGetData('ddisp_r'), myGetData('rainToday').toBigDecimal()) + sSPC + myGetData(sRMETR) : 'None') + sBR
 		mytexte+= sIMGS + myGetData(sICON) + 'wsr.png' + iconClose + '>' + myGetData('localSunrise') + '   ' + sIMGS + myGetData(sICON) + 'wss.png' + iconClose + '>'
 		mytexte+= myGetData('localSunset') + '   Updated: ' + myGetData(sSUMLST)
 
