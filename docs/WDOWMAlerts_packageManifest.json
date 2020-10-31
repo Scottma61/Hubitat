@@ -1,10 +1,10 @@
 {
   "packageName": "Weather-Display With OWM-Alerts Forecast Driver",
   "author": "Matthew Scott",
-  "version": "0.3.9",
+  "version": "0.4.0",
   "minimumHEVersion": "2.1.9",
-  "dateReleased": "2019-10-30",
-  "releaseNotes": "More code cleanups/reductions/optimizations by @nh.schottfam.",
+  "dateReleased": "2019-10-31",
+  "releaseNotes": "Tweaked threedayfcstTile for small screens.",
   "communityLink": "https://community.hubitat.com/t/release-weather-display-with-owm-nws-alerts-forecast-driver/38557",
   "documentationLink": "https://github.com/HubitatCommunity/Weather-Display-With-OWM-Alerts-Forecast-Driver/wiki",
   "drivers": [
