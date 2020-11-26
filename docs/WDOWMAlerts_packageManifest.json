@@ -1,10 +1,10 @@
 {
   "packageName": "Weather-Display With OWM-Alerts Forecast Driver",
   "author": "Matthew Scott",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "minimumHEVersion": "2.1.9",
-  "dateReleased": "2019-11-06",
-  "releaseNotes": "Refactored the dashboard tiles.",
+  "dateReleased": "2019-11-26",
+  "releaseNotes": "Bug fixes.  Fix timeouts on http calls (by @nh.schottfam).",
   "communityLink": "https://community.hubitat.com/t/release-weather-display-with-owm-alerts-forecast-driver/38557",
   "documentationLink": "https://github.com/HubitatCommunity/Weather-Display-With-OWM-Alerts-Forecast-Driver/wiki",
   "drivers": [
