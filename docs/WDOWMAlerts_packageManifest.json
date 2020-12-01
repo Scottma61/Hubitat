@@ -1,10 +1,10 @@
 {
   "packageName": "Weather-Display With OWM-Alerts Forecast Driver",
   "author": "Matthew Scott",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "minimumHEVersion": "2.1.9",
-  "dateReleased": "2019-11-26",
-  "releaseNotes": "Bug fixes.  Fix timeouts on http calls (by @nh.schottfam).",
+  "dateReleased": "2019-12-01",
+  "releaseNotes": "Added ability to select Weather Alert source (none/OWM/Weather.gov {US Only})",
   "communityLink": "https://community.hubitat.com/t/release-weather-display-with-owm-alerts-forecast-driver/38557",
   "documentationLink": "https://github.com/HubitatCommunity/Weather-Display-With-OWM-Alerts-Forecast-Driver/wiki",
   "drivers": [
