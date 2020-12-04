@@ -58,9 +58,10 @@
 	on an 'AS IS' BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
 	for the specific language governing permissions and limitations under the License.
 
-	Last Update 12/01/2020
+	Last Update 12/03/2020
 { Left room below to document version changes...}
 
+	V0.4.4	12/03/2020	New tinyurl for icons.  Added tinyurl for weather.gov alert poll.
 	V0.4.3	12/01/2020	Added ability to select Weather Alert source (none/OWM/Weather.gov {US Only}).
 	V0.4.2	11/26/2020	Bug fixes.  Fix timeouts on http calls (by @nh.schottfam).
 	V0.4.1	11/06/2020	Refactored the dashboard tiles.
@@ -118,7 +119,7 @@ The way the 'optional' attributes work:
 	available in the dashboard is to delete the virtual device and create a new one AND DO NOT SELECT the
 	attribute you do not want to show.
 */
-static String version()	{  return '0.4.3'  }
+static String version()	{  return '0.4.4'  }
 import groovy.transform.Field
 
 metadata {
@@ -225,7 +226,8 @@ metadata {
 			input 'pressureFormat', 'enum', required: true, defaultValue: 'Inches', title: 'Display Unit - Pressure: Inches or Millibar',  options: ['Inches', 'Millibar', 'Hectopascal']
 			input 'rainFormat', 'enum', required: true, defaultValue: 'Inches', title: 'Display Unit - Precipitation: Inches or Millimeters',  options: ['Inches', 'Millimeters']
 			input 'luxjitter', 'bool', title: 'Use lux jitter control (rounding)?', required: true, defaultValue: false
-			input 'iconLocation', 'text', required: true, defaultValue: 'https://tinyurl.com/y6xrbhpf/', title: 'Alternative Icon Location:'
+//	https://tinyurl.com/icnqz/ points to https://raw.githubusercontent.com/HubitatCommunity/WeatherIcons/master/
+			input 'iconLocation', 'text', required: true, defaultValue: 'https://tinyurl.com/icnqz/', title: 'Alternative Icon Location:'
 			input 'iconType', 'bool', title: 'Condition Icon: ON = Current - OFF = Forecast', required: true, defaultValue: false
 			input 'sourcefeelsLike', 'bool', required: true, title: 'Feelslike from Weather-Display?', defaultValue: false
 			input 'sourceIllumination', 'bool', required: true, title: 'Illuminance from Weather-Display?', defaultValue: true
@@ -623,8 +625,8 @@ void pollOWM() {
 		return
 	}
 /*  for testing a different Lat/Lon location uncommnent the two lines below */
-//	String altLat = "44.809122" //"41.5051613" // "40.6" //"38.627003" //"30.6953657"
-//	String altLon = "-68.735892" //"-81.6934446" // "-75.43" //"-90.199402" //-88.0398912"
+//	String altLat = "38.627003" //"44.809122" // "40.6" //"30.6953657"
+//	String altLon = "-90.199402" //"-68.735892" // "-75.43" //-88.0398912"
 
 	Map ParamsOWM
 	ParamsOWM = [ uri: 'https://api.openweathermap.org/data/2.5/onecall?lat=' + (String)altLat + '&lon=' + (String)altLon + '&exclude=minutely,hourly&mode=json&units=imperial&appid=' + apiKey, timeout: 20 ]
@@ -890,8 +892,8 @@ void pollOWMHandler(resp, data) {
 		if(alertPublish) {
 			if(alertSource==sTWO) {
 /*  for testing a different Lat/Lon location uncommnent the two lines below */
-//	String altLat = "44.809122" //"41.5051613" // "40.6" //"38.627003" //"30.6953657"
-//	String altLon = "-68.735892" //"-81.6934446" // "-75.43" //"-90.199402" //-88.0398912"
+//	String altLat = "38.627003" //"44.809122" // "40.6" //"30.6953657"
+//	String altLon = "-90.199402" //"-68.735892" // "-75.43" //-88.0398912"
 				pollWDG()
 			}
 			if((alertSource==sZERO) || (!owm.alerts && alertSource==sONE) || (myGetData('curAl')==sNCWA && alertSource==sTWO)) {
@@ -921,11 +923,12 @@ void pollOWMHandler(resp, data) {
 					}
 				}else{
 /*  for testing a different Lat/Lon location uncommnent the two lines below */
-////	String altLat = "44.809122" // "40.6" //"38.627003" //"30.6953657"
-////	String altLon = "-68.735892" // "-75.43" //"-90.199402" //-88.0398912"
+//	String altLat = "38.627003" //"44.809122" // "40.6" //"30.6953657"
+//	String altLon = "-90.199402" //"-68.735892" // "-75.43" //-88.0398912"
 					myUpdData('alert', myGetData('curAl') + (myGetData('alertCnt') != sZERO ? ' +' + myGetData('alertCnt') : sBLK))
-					myUpdData('alertTileLink', '<a style="font-style:italic;color:red" href="https://forecast.weather.gov/MapClick.php?lat=' + altLat + '&lon=' + altLon +'" target=\'_blank\'>'+myGetData('alert')+sACB)
-					myUpdData('alertLink',  '<a style="font-style:italic;color:red" href="https://forecast.weather.gov/MapClick.php?lat=' + altLat + '&lon=' + altLon +'" target=\'_blank\'>'+myGetData('alert')+sACB)
+// https://tinyurl.com/zznws points to https://forecast.weather.gov/MapClick.php
+					myUpdData('alertTileLink', '<a style="font-style:italic;color:red" href="https://tinyurl.com/zznws?lat=' + altLat + '&lon=' + altLon +'" target=\'_blank\'>'+myGetData('alert')+sACB)
+					myUpdData('alertLink',  '<a style="font-style:italic;color:red" href="https://tinyurl.com/zznws?lat=' + altLat + '&lon=' + altLon +'" target=\'_blank\'>'+myGetData('alert')+sACB)
 					if(myGetData('curAl')==sNCWA) {
 						clearAlerts()
 					}
@@ -942,7 +945,7 @@ void pollOWMHandler(resp, data) {
 				alertTile+= '<a href="https://openweathermap.org/city/' + myGetData('OWML') + '" target="_blank">' + sIMGS5 + myGetData(sICON) + 'OWM.png style="height:2em"></a> @ ' + myGetData(sSUMLST)
 			}else{
 				if(alertSource==sTWO) {
-    				alertTile+= '<a href=\"https://forecast.weather.gov/MapClick.php?lat=' + altLat + '&lon=' + altLon + '\" target=\"_blank\">' + sIMGS5 + myGetData(sICON) + 'NWS_240px.png style="height:2em"></a> @ ' + myGetData(sSUMLST)
+    				alertTile+= '<a href="https://tinyurl.com/zznws?lat=' + altLat + '&lon=' + altLon + '" target="_blank">' + sIMGS5 + myGetData(sICON) + 'NWS_240px.png style="height:2em"></a> @ ' + myGetData(sSUMLST)
 				}
 			}
 			myUpdData('alertTile', alertTile)
@@ -971,8 +974,8 @@ void pollOWMHandler(resp, data) {
 // <<<<<<<<<< Begin polling weather.gov for Alerts >>>>>>>>>>
 void pollWDG() {
 /*  for testing a different Lat/Lon location uncommnent the two lines below */
-//	String altLat = "44.809122" //"41.5051613" // "40.6" //"38.627003" //"30.6953657"
-//	String altLon = "-68.735892" //"-81.6934446" // "-75.43" //"-90.199402" //-88.0398912"
+//	String altLat = "38.627003" //"44.809122" // "40.6" //"30.6953657"
+//	String altLon = "-90.199402" //"-68.735892" // "-75.43" //-88.0398912"
 	Map wdgParams = [ uri: 'https://api.weather.gov/alerts/active?status=actual&message_type=alert,update&point=' + altLat + ',' + altLon,
 		requestContentType:'application/json',
 		contentType:'application/json',
@@ -1474,8 +1477,8 @@ void initMe() {
 	Boolean altCoord = (settings.altCoord ?: false)
 	String valtLat = location.latitude.toString().replace(sSPC, sBLK)
 	String valtLon = location.longitude.toString().replace(sSPC, sBLK)
-//	String altLat = settings.altLat ?: valtLat
-//	String altLon = settings.altLon ?: valtLon
+	String altLat = settings.altLat ?: valtLat
+	String altLon = settings.altLon ?: valtLon
 	myUpdData('forecastPoll', sFLS)
 	
 	if (altCoord) {
@@ -1516,7 +1519,8 @@ void initMe() {
 
 	Boolean iconType = (settings.iconType ?: false)
 	myUpdData('iconType', iconType ? sTRU : sFLS)
-	String iconLocation = (settings.iconLocation ?: 'https://tinyurl.com/y6xrbhpf/')
+//	https://tinyurl.com/icnqz/ points to https://raw.githubusercontent.com/HubitatCommunity/WeatherIcons/master/
+	String iconLocation = (settings.iconLocation ?: 'https://tinyurl.com/icnqz/')
 	myUpdData(sICON, iconLocation)
 	state.OWM = '<a href="https://openweathermap.org" target="_blank">' + sIMGS5 + myGetData(sICON) + 'OWM.png style="height:2em"></a>'
 	setDateTimeFormats((String)settings.datetimeFormat)
@@ -1544,8 +1548,8 @@ void initMe() {
 }
 void pollOWMl() {
 /*  for testing a different Lat/Lon location uncommnent the two lines below */
-//	String altLat = "44.809122" //"41.5051613" // "40.6" //"38.627003" //"30.6953657"
-//	String altLon = "-68.735892" //"-81.6934446" // "-75.43" //"-90.199402" //-88.0398912"
+//	String altLat = "38.627003" //"44.809122" // "40.6" //"30.6953657"
+//	String altLon = "-90.199402" //"-68.735892" // "-75.43" //-88.0398912"
 	Map ParamsOWMl = [ uri: 'https://api.openweathermap.org/data/2.5/find?lat=' + (String)altLat + '&lon=' + (String)altLon + '&cnt=1&appid=' + (String)apiKey, timeout: 20 ]
 	LOGINFO('Poll OpenWeatherMap.org Location: ' + ParamsOWMl.toString())
 	asynchttpGet('pollOWMlHandler', ParamsOWMl)
