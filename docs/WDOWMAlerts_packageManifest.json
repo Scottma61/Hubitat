@@ -1,10 +1,10 @@
 {
   "packageName": "Weather-Display With OWM-Alerts Forecast Driver",
   "author": "Matthew Scott",
-  "version": "0.4.4",
+  "version": "0.4.5",
   "minimumHEVersion": "2.1.9",
   "dateReleased": "2019-12-03",
-  "releaseNotes": "New tinyurl for icons.  Added tinyurl for weather.gov alert poll.",
+  "releaseNotes": "Bug fix for 'forecast_textn' optional attributes.",
   "communityLink": "https://community.hubitat.com/t/release-weather-display-with-owm-alerts-forecast-driver/38557",
   "documentationLink": "https://github.com/HubitatCommunity/Weather-Display-With-OWM-Alerts-Forecast-Driver/wiki",
   "drivers": [
