@@ -1,10 +1,10 @@
 {
   "packageName": "OpenWeatherMap-Alerts Weather Driver",
   "author": "Matthew Scott",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "minimumHEVersion": "2.1.9",
-  "dateReleased": "2019-12-03",
-  "releaseNotes": "Bug fix for 'forecast_textn' optional attributes.",
+  "dateReleased": "2019-12-12",
+  "releaseNotes": "Changes to dahboard tile logo/hyperlinks when using weather.gov for alerts and there is an alert.",
   "communityLink": "https://community.hubitat.com/t/openweathermap-alerts-weather-driver/38249",
   "documentationLink": "https://github.com/HubitatCommunity/OpenWeatherMap-Alerts-Weather-Driver/wiki/OpenWeatherMap-Alerts-Weather-Driver-wiki!",
   "drivers": [
