@@ -1,10 +1,10 @@
 {
   "packageName": "Weather-Display With OWM-Alerts Forecast Driver",
   "author": "Matthew Scott",
-  "version": "0.4.7",
+  "version": "0.4.8",
   "minimumHEVersion": "2.1.9",
-  "dateReleased": "2019-12-12",
-  "releaseNotes": "Corrected a display issue on Alerts.",
+  "dateReleased": "2021-08-11",
+  "releaseNotes": "Exposed cloud coverage forecasts.",
   "communityLink": "https://community.hubitat.com/t/release-weather-display-with-owm-alerts-forecast-driver/38557",
   "documentationLink": "https://github.com/HubitatCommunity/Weather-Display-With-OWM-Alerts-Forecast-Driver/wiki",
   "drivers": [
