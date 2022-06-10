@@ -1,10 +1,10 @@
 {
   "packageName": "Weather-Display With OWM-Alerts Forecast Driver",
   "author": "Matthew Scott",
-  "version": "0.4.9",
+  "version": "0.5.0",
   "minimumHEVersion": "2.1.9",
-  "dateReleased": "2022-04-17",
-  "releaseNotes": "Fallback for Sunrise-sunset.oreg failure.",
+  "dateReleased": "2022-06-10",
+  "releaseNotes": "Corrected PoP1 & PoP2 from not displaying when Extended precipitation forecast was selected.",
   "communityLink": "https://community.hubitat.com/t/release-weather-display-with-owm-alerts-forecast-driver/38557",
   "documentationLink": "https://github.com/HubitatCommunity/Weather-Display-With-OWM-Alerts-Forecast-Driver/wiki",
   "drivers": [
