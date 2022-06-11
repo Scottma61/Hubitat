@@ -1,10 +1,10 @@
 {
   "packageName": "OpenWeatherMap-Alerts Weather Driver",
   "author": "Matthew Scott",
-  "version": "0.5.5",
+  "version": "0.5.6",
   "minimumHEVersion": "2.1.9",
-  "dateReleased": "2022-06-10",
-  "releaseNotes": "Corrected PoP1 & PoP2 from not displaying when extended precipitation forcast was slected.",
+  "dateReleased": "2022-06-11",
+  "releaseNotes": "Corrected 3 day tile icon to honor user's selection of Current or Forecast icon.",
   "communityLink": "https://community.hubitat.com/t/openweathermap-alerts-weather-driver/38249",
   "documentationLink": "https://github.com/HubitatCommunity/OpenWeatherMap-Alerts-Weather-Driver/wiki/OpenWeatherMap-Alerts-Weather-Driver-wiki!",
   "drivers": [
