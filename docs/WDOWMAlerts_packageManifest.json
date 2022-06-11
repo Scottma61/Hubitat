@@ -3,7 +3,7 @@
   "author": "Matthew Scott",
   "version": "0.5.1",
   "minimumHEVersion": "2.1.9",
-  "dateReleased": "2022-06-10",
+  "dateReleased": "2022-06-11",
   "releaseNotes": " Corrected 3 day tile icon to honor user's selection of Current or Forecast icon.",
   "communityLink": "https://community.hubitat.com/t/release-weather-display-with-owm-alerts-forecast-driver/38557",
   "documentationLink": "https://github.com/HubitatCommunity/Weather-Display-With-OWM-Alerts-Forecast-Driver/wiki",
