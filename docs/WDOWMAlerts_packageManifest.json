@@ -1,10 +1,10 @@
 {
   "packageName": "Weather-Display With OWM-Alerts Forecast Driver",
   "author": "Matthew Scott",
-  "version": "0.5.2",
+  "version": "0.5.3",
   "minimumHEVersion": "2.1.9",
-  "dateReleased": "2022-06-12",
-  "releaseNotes": "Both MyTile and the Three day Forecast Tile use the Icon and Text selected in the 'Condition Icon/Text for current day on MyTile & Three Day Forecast Tile' option.",
+  "dateReleased": "2022-07-26",
+  "releaseNotes": "Fallback to hub location defaults and estimates for Sunrise-Sunset.org failure.",
   "communityLink": "https://community.hubitat.com/t/release-weather-display-with-owm-alerts-forecast-driver/38557",
   "documentationLink": "https://github.com/HubitatCommunity/Weather-Display-With-OWM-Alerts-Forecast-Driver/wiki",
   "drivers": [
