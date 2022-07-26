@@ -1,10 +1,10 @@
 {
   "packageName": "OpenWeatherMap-Alerts Weather Driver",
   "author": "Matthew Scott",
-  "version": "0.5.7",
+  "version": "0.5.8",
   "minimumHEVersion": "2.1.9",
-  "dateReleased": "2022-06-12",
-  "releaseNotes": "Both MyTile and the Three day Forecast Tile use the Icon and Text selected in the 'Condition Icon/Text for current day on MyTile & Three Day Forecast Tile' option.",
+  "dateReleased": "2022-07-26",
+  "releaseNotes": "Fallback to hub location defaults and estimates for Sunrise-Sunset.org failure.",
   "communityLink": "https://community.hubitat.com/t/openweathermap-alerts-weather-driver/38249",
   "documentationLink": "https://github.com/HubitatCommunity/OpenWeatherMap-Alerts-Weather-Driver/wiki/OpenWeatherMap-Alerts-Weather-Driver-wiki!",
   "drivers": [
