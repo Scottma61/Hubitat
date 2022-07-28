@@ -1,10 +1,10 @@
 {
   "packageName": "Weather-Display With OWM-Alerts Forecast Driver",
   "author": "Matthew Scott",
-  "version": "0.5.3",
+  "version": "0.5.4",
   "minimumHEVersion": "2.1.9",
-  "dateReleased": "2022-07-26",
-  "releaseNotes": "Fallback to hub location defaults and estimates for Sunrise-Sunset.org failure.",
+  "dateReleased": "2022-07-28",
+  "releaseNotes": "Code clean-up and optimization (Thanks @nh.schottfam).",
   "communityLink": "https://community.hubitat.com/t/release-weather-display-with-owm-alerts-forecast-driver/38557",
   "documentationLink": "https://github.com/HubitatCommunity/Weather-Display-With-OWM-Alerts-Forecast-Driver/wiki",
   "drivers": [
