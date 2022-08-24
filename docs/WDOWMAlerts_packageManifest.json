@@ -1,10 +1,10 @@
 {
   "packageName": "Weather-Display With OWM-Alerts Forecast Driver",
   "author": "Matthew Scott",
-  "version": "0.5.6",
+  "version": "0.5.7",
   "minimumHEVersion": "2.1.9",
-  "dateReleased": "2022-08-22",
-  "releaseNotes": "Removed sunrise-sunset.org poll.",
+  "dateReleased": "2022-08-27",
+  "releaseNotes": "Added user selection of 2.5 or 3.5 OWM API Key; Moved Schedule Change notice to Extended Logging.",
   "communityLink": "https://community.hubitat.com/t/release-weather-display-with-owm-alerts-forecast-driver/38557",
   "documentationLink": "https://github.com/HubitatCommunity/Weather-Display-With-OWM-Alerts-Forecast-Driver/wiki",
   "drivers": [
