@@ -1,10 +1,10 @@
 {
   "packageName": "OpenWeatherMap-Alerts Weather Driver",
   "author": "Matthew Scott",
-  "version": "0.6.2",
+  "version": "0.6.3",
   "minimumHEVersion": "2.1.9",
-  "dateReleased": "2022-08-23",
-  "releaseNotes": "Added user selection of 2.5 or 3.5 OWM API Key; Moved Schedule Change notice to Extended Logging.",
+  "dateReleased": "2023-01-05",
+  "releaseNotes": "Bug fix for myTile not showing icon when neither the 'Three day Forecast Tile' nor the 'Forecast High/Low Temperatures' Optional attributes are selected..",
   "communityLink": "https://community.hubitat.com/t/openweathermap-alerts-weather-driver/38249",
   "documentationLink": "https://github.com/HubitatCommunity/OpenWeatherMap-Alerts-Weather-Driver/wiki/OpenWeatherMap-Alerts-Weather-Driver-wiki!",
   "drivers": [
