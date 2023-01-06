@@ -1,10 +1,10 @@
 {
   "packageName": "Weather-Display With OWM-Alerts Forecast Driver",
   "author": "Matthew Scott",
-  "version": "0.5.7",
+  "version": "0.5.8",
   "minimumHEVersion": "2.1.9",
-  "dateReleased": "2022-08-27",
-  "releaseNotes": "Added user selection of 2.5 or 3.5 OWM API Key; Moved Schedule Change notice to Extended Logging.",
+  "dateReleased": "2023-01-05",
+  "releaseNotes": "Bug fix for myTile not showing icon when neither the 'Three day Forecast Tile' nor the 'Forecast High/Low Temperatures' Optional attributes are selected..",
   "communityLink": "https://community.hubitat.com/t/release-weather-display-with-owm-alerts-forecast-driver/38557",
   "documentationLink": "https://github.com/HubitatCommunity/Weather-Display-With-OWM-Alerts-Forecast-Driver/wiki",
   "drivers": [
