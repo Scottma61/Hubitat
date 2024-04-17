@@ -1,10 +1,10 @@
 {
   "packageName": "Weather-Display With OWM-Alerts Forecast Driver",
   "author": "Matthew Scott",
-  "version": "0.6.2",
+  "version": "0.6.3",
   "minimumHEVersion": "2.1.9",
-  "dateReleased": "2023-08-31",
-  "releaseNotes": "Added pull request from @nh.schottfam to display sun 'altitude' & 'azimuth' as stand-alone optional attributes. Code cleanups",
+  "dateReleased": "2024-04-17",
+  "releaseNotes": "Fixed API URL to pull location alerts.",
   "communityLink": "https://community.hubitat.com/t/release-weather-display-with-owm-alerts-forecast-driver/38557",
   "documentationLink": "https://github.com/HubitatCommunity/Weather-Display-With-OWM-Alerts-Forecast-Driver/wiki",
   "drivers": [
