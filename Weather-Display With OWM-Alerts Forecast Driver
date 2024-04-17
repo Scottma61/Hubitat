@@ -58,10 +58,12 @@
 	on an 'AS IS' BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
 	for the specific language governing permissions and limitations under the License.
 
-	Last Update 06/03/2023
+	Last Update 04/17/2024
 { Left room below to document version changes...}
 
-    V0.6.1	06/03/2023	Code clean-up & corrections from @nh.schotthm (Thanks!).
+    V0.6.3	04/17/2024	Fixed API URL to pull location alerts.
+    V0.6.2	08/31/2023	Added pull request from @nh.schottfam to display sun 'altitude' & 'azimuth' as stand-alone optional attributes. Code cleanups.
+    V0.6.1	06/03/2023	Code clean-up & corrections from @nh.schottfam (Thanks!).
     V0.6.0	05/30/2023	Changes to prevent errors and better reporting in situations where there is no sunrise or sunset.
     V0.5.9	01/23/2023	Bug fix for wind_cardinal that is creating a "No Data" response w/ 3rd party tile apps.
     V0.5.8	01/05/2023	Bug fix for myTile not showing icon when neither the 'Three day Forecast Tile' nor the 'Forecast High/Low Temperatures' Optional attributes are selected.
@@ -143,7 +145,7 @@ The way the 'optional' attributes work:
 //file:noinspection GroovyAssignabilityCheck
 //file:noinspection GrDeprecatedAPIUsage
 
-static String version()	{  return '0.6.1'  }
+static String version()	{  return '0.6.3'  }
 import groovy.transform.Field
 
 metadata {
@@ -218,6 +220,10 @@ metadata {
 		attribute 'sunsetTime', sSTR
 		attribute 'tw_end', sSTR
 
+//suncalc
+		attribute 'altitude', sNUM // sun angle up from the horizon (0 on your horizon, 90 straight up)
+		attribute 'azimuth', sNUM  // sun angle along the horizon (0 is N, 90 East, etc..)
+        
 //obspoll
 		attribute 'last_poll_Forecast', sSTR
 		attribute 'last_observation_Forecast', sSTR
@@ -250,9 +256,9 @@ metadata {
 			input 'txtEnable', 'bool', title: 'Enable Extended Logging', description: '<i>Extended logging will turn off automatically after 30 minutes.</i>', required: true, defaultValue: false
 			input 'alertSource', 'enum', required: true, defaultValue: sONE, title: 'Weather Alert Source<br>0=None 1=OWM or 2=Weather.gov (US only)', options: [0:sZERO, 1:sONE, 2:sTWO]			
 			input 'tempFormat', 'enum', required: true, defaultValue: 'Fahrenheit (°F)', title: 'Display Unit - Temperature: Fahrenheit (°F) or Celsius (°C)',  options: ['Fahrenheit (°F)', 'Celsius (°C)']
-			input 'TWDDecimals', 'enum', required: true, defaultValue: sZERO, title: 'Display decimals for Temp, Wind & Distance', options: [0:sZERO, 1:sONE, 2:'2', 3:'3', 4:'4']
-			input 'PDecimals', 'enum', required: true, defaultValue: sZERO, title: 'Display decimals for Pressure', options: [0:sZERO, 1:sONE, 2:'2', 3:'3', 4:'4']
-			input 'RDecimals', 'enum', required: true, defaultValue: sZERO, title: 'Display decimals for Rain volume', options: [0:sZERO, 1:sONE, 2:'2', 3:'3', 4:'4']			
+			input 'TWDDecimals', 'enum', required: true, defaultValue: sZERO, title: 'Display decimals for Temp, Wind & Distance', options: [0:sZERO, 1:sONE, 2:sTWO, 3:'3', 4:'4']
+			input 'PDecimals', 'enum', required: true, defaultValue: sZERO, title: 'Display decimals for Pressure', options: [0:sZERO, 1:sONE, 2:sTWO, 3:'3', 4:'4']
+			input 'RDecimals', 'enum', required: true, defaultValue: sZERO, title: 'Display decimals for Rain volume', options: [0:sZERO, 1:sONE, 2:sTWO, 3:'3', 4:'4']			
 			input 'datetimeFormat', 'enum', required: true, defaultValue: sONE, title: 'Display Unit - Date-Time Format',  options: [1:'m/d/yyyy 12 hour (am|pm)', 2:'m/d/yyyy 24 hour', 3:'mm/dd/yyyy 12 hour (am|pm)', 4:'mm/dd/yyyy 24 hour', 5:'d/m/yyyy 12 hour (am|pm)', 6:'d/m/yyyy 24 hour', 7:'dd/mm/yyyy 12 hour (am|pm)', 8:'dd/mm/yyyy 24 hour', 9:'yyyy/mm/dd 24 hour']
 			input 'distanceFormat', 'enum', required: true, defaultValue: 'Miles (mph)', title: 'Display Unit - Distance/Speed: Miles, Kilometers or knots',  options: ['Miles (mph)', 'Kilometers (kph)', 'knots', 'meters (m/s)']
 			input 'pressureFormat', 'enum', required: true, defaultValue: 'Inches', title: 'Display Unit - Pressure: Inches or Millibar',  options: ['Inches', 'Millibar', 'Hectopascal']
@@ -974,10 +980,11 @@ void pollOWMHandler(resp, data) {
 					if(curAl==sNCWA) {
 						clearAlerts()
 					}else{
-						Integer alertCnt = 0
-						for(Integer i = 1;i<10;i++) {
-							if(owm?.alerts[i]?.event!=null) {
-								alertCnt = i
+						Integer alertCnt; alertCnt = 0
+						Integer i
+						for(i = 1;i<10;i++) {
+                            if(owm?.alerts[i]?.event!=null) {
+								alertCnt++
 							}
 						}
 						myUpdData('alertCnt', alertCnt.toString())
@@ -1070,10 +1077,11 @@ void pollWDGHandler(resp, data) {
 		myUpdData('curAl', wdg?.features[0]?.properties?.event == null ? sNCWA : wdg.features[0].properties.event.replaceAll('\n', sSPC).replaceAll('[{}\\[\\]]', sBLK))
 		myUpdData('curAlSender', wdg?.features[0]?.properties?.senderName==null ? sNULL : ((String)wdg.features[0].properties.senderName).replaceAll('\n',sSPC).replaceAll('[{}\\[\\]]', sBLK))
 		myUpdData('curAlDescr', wdg?.features[0]?.properties?.description==null ? sNULL : ((String)wdg.features[0].properties.description).replaceAll('\n',sSPC).replaceAll('[{}\\[\\]]', sBLK).take(1024))
-		Integer alertCnt = 0
-		for(Integer i = 1;i<10;i++) {
+        Integer alertCnt; alertCnt = 0
+        Integer i
+        for(i = 1;i<10;i++) {
 			if(wdg?.features[i]?.properties?.event!=null) {
-				alertCnt = i
+				alertCnt++
 			}
 		}
 		myUpdData('alertCnt', alertCnt.toString())
@@ -1151,8 +1159,9 @@ static String dumpListDesc(data, Integer level, List<Boolean> lastLevel, String 
 			newLevel[level]=t1
 			str += dumpMapDesc(newmap, level, newLevel, !t1, html)
 		}else{
-			String lineStrt='\n'
-			for(Integer i=0; i<level; i++){
+			String lineStrt; lineStrt='\n'
+			Integer i
+			for(i=0; i<level; i++){
 				lineStrt += (i+1<level)? (!lastLevel[i] ? '     │' : '      '):'      '
 			}
 			lineStrt += (cnt==1 && sz>1)? '┌─ ':(cnt<sz ? '├─ ' : '└─ ')
@@ -1436,6 +1445,16 @@ void PostPoll() {
 	}
 	sendEventPublish(name: 'illuminated', value: myGetData('illuminated') + ' lx')
 	sendEventPublish(name: 'is_day', value: myGetData('is_day'))
+
+//suncalc
+	if(suncalcPublish){  // don't bother setting these values if it's not enabled
+		LinkedHashMap<String,Double> coords = getPosition()
+		sendEvent(name: 'altitude', value: coords.altitude)
+		sendEvent(name: 'azimuth', value: coords.azimuth)
+	}else{
+		device.deleteCurrentState('altitude')
+		device.deleteCurrentState('azimuth')
+	}
 
 	if(obspollPublish){  // don't bother setting these values if it's not enabled
         sendEvent(name: 'last_poll_Forecast', value: new Date().parse(tfmt2, myGetData('futime')).format(dfmt1, tZ) + ', ' + new Date().parse(tfmt2, myGetData('futime')).format(tfmt1, tZ))
@@ -1738,14 +1757,14 @@ void pollOWMl() {
 /*  for testing a different Lat/Lon location uncommnent the two lines below */
 //	String altLat = "38.627003" //"44.809122" // "40.6" //"30.6953657"
 //	String altLon = "-90.199402" //"-68.735892" // "-75.43" //-88.0398912"
-	Map ParamsOWMl = [ uri: 'https://api.openweathermap.org/data/' + (apiVer==true ? '3.0' : '2.5') + '/find?lat=' + (String)altLat + '&lon=' + (String)altLon + '&cnt=1&appid=' + (String)apiKey, timeout: 20 ]
+	Map ParamsOWMl = [ uri: 'https://api.openweathermap.org/data/2.5/find?lat=' + (String)altLat + '&lon=' + (String)altLon + '&cnt=1&appid=' + (String)apiKey, timeout: 20 ]
 	LOGINFO('Poll OpenWeatherMap.org Location: ' + ParamsOWMl.toString())
 	asynchttpGet('pollOWMlHandler', ParamsOWMl)
 }
 void pollOWMlHandler(resp, data) {
 	LOGINFO('Polling OpenWeatherMap.org Location')
 	if(resp.getStatus() != 200 && resp.getStatus() != 207) {
-		LOGWARN('Calling https://api.openweathermap.org/data/' + (apiVer==true ? '3.0' : '2.5') + '/find?lat=' + (String)altLat + '&lon=' + (String)altLon + '&cnt=1&appid=' + (String)apiKey)
+		LOGWARN('Calling https://api.openweathermap.org/data/2.5/find?lat=' + (String)altLat + '&lon=' + (String)altLon + '&cnt=1&appid=' + (String)apiKey)
 		LOGWARN(resp.getStatus() + sCOLON + resp.getErrorMessage())
 		myUpdData('OWML',sSPC)
 	}else{
@@ -1876,7 +1895,7 @@ void setDateTimeFormats(String formatselector){
 	String timeFormat
 	switch(mSel) {
 		case sONE: DTFormat = 'M/d/yyyy h:mm a';   dateFormat = 'M/d/yyyy';   timeFormat = 'h:mm a'; break
-		case '2': DTFormat = 'M/d/yyyy HH:mm';	dateFormat = 'M/d/yyyy';   timeFormat = 'HH:mm';  break
+		case sTWO: DTFormat = 'M/d/yyyy HH:mm';	dateFormat = 'M/d/yyyy';   timeFormat = 'HH:mm';  break
 		case '3': DTFormat = 'MM/dd/yyyy h:mm a'; dateFormat = 'MM/dd/yyyy'; timeFormat = 'h:mm a'; break
 		case '4': DTFormat = 'MM/dd/yyyy HH:mm';  dateFormat = 'MM/dd/yyyy'; timeFormat = 'HH:mm';  break
 		case '5': DTFormat = 'd/M/yyyy h:mm a';   dateFormat = 'd/M/yyyy';   timeFormat = 'h:mm a'; break
@@ -1941,7 +1960,7 @@ void setDisplayDecimals(String TWDDisp, String PressDisp, String RainDisp) {
 	switch(TWDDisp) {
 		case sZERO: ddisp_twd = '%3.0f'; mult_twd = sONE; break
 		case sONE: ddisp_twd = '%3.1f'; mult_twd = '10'; break
-		case '2': ddisp_twd = '%3.2f'; mult_twd = '100'; break
+		case sTWO: ddisp_twd = '%3.2f'; mult_twd = '100'; break
 		case '3': ddisp_twd = '%3.3f'; mult_twd = '1000'; break
 		case '4': ddisp_twd = '%3.4f'; mult_twd = '10000'; break
 		defa: ddisp_twd = '%3.0f'; mult_twd = sONE; break
@@ -1951,7 +1970,7 @@ void setDisplayDecimals(String TWDDisp, String PressDisp, String RainDisp) {
 	switch(PressDisp) {
 		case sZERO: ddisp_p = '%,4.0f'; mult_p = sONE; break
 		case sONE: ddisp_p = '%,4.1f'; mult_p = '10'; break
-		case '2': ddisp_p = '%,4.2f'; mult_p = '100'; break
+		case sTWO: ddisp_p = '%,4.2f'; mult_p = '100'; break
 		case '3': ddisp_p = '%,4.3f'; mult_p = '1000'; break
 		case '4': ddisp_p = '%,4.4f'; mult_p = '10000'; break
 		defa: ddisp_p = '%,4.0f'; mult_p = sONE; break
@@ -1961,7 +1980,7 @@ void setDisplayDecimals(String TWDDisp, String PressDisp, String RainDisp) {
 	switch(RainDisp) {
 		case sZERO: ddisp_r = '%2.0f'; mult_r = sONE; break
 		case sONE: ddisp_r = '%2.1f'; mult_r = '10'; break
-		case '2': ddisp_r = '%2.2f'; mult_r = '100'; break
+		case sTWO: ddisp_r = '%2.2f'; mult_r = '100'; break
 		case '3': ddisp_r = '%2.3f'; mult_r = '1000'; break
 		case '4': ddisp_r = '%2.4f'; mult_r = '10000'; break
 		defa: ddisp_r = '%2.0f'; mult_r = sONE; break
@@ -2074,9 +2093,9 @@ def estimateLux(Integer condition_id, Integer cloud)	 {
 			break
 	}
 	String cC = condition_id.toString()
-	String cCT = ' using cloud cover from API'
-	Double cCF = (!cloud || cloud==sBLK) ? 0.998d : (1 - (cloud/100 / 3d))
-	if(aFCC){
+	String cCT; cCT = ' using cloud cover from API'
+	Double cCF; cCF = (!cloud || cloud==sBLK) ? 0.998d : (1 - (cloud/100 / 3d))
+    if(aFCC){
 		if(!cloud){
 			Map LUitem = LUTable.find{ Map it -> (Integer)it.id == condition_id }
 			if (LUitem)	{
@@ -2199,7 +2218,9 @@ void settingsOff(){
 	log.info 'Weather-Display Driver - INFO: Settings disabled...'
 	device.updateSetting('settingEnable',[value:sFLS,type:'bool'])
 }
-
+/**
+ * send event if enabled for publishing, otherwise delete current state
+ */
 void sendEventPublish(evt)	{
 //	Purpose: Attribute sent to DB if selected	
 	if (settings."${evt.name + 'Publish'}") {
@@ -2208,6 +2229,87 @@ void sendEventPublish(evt)	{
     }else{
 		device.deleteCurrentState((String)evt.name)
 	}
+}
+
+///
+/// Calculations
+// based on SunCalc by Justin Walker
+///
+
+// date/time constants and conversions
+static Integer dayMs() { return 1000 * 60 * 60 * 24 }
+
+static Long J1970() { return 2440588L }
+
+static Long J2000() { return 2451545L }
+
+static Double rad() { return  Math.PI / 180.0D }
+
+static Double e() { return  rad() * 23.4397D } // obliquity of the Earth
+
+static Double toJulian() {
+	Date date = new Date()
+	Double l = date.getTime() / dayMs() - 0.5D + J1970()
+	return l
+}
+
+static Date fromJulian(Double j)  { return new Date(Math.round((j + 0.5D - J1970()) * dayMs()) ) }
+static Integer toDays(){ return toJulian() - J2000() }
+
+// general calculations for position
+
+static Double rightAscension(Double l, Double b) { return Math.atan2(Math.sin(l) * Math.cos(e()) - Math.tan(b) * Math.sin(e()), Math.cos(l)) }
+static Double declination(Double l, Double b)    { return Math.asin(Math.sin(b) * Math.cos(e()) + Math.cos(b) * Math.sin(e()) * Math.sin(l)) }
+
+static Double azimuth(Double H, Double phi, Double dec)  { return Math.atan2(Math.sin(H), Math.cos(H) * Math.sin(phi) - Math.tan(dec) * Math.cos(phi)) }
+static Double altitude(Double H, Double phi, Double dec) { return Math.asin(Math.sin(phi) * Math.sin(dec) + Math.cos(phi) * Math.cos(dec) * Math.cos(H)) }
+
+static Double siderealTime(Double d, Double lw) { return rad() * (280.16D + 360.9856235D * d) - lw }
+
+// general sun calculations
+
+static Double solarMeanAnomaly(Double d) { return rad() * (357.5291D + 0.98560028D * d) }
+
+static Double eclipticLongitude(Double M) {
+
+	Double C = rad() * (1.9148D * Math.sin(M) + 0.02D * Math.sin(2.0D * M) + 0.0003D * Math.sin(3.0D * M)) // equation of center
+	Double P = rad() * 102.9372D // perihelion of the Earth
+
+	return M + C + P + Math.PI
+}
+
+
+static LinkedHashMap<String,Double> sunCoords(Double d) {
+
+	Double M = solarMeanAnomaly(d)
+	Double L = eclipticLongitude(M)
+
+	return [dec: declination(L, 0D), ra: rightAscension(L, 0D)]
+}
+
+// calculates sun position for a given date and latitude/longitude
+
+LinkedHashMap<String,Double> getPosition() {
+
+	Double lng = ((String)altLon).toDouble()
+	Double lat = ((String)altLat).toDouble()
+
+	Double lw  = rad() * -lng
+	Double phi = rad() * lat
+	Double d   = toDays()
+	LinkedHashMap<String,Double> c  = sunCoords(d)
+	Double H  = siderealTime(d, lw) - c.ra
+
+	Double az; az = azimuth(H, phi, c.dec)
+	az = (az * 180.0D / Math.PI) + 180.0D
+
+	Double al; al = altitude(H, phi, c.dec)
+	al = al * 180.0D / Math.PI
+
+	return [
+			azimuth: az,
+			altitude: al,
+	]
 }
 
 @Field final List<Map>	LUTable =	 [
@@ -2269,12 +2371,12 @@ void sendEventPublish(evt)	{
 [id: 999, OWMd: '50d.png', OWMn: '50n.png', Icd: sNPNG, Icn: sNPNG, luxp: 1.0, sId: 'unknown', sIn: 'unknown'],
 ]
 
-@Field final Map attributesMap = [
+@Field final Map<String,Map> attributesMap = [
 	'threedayTile':				[title: 'Three Day Forecast Tile', d: 'Display Three Day Forecast Tile?', ty: false, defa: sFLS],
 	'alert':					[title: 'Weather Alert', d: 'Display any weather alert?', ty: false, defa: sFLS],
 	'betwixt':					[title: 'Slice of Day', d: 'Display the \'slice-of-day\'?', ty: sSTR, defa: sFLS],
 	'cloud':					[title: 'Cloud', d: 'Display cloud coverage %?', ty: sNUM, defa: sFLS],
-	'cloudExtended':			[t: 'Cloud Forecast', d: 'Display cloud coverage forecast?', ty: false, defa: sFLS],
+	'cloudExtended':			[title: 'Cloud Forecast', d: 'Display cloud coverage forecast?', ty: false, defa: sFLS],
 	'condition_code':			[title: 'Condition Code', d: 'Display \'condition_code\'?', ty: sSTR, defa: sFLS],
 	'condition_icon_only':		[title: 'Condition Icon Only', d: 'Display \'condition_code_only\'?', ty: sSTR, defa: sFLS],
 	'condition_icon_url':		[title: 'Condition Icon URL', d: 'Display \'condition_code_url\'?', ty: sSTR, defa: sFLS],
@@ -2299,6 +2401,7 @@ void sendEventPublish(evt)	{
 	'percentPrecip':			[title: 'Today\'s Precipitation Probability', d: 'Display today\'s precipitation probability?', ty: sNUM, defa: sFLS],
 	'precipExtended':			[title: 'Precipitation Forecast', d: 'Display precipitation forecast?', ty: false, defa: sFLS],
 	'obspoll':					[title: 'Observation time', d: 'Display Observation and Poll times?', ty: false, defa: sFLS], 
+	'suncalc':					[title: 'Sun calculations', d: 'Display Altitude and Azuimuth of Sun?', ty: false, defa: sFLS],    
 	'state':					[title: 'State', d: 'Display \'state\'?', ty: sSTR, defa: sFLS],
 	'vis':						[title: 'Visibility (in default unit)', d: 'Display visibility distance?', ty: sNUM, defa: sFLS],
 	'weatherSummary':			[title: 'Weather Summary Message', d: 'Display the Weather Summary?', ty: sSTR, defa: sFLS],
