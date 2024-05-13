@@ -1,10 +1,10 @@
-{
+d moon phase`{
   "packageName": "Weather-Display With OWM-Alerts Forecast Driver",
   "author": "Matthew Scott",
   "version": "0.6.4",
   "minimumHEVersion": "2.1.9",
   "dateReleased": "2024-05-13",
-  "releaseNotes": "Fixed API URL to pull location alerts.",
+  "releaseNotes": "Corrected moon phase.",
   "communityLink": "https://community.hubitat.com/t/release-weather-display-with-owm-alerts-forecast-driver/38557",
   "documentationLink": "https://github.com/HubitatCommunity/Weather-Display-With-OWM-Alerts-Forecast-Driver/wiki",
   "drivers": [
