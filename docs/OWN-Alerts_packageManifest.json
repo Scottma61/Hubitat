@@ -1,10 +1,10 @@
 {
   "packageName": "OpenWeatherMap-Alerts Weather Driver",
   "author": "Matthew Scott",
-  "version": "0.6.9",
+  "version": "0.7.0",
   "minimumHEVersion": "2.1.9",
-  "dateReleased": "2024-04-17",
-  "releaseNotes": "Added moonrise, moonset and moon_phase attributes.",
+  "dateReleased": "2024-05-13",
+  "releaseNotes": "Corrected moon_phase.",
   "communityLink": "https://community.hubitat.com/t/openweathermap-alerts-weather-driver/38249",
   "documentationLink": "https://github.com/HubitatCommunity/OpenWeatherMap-Alerts-Weather-Driver/wiki/OpenWeatherMap-Alerts-Weather-Driver-wiki!",
   "drivers": [
