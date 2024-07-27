@@ -48,9 +48,10 @@
 	on an 'AS IS' BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
 	for the specific language governing permissions and limitations under the License.
 
-	Last Update 05/13/2024
+	Last Update 07/27/2024
 	{ Left room below to document version changes...}
 
+    V0.7.1	07/27/2024	Added attribute 'alertDescrFull' that contain the full text of up to 10 current alerts.
     V0.7.0	05/13/2024	Corrected moon_phase.
     V0.6.9	04/17/2024	Added moonrise, moonset and moon_phase attributes.
     V0.6.8	08/31/2023	Added pull request from @nh.schottfam to display sun 'altitude' & 'azimuth' as stand-alone optional attributes. Code cleanups.
@@ -142,7 +143,7 @@ The way the 'optional' attributes work:
 //file:noinspection GroovyAssignabilityCheck
 //file:noinspection GrDeprecatedAPIUsage
 
-static String version()	{  return '0.7.0'  }
+static String version()	{  return '0.7.1'  }
 import groovy.transform.Field
 
 metadata {
@@ -705,7 +706,7 @@ void pollOWMHandler(resp, data) {
 					String curAlSender = owmAlerts0?.sender_name==null ? sNULL : owmAlerts0.sender_name.replaceAll('\n',sSPC).replaceAll('[{}\\[\\]]', sBLK)
 					String curAlDescr = owmAlerts0?.description==null ? sNULL : owmAlerts0.description.replaceAll('\n',sSPC).replaceAll('[{}\\[\\]]', sBLK).take(1024)
                     String alertDescrFull = owmAlerts0?.description==null ? sNULL : owmAlerts0.description.replaceAll('\n',sSPC).replaceAll('[{}\\[\\]]', sBLK)
-					if(curAl==sNCWA) {
+                    if(curAl==sNCWA) {
 						clearAlerts()
 					}else{
 						Integer alertCnt; alertCnt = 0
@@ -713,8 +714,8 @@ void pollOWMHandler(resp, data) {
 						for(i = 1;i<10;i++) {
 //                            Map owmAlerts$i= owm?.alerts ? owm.alerts[$1] : null
 							if(owm?.alerts[i]?.event!=null) {
-								alertCnt++
                                 alertDescrFull = alertDescrFull + owm?.alerts[i]?.description==null ? sNULL : owm?.alerts[i]?.description.replaceAll('\n',sSPC).replaceAll('[{}\\[\\]]', sBLK)
+                                alertCnt++
 							}
 						}
 						myUpdData('alertCnt', alertCnt.toString())
