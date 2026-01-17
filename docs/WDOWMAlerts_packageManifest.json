@@ -1,10 +1,10 @@
 {
   "packageName": "Weather-Display With OWM-Alerts Forecast Driver",
   "author": "Matthew Scott",
-  "version": "0.6.4",
+  "version": "0.6.5",
   "minimumHEVersion": "2.1.9",
-  "dateReleased": "2024-05-13",
-  "releaseNotes": "Corrected moon phase.",
+  "dateReleased": "2026-01-17",
+  "releaseNotes": "Replaced icons with unicode characters in dashboard tiles.",
   "communityLink": "https://community.hubitat.com/t/release-weather-display-with-owm-alerts-forecast-driver/38557",
   "documentationLink": "https://github.com/HubitatCommunity/Weather-Display-With-OWM-Alerts-Forecast-Driver/wiki",
   "drivers": [
@@ -17,3 +17,4 @@
     }
   ]
 }
+
