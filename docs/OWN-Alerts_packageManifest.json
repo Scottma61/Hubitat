@@ -1,10 +1,10 @@
 {
   "packageName": "OpenWeatherMap-Alerts Weather Driver",
   "author": "Matthew Scott",
-  "version": "0.7.1",
+  "version": "0.7.2",
   "minimumHEVersion": "2.1.9",
-  "dateReleased": "2024-07-29",
-  "releaseNotes": "Added attribute 'alertDescrFull' that contain the full text of up to 10 current alerts.",
+  "dateReleased": "2026-01-17",
+  "releaseNotes": "Replaced icons with unicode characters in dashboard tiles.",
   "communityLink": "https://community.hubitat.com/t/openweathermap-alerts-weather-driver/38249",
   "documentationLink": "https://github.com/HubitatCommunity/OpenWeatherMap-Alerts-Weather-Driver/wiki/OpenWeatherMap-Alerts-Weather-Driver-wiki!",
   "drivers": [
@@ -17,3 +17,4 @@
     }
   ]
 }
+
