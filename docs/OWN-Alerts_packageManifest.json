@@ -1,10 +1,10 @@
 {
   "packageName": "OpenWeatherMap-Alerts Weather Driver",
   "author": "Matthew Scott",
-  "version": "0.7.2",
+  "version": "0.7.3",
   "minimumHEVersion": "2.1.9",
-  "dateReleased": "2026-01-17",
-  "releaseNotes": "Replaced icons with unicode characters in dashboard tiles.",
+  "dateReleased": "2026-03-19",
+  "releaseNotes": "Clear expired NWS alerts (@rschumaker).",
   "communityLink": "https://community.hubitat.com/t/openweathermap-alerts-weather-driver/38249",
   "documentationLink": "https://github.com/HubitatCommunity/OpenWeatherMap-Alerts-Weather-Driver/wiki/OpenWeatherMap-Alerts-Weather-Driver-wiki!",
   "drivers": [
