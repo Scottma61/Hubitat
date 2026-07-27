@@ -4,7 +4,7 @@
   "version": "0.7.3",
   "minimumHEVersion": "2.1.9",
   "dateReleased": "2026-03-19",
-  "releaseNotes": "Clear expired NWS alerts (@rschumaker).",
+  "releaseNotes": "This driver is deprecated and no longer supported",
   "communityLink": "https://community.hubitat.com/t/openweathermap-alerts-weather-driver/38249",
   "documentationLink": "https://github.com/HubitatCommunity/OpenWeatherMap-Alerts-Weather-Driver/wiki/OpenWeatherMap-Alerts-Weather-Driver-wiki!",
   "drivers": [
